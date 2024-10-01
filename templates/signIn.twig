@@ -1,0 +1,48 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center" tabindex="-1">
+	<div class="card shadow mt-4" style="min-width: 350px; max-width: 500px;">
+		<div class="card-header background-template-color text-template-color font-italic h6">
+			Iniciar sesión
+		</div>
+		<div class="card-body">
+			<div class="d-flex justify-content-center">
+				<div class="form-group w-75">
+					<label for="inputRut">Empresa</label>
+					<input id="inputRut" type="text" list="listRuts" value="{{ paramRut }}" onchange="loadRuts(this)" onkeyup="this.onchange()" class="form-control shadow-sm" onkeypress="return keyPressSignIn(event, this.value, 12)" autofocus tabindex="1">
+					<datalist id="listRuts" ></datalist>
+				</div>
+			</div>
+			<div class="d-flex justify-content-center">
+				<div class="form-group w-75">
+					<label for="inputUser">Usuario</label>
+					<input type="text" class="form-control shadow-sm" id="inputUser" value="{{ paramUser }}" placeholder="Ingresar usuario" onkeypress="return keyPressSignIn(event, this.value, 40)" tabindex="2">
+				</div>
+			</div>
+			<div class="d-flex justify-content-center">
+				<div class="form-group w-75">
+					<label for="inputPassword">Contraseña</label>
+					<input type="password" class="form-control shadow-sm" id="inputPassword" placeholder="Ingresar contraseña" onkeypress="return keyPressSignIn(event, this.value, 30)" tabindex="3">
+				</div>
+			</div>
+		</div>
+		<div class="card-footer">
+			<div class="d-flex justify-content-between">
+				<a class="btn btn-danger shadow-sm" href="{{ path_for('Start') }}" tabindex="5">Cancelar</a>
+				<button id="buttonConfirm" class="btn btn-success shadow-sm" onclick="signIn()" onkeypress="return keyPressSignIn(event, null, null)" tabindex="4">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/signIn.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$('#inputRut').focus();
+</script>
+{% endblock %}
+{% endblock %}

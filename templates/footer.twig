@@ -1,0 +1,14 @@
+<footer id="sticky-footer" class="text-white background-template-color">
+	<div class="d-flex justify-content-between" >
+		<div></div>
+		<small class="text-white m-3"><a class="text-white" href="https://byg.uy">www.byg.uy</a> &copy; 2021</small>
+		<div>
+			{% if systemSession %}
+			<div class="row mr-2">
+				<p id="textUpdate" class="h6 text-white mt-2 mr-2" style="visibility: hidden;">Actualizando datos...</p>
+				<button class="btn btn-sm background-template-color2 text-template-background mt-2 mr-2" onclick="updateVouchers('FOOTER');" data-toggle="tooltip" data-placement="top" title="Actualizar comprobantes almacenados"><i id="btnUpdateFooter" class="fas fa-sync-alt"></i></button>
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</footer>

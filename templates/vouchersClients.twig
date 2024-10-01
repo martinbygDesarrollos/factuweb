@@ -1,0 +1,277 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
+			<h5>Comprobantes emitidos</h5>
+			<div>
+				<button class="btn background-template-color2 btn-sm shadow-sm" data-toggle="modal" data-target="#modalExport" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
+				<button class="btn background-template-color2 btn-sm shadow-sm" data-toggle="modal" data-target="#modalExportVoucherDetails" ><i class="fas fa-cloud-download-alt"></i> Exportar detalles</button>
+				{% if systemSession.superUser == 'SI' %}
+				<button class="btn background-template-color2 btn-sm shadow-sm" onclick="updateSuperVouchers();"><i class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+				{% endif %}
+			</div>
+		</div>
+		<div class="card-body">
+			<div class="form-row mb-3">
+				<div class="col m-1">
+					<div class="input-group" style="min-width: 100px; max-width: 200px;">
+						<input id="inputToSearchClient" type="text" class="form-control form-control-sm shadow-sm" onchange="searchVoucherClient(this)" onkeyup="this.onchange()" placeholder="Buscar cliente..." title="Documento o nombre del cliente.">
+					</div>
+				</div>
+				<div class="col m-1">
+					<div class="input-group" style="min-width: 100px; max-width: 200px;">
+						<input id="inputToSearch" type="number" class="form-control form-control-sm shadow-sm" onchange="searchVoucherNumber(this)" onkeyup="this.onchange()" placeholder="Buscar comprobante..." title="Ingresar número de comprobante.">
+					</div>
+				</div>
+				{% if resultDatesVoucher.result == 2 %}
+				<div class="col m-1">
+					<div class="input-group shadow-sm" style="min-width: 170px; max-width: 250px;">
+						<input id="inputDateFilter" type="date" class="form-control form-control-sm" value="{{resultDatesVoucher.objectResult.maxDate}}"> <!--min="{{ resultDatesVoucher.objectResult.minDate }}" max="{{ resultDatesVoucher.objectResult.maxDate }}"-->
+						<div class="input-group-append">
+							<button id="btnSearchVoucher" class="btn background-template-color2 btn-sm shadow-sm" onclick="findWithDate()"><i id="iconSearch" class="fas fa-search"></i></button>
+						</div>
+					</div>
+				</div>
+				{% endif %}
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+					<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changePaymentMethod(this)">
+						<option value="0" selected>Formas de pago</option>
+						<option value="1">Contado</option>
+						<option value="2">Crédito</option>
+					</select>
+				</div>
+				{% if resultTypeVouchers.result == 2 %}
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+					<select id="selectTypeVoucher" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changeTypeVoucher(this)">
+						<option value="0" selected>Todos los comprobantes</option>
+						{% for typeCFE in resultTypeVouchers.listResult %}
+						{% if typeCFE.nameCFE != null %}
+							{% if typeCFE.nameCFE == "e-Ticket Cobranza" %}
+							<option value="{{ typeCFE.typeCFE }}">Recibo e-Ticket</option>
+							{% elseif typeCFE.nameCFE == "e-Factura Cobranza" %}
+							<option value="{{ typeCFE.typeCFE }}">Recibo e-Factura</option>
+							{% else %}
+							<option value="{{ typeCFE.typeCFE }}">{{ typeCFE.nameCFE }}</option>
+							{% endif %}
+						{% endif %}
+						{% endfor %}
+					</select>
+				</div>
+				{% endif %}
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+					<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changeBranchCompany(this)">
+						<option value="0" selected>Sucursales</option>
+						{% for index in branchCompany.listResult %}
+						<option value="{{ index.codDGI }}">{{ index.nombreComercial }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<div id="containerTable">
+				<table id="tableVouchersEmitted" class="table table2">
+					<thead class="background-template-color text-template-color">
+						<tr>
+							<th class="text-right" scope="col">Documento</th>
+							<th class="text-right" scope="col">Cliente</th>
+							<th class="text-right toHidden1" scope="col">Fecha</th>
+							<!--th class="text-right toHidden1" scope="col">Pago</th-->
+							<!--th class="text-right toHidden1" scope="col">Moneda</th-->
+							<th class="text-right toHidden1" scope="col">Total</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyVouchersEmitted">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalExport" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Exportar</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="row d-flex justify-content-center">
+					<div class="col-5">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text  background-template-color text-template-color">Inicio</span>
+							</div>
+							<input id="inputDateInitExport" type="date" class="form-control text-center" >
+						</div>
+					</div>
+					<div class="col-5">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text background-template-color text-template-color">Fin</span>
+							</div>
+							<input id="inputDateFinishExport" type="date" class="form-control text-center">
+						</div>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					{% if resultTypeVouchers.result == 2 %}
+					<select id="selectTypeVoucherExport" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm w-50">
+						<option value="0" selected>Todos los comprobantes</option>
+						{% for typeCFE in resultTypeVouchers.listResult %}
+						{% if typeCFE.nameCFE != null %}
+						<option value="{{ typeCFE.typeCFE }}">{{ typeCFE.nameCFE }}</option>
+						{% endif %}
+						{% endfor %}
+					</select>
+					{% endif %}
+				</div>
+				<div class="d-flex justify-content-center mt-3">
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="type" id="radioUnifyCoin" value="option1">
+						<label class="form-check-label" for="radioUnifyCoin">Unificado en pesos Uruguayos</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="type" id="iradioDiscriminateCoin" value="option2">
+						<label class="form-check-label" for="radioDiscriminateCoin">Discriminado por moneda</label>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center mt-2">
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="includeReceipts" checked>
+						<label class="form-check-label" for="flexCheckChecked">
+							Incluir recibos de cobranza
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cerrar</button>
+				<button type="button" class="btn btn-success shadow-sm" onclick="exportCFEs()">Descargar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="modal fade" id="modalExportVoucherDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Exportar detalles de ventas</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+
+				<div class="row d-flex justify-content-center">
+					<div class="col-10">
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="inputCheckClientExportVoucherDetails" onchange="enableClientSearchExportVoucherDetails()" checked>
+							<label class="form-check-label" id="labelCheckClientExportVoucherDetails" for="inputCheckClientExportVoucherDetails">
+								Todos los clientes
+							</label>
+						</div>
+					</div>
+				</div>
+				<div class="row d-flex justify-content-center">
+					<div class="col-10">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text background-template-color text-template-color">Cliente</span>
+							</div>
+							<input list="inputListClientExportVoucherDetails" id="inputDatalistExportVoucherDetails" type="search" class="form-control" onsearch="getBusinessExportVoucherDetails()" onkeyup="this.onsearch()" placeholder="Buscar cliente por nombre o documento." readonly disabled>
+							<datalist id="inputListClientExportVoucherDetails" ></datalist>
+
+						</div>
+					</div>
+				</div>
+
+				<div class="row d-flex justify-content-center">
+					<div class="col-5">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text  background-template-color text-template-color">Desde</span>
+							</div>
+							<input id="inputDateInitExportVoucherDetails" type="date" class="form-control text-center" >
+						</div>
+					</div>
+					<div class="col-5">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text background-template-color text-template-color">Hasta</span>
+							</div>
+							<input id="inputDateFinishExportVoucherDetails" type="date" class="form-control text-center">
+						</div>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					{% if resultTypeVouchers.result == 2 %}
+					<select id="selectTypeVoucherExportVoucherDetails" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm w-50">
+						<option value="0" selected>Todos los comprobantes</option>
+						{% for typeCFE in resultTypeVouchers.listResult %}
+						{% if typeCFE.nameCFE != null %}
+						<option value="{{ typeCFE.typeCFE }}">{{ typeCFE.nameCFE }}</option>
+						{% endif %}
+						{% endfor %}
+					</select>
+					{% endif %}
+				</div>
+				<div class="d-flex justify-content-center mt-3">
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="type" id="radioUnifyCoinVoucherDetails" value="option1">
+						<label class="form-check-label" for="radioUnifyCoinVoucherDetails">Unificado en pesos Uruguayos</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="type" id="iradioDiscriminateCoinVoucherDetails" value="option2">
+						<label class="form-check-label" for="iradioDiscriminateCoinVoucherDetails">Discriminado por moneda</label>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center mt-2">
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="includeReceiptsVoucherDetails" checked>
+						<label class="form-check-label" for="includeReceiptsVoucherDetails">
+							Incluir recibos de cobranza
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cerrar</button>
+				<button type="button" class="btn btn-success shadow-sm" onclick="exportCfesVoucherDetails()">Descargar</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% include("progressBar.twig") %}
+{% include("modalSeeVoucher.twig") %}
+{% include("modalCancelVoucher.twig") %}
+{% include("buttonUp.twig") %}
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/vouchersEmitted.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/accountState.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/modalAccountState.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/configuration.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		let heightwindow = ($(document).height() * 60) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+	});
+	loadVouchersEmitted();
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 2) {
+			loadVouchersEmitted();
+		}
+	});
+</script>
+{% endblock %}
+{% endblock %}

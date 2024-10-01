@@ -1,0 +1,20 @@
+<div class="modal fade" id="modalSeeVoucher" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<button id="buttonExportVoucher" class="btn btn-sm background-template-color2 text-template-background shadow-sm">Imprimir <i class="fas fa-print"></i></button>
+				<button id="buttonCancelVoucher" style="visibility: hidden;" class="btn btn-sm background-template-color2 text-template-background shadow-sm ml-1"><i class="fas fa-ban"></i> Anular</button>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div id="seeVoucherIsAnulado" class="alert-danger justify-content-center p-3 fade" style="border-left: 0.3rem solid;" hidden>
+				<h6><i class="fas fa-info-circle mt-1 mr-2"></i>Este comprobante se encuentra anulado por DGI</h6>
+				<p id="seeVoucherIsAnuladoMotivo"></p>
+			</div>
+			<div id="containerIframe" class="modal-body" >
+				<iframe id="frameSeeVoucher" frameborder="0" width="100%"  height="90%" style='height: 80vh;'></iframe>
+			</div>
+		</div>
+	</div>
+</div>

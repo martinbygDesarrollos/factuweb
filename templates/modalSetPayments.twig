@@ -1,0 +1,119 @@
+<div class="modal fade modal fade bd-example-modal-lg" id="modalSetPayments" tabindex="0" role="dialog">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="titleModalSetPayments">Agregar medios de pago</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+                <div id="containerPayments" class="border rounded shadow-sm p-2 w-100" style="height: 80%;"> <!-- ESTE DIV CONTENDRA TODOS LOS MEDIOS DE PAGOS QUE SE AGREGAN -->
+                    <div class="row">
+                        <div class="col-8">
+                            <label for="x" class="col-form-label col-form-label-sm">Medio de pago: </label>
+                        </div>
+                        <div class="col-4">
+                            <label for="y" class="col-form-label col-form-label-sm">Monto: </label>
+                        </div>
+                    </div>
+                    {# <div class="row">
+                        <div class="col-8">
+                            <p class="custom-text" id="x" > Efectivo </p>
+                        </div>
+                        <div class="col-4">
+                            <input id="y" type="text" value="140.00" class="form-control form-control-sm shadow-sm text-center">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <p class="custom-text" id="x" > Tarjeta </p>
+                        </div>
+                        <div class="col-4">
+                            <input id="y" type="text" value="100.00" class="form-control form-control-sm shadow-sm text-center">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <p class="custom-text" id="x" > Cheque </p>
+                        </div>
+                        <div class="col-4">
+                            <input id="y" type="text" value="120.00" class="form-control form-control-sm shadow-sm text-center">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <p class="custom-text" id="x" > Depósito </p>
+                        </div>
+                        <div class="col-4">
+                            <input id="y" type="text" value="200.00" class="form-control form-control-sm shadow-sm text-center">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <p class="custom-text" id="x" > Orden de compra </p>
+                        </div>
+                        <div class="col-4">
+                            <input id="y" type="text" value="1500.00" class="form-control form-control-sm shadow-sm text-center">
+                        </div>
+                    </div> #}
+                </div>
+				<div class="d-flex flex-row-reverse mt-2">  <!-- ESTE DIV CONTENDRA LAS ACCIONES (EN PRINCIPIO SOLO AGREGAR NUEVO MODO DE PAGO QUE MUESTRA UN MODAL PARA SELECCIONAR UNO Y LO AÑADE) -->
+                    <button id="btnAddPayment" type="button" class="btn btn-success shadow-sm" onclick="insertNewPayment()" onkeypress="return keyPressAddDetail(event, null,null)">Agregar (Ins) <i class="fas fa-wallet"></i></button>
+                </div>
+                <div class="d-flex flex-row-reverse mt-2">
+                    <label for="inputPriceSale2" class="label-decoration-venta"><b>Total:</b>
+                        <input class="form-control form-control-sm text-right" type="float" readonly id="inputPriceSale2" value="2060.00" tabindex="-1">
+                    </label>
+
+                    <label for="inputPriceSale22" class="label-decoration-venta mr-2"><b>Restante:</b>
+                        <input class="form-control form-control-sm text-right" type="float" readonly id="inputPriceSale22" value="0.00" tabindex="-1">
+                    </label>
+                </div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmAddDetail2" type="button" class="btn btn-success shadow-sm" onclick="insertNewDetail()"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="modalInsertNewPaymentMethod" class="modal" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div id="modalInsertNewPaymentMethodColor" class="modal-header background-template-color">
+                <span id="modalInsertNewPaymentMethodTitle" class="modal-title text-template-color"> Insertar nuevo método de pago</span>
+                <button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col">
+                        <select id="modalInsertNewPaymentMethodOptions" class="custom-select custom-select-sm shadow-sm" tabindex="1">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Giro">Giro</option>
+                            <option value="Deposito">Depósito</option>
+                            <option value="Vale">Vale</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Resguardo de IVA">Resguardo de IVA</option>
+                            <option value="Certificado de Crédito">Certificado de Crédito</option>
+                            <option value="Orden de Compra">Orden de Compra</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input class="form-control form-control-sm text-right" type="float" id="modalInsertNewPaymentMethodAmount" onkeypress="return keyPressAddPaymentMethod(event, value)" tabindex="2">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button id="modalInsertNewPaymentMethodButtonCancel" type="button" class="btn btn-danger shadow-sm" tabindex="3">Cancelar</button>
+                <button id="modalInsertNewPaymentMethodButtonConfirm" type="button" class="btn btn-success shadow-sm" tabindex="4">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,221 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
+			<h5>Punto de venta</h5>
+		</div>
+		<div class="card-body">
+			<div class="row">
+				<div id="step-2" class="col d-none" style="max-width: 280px;">
+					<div class="border rounded shadow-sm p-2" style="height: 100%;">
+						<div class="d-flex justify-content-center ml-3 mb-4">
+							<button id="buttonModalClientWithName" class="btn btn-sm background-template-color2 text-template-background shadow-sm" style="max-width: 95%;" accesskey="c" data-tipo="" data-toggle="modal" data-target="#modalSetClient">Agregar <u>C</u>liente <i class="fas fa-user-plus"></i></button>
+						</div>
+						<div class="form-group col-md">
+							<label class="form-label-sm" for="inputDateVoucher">Fecha comprobante</label>
+							<input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateVoucher">
+						</div>
+						<div id="divComprobante" class="form-group col-md">
+							<label for="selectTypeVoucher">Comprobante</label>
+							<select class="custom-select custom-select-sm shadow-sm" id="selectTypeVoucher" onchange="onChangeTypeVoucher(this)">
+							{# <select class="custom-select custom-select-sm shadow-sm" id="selectTypeVoucher" > #}
+								{# <option value="101">ETicket</option>
+								<option value="111">EFactura</option> #}
+							</select>
+						</div>
+						{# <div id="divComprobante" class="form-group col-md">
+							
+						</div> #}
+						{# <div class="form-group col-md">
+							<input id="checkboxConfigIvaIncluido" type="checkbox" onchange="updateConfigurationIva(this)">
+							<label  for="checkboxConfigIvaIncluido">IVA incluido</label>
+						</div> #}
+						{# <div class="form-group col-md fade" id="containerInputIdBuy" hidden>
+							<label for="inputIdBuy">Identificación de compra</label>
+							<input type="text" class="form-control form-control-sm shadow-sm text-center" id="inputIdBuy">
+						</div> #}
+						{# <div class="form-row ml-2 mr-2">
+							<div class="form-group col-md">
+								<label for="selectTypeCoin">Moneda</label>
+								<select class="custom-select custom-select-sm shadow-sm" id="selectTypeCoin" onchange="onChangeTypeCoin(this)">
+									<option value="UYU">UYU</option>
+									<option value="USD">USD</option>
+								</select>
+							</div>
+							<div id="containerQuote" style="visibility: hidden;" class="form-group col-md">
+								<label class="form-label-sm" for="inputQuote">Cotización</label>
+								<input type="text" class="form-control form-control-sm shadow-sm text-center" id="inputQuote" readonly>
+							</div>
+						</div> #}
+						{# <div class="form-group col-md">
+							<label for="selectShapePayment">Forma de pago</label>
+							<select class="custom-select custom-select-sm shadow-sm" id="selectShapePayment" onchange="onChangeShapePayment(this)">
+								<option value="1">Contado</option>
+								<option value="2">Crédito</option>
+							</select>
+						</div> #}
+						<div id="containerInfoCredito" class="d-none">
+							<div class="form-group col-md">
+								<label class="form-label-sm" for="inputDateExpirationVoucher">Fecha Vencimiento</label>
+								<input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateExpirationVoucher">
+								<div class="form-check ml-2">
+									<input class="form-check-input" type="checkbox" id="inputNotUseExpirationDate">
+									<label class="form-check-label" for="gridCheck">
+										Sin vencimiento
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col">
+					<div class="border rounded p-2 shadow-sm">
+						<div class="d-flex justify-content-between  mb-2">
+							{% if productsNoEntered == "SI" %}
+							<button class="btn btn-sm background-template-color2 text-template-background shadow-sm" onclick="openModalAddProduct()" id="buttonAgregarArticulo" accesskey="a" tabindex="8">Agregar <u>A</u>rtículo (+)<i class="fas fa-cart-plus"></i></button>
+							{% endif %}
+							{% if listProducts == "SI" %}
+						<button data-toggle="modal" data-target="#modalListPrice" class="btn btn-sm background-template-color2 text-template-background shadow-sm" onclick="openModalGetPrices()" accesskey="p">Lista de <u>P</u>recios (Shift +)<i class="fas fa-cart-plus"></i></button>
+							{% endif %}
+						</div>
+
+						<div id="containerTable" style="min-height: 330px;">
+							<table class="table table-sm table-striped">
+								<thead class="background-template-color text-template-color">
+									<tr>
+										<td class="text-left col-5" scope="col">Descripción</td>
+										{# <td class="text-left w-50" scope="col">Detalle</td> #}
+										<td class="text-center col-1"></td>
+										<td class="text-right col-2" scope="col">Cantidad</td>
+										<td id="headerTdDesc" class="text-right col-2" scope="col">Descuento</td>
+										<td class="text-right col-2" scope="col">Precio</td>
+									</tr>
+								</thead>
+								<tbody id="tbodyDetailProducts">
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<div class="d-flex flex-row-reverse mt-2">
+						<label for="inputPriceSale" class="label-decoration-venta"><b>Total:</b>
+							<input class="form-control form-control-sm text-right" type="float" readonly id="inputPriceSale" value="0.00" tabindex="-1">
+						</label>
+					</div>
+					<div class="d-flex flex-row-reverse">
+						<div id="step-3" class="form-group w-100 d-none">
+							<label for="inputAdenda">Adenda</label>
+							<textarea id="inputAdenda" class="form-control shadow-sm rounded-0" maxlength="200" rows="3">{{adenda}}</textarea>
+						</div>
+					</div>
+					<div class="">
+						<div>
+							<button id="discardSales" class="btn btn-secondary shadow-sm mt-3" onclick="discardSalesProducts()">Descartar</button>
+							<button id="nextStep" class="btn btn-success shadow-sm mt-3" onclick="nextStep()" tabindex="9" style="float:right;"><span class="maintext"> Siguiente </span>  <span class="shortcut"> (Ctrl + Fin) </span></button>
+							{# <button id="idButtonCreateNewFactura" class="btn btn-success shadow-sm mt-3 d-none" onclick="createNewFactura()" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button> #}
+							<button id="idButtonShowModalPayment" class="btn btn-success shadow-sm mt-3 d-none" onclick="showModalPayment()" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% include("modalAddProduct.twig") %}
+{% include("modalDeleteDetail.twig") %}
+{% include("modalListPrice.twig") %}
+{% include("modalSeeVoucher.twig") %}
+{% include("modalSetClient.twig") %}
+{% include("modalSetPayments.twig") %}
+{% include("progressBar.twig") %}
+{% block script %}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+{# <script type="text/javascript" src="{{ path_for('Start')}}scripts/sales.js{{ versionerp }}"></script> #}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/pointsaleClientSection.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/accountState.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/managerDataSession.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/pointsale.js{{ versionerp }}"></script>
+
+<script type="text/javascript">
+
+	$('#inputDateVoucher').val(getCurrentDate());
+	$(document).ready( function(){
+		let heightwindow = ($(document).height() * 40) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+		loadProductsInSession();
+		let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+		if(responseDesc.result == 2){
+			if(responseDesc.configValue == "SI")
+				$('#headerTdDesc').text("Descuento(%)")
+			else
+				$('#headerTdDesc').text("Descuento($)")
+		}
+	//////////////////////////////////////////////////////////////////////////////
+	//BARCODE
+		let barcode="";
+		$(document).keydown(function(e) {
+			console.log(barcode);
+			let elementFocused = document.activeElement.tagName;
+			let elementFocusedID = document.activeElement.id;
+			console.log(elementFocusedID);
+			if ( elementFocused == "BODY" ){
+				//console.log("");
+				console.log("BODy");
+                console.log(e);
+				let code = (e.keyCode ? e.keyCode : e.which);
+				let character = e.key;
+				if(code == 13 && barcode != ""){
+					if(barcode.length > 0)
+						addProductByCodeBar(barcode);
+					barcode = "";
+					code = null;
+				}
+				else if (code == 107 && !e.shiftKey){
+					openModalAddProduct();
+				}
+				else if (code == 107 && e.shiftKey){
+					openModalGetPrices()
+				}
+				else if (code == 35 && e.ctrlKey){
+					nextStep();
+					// createNewFactura();
+				} 
+				else {
+					if ( character.length == 1 ){
+						barcode = barcode + character;
+					}
+				}
+				
+			} else if(elementFocusedID == "inputTextToSearchClient"){
+				let code = (e.keyCode ? e.keyCode : e.which);
+				if (code == 27) {
+					// 'Escape' key pressed
+					e.preventDefault(); // Prevent the default behavior (closing the modal)
+					showConfirmMessage("¿Facturar como cliente final?", "Confirmar", setClientFinal(), "modalSetClient");
+				}
+			} else if(elementFocusedID == "selectTypeVoucher"){
+				let code = (e.keyCode ? e.keyCode : e.which);
+				if (code == 35 && e.ctrlKey){
+					nextStep();
+					// createNewFactura();
+				} 
+			} else if (elementFocusedID == "modalSetPayments"){
+				let code = (e.keyCode ? e.keyCode : e.which);
+				console.log(code);
+				if (code == 45) {
+					$('#btnAddPayment').click();
+				}
+			}
+		});
+	//////////////////////////////////////////////////////////////////////////////
+	});
+</script>
+{% endblock %}
+{% endblock %}

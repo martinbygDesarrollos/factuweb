@@ -1,0 +1,105 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
+			<h5>Recibos manuales de proveedores</h5>
+		</div>
+		<div class="card-body">
+			<div class="input-group mb-2 shadow-sm" style="min-width: 210px; max-width: 300px;">
+				<input type="text" class="form-control" onchange="searchManualReceiptReceived(this)" onkeyup="this.onchange()" aria-label="Sizing example input" placeholder="Buscar nombre...">
+			</div>
+			<div id="containerTable">
+				<table class="table">
+					<thead class="background-template-color text-template-color">
+						<tr>
+							<th class="text-right" scope="col">Fecha</th>
+							<th class="text-right toHidden1" scope="col">Documento</th>
+							<th class="text-right" scope="col">Nombre</th>
+							<th class="text-right toHidden1" scope="col">Moneda</th>
+							<th class="text-right" scope="col">Total</th>
+							<th class="text-center" scope="col">Acción</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyManualReceipt"></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalModifyManualReceipt" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-mycolor">
+				<span class="modal-title text-white">Modificar recibo manual</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="d-flex justify-content-center">
+					<div class="input-group mb-3 w-75 shadow-sm">
+						<div class="input-group-prepend bg-mycolor text-white">
+							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Fecha</span>
+						</div>
+						<input id="inputDateManualReceipt" type="date" class="form-control text-center" onkeypress="return keyPressModifyManualReceipt(event)">
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="input-group mb-3 w-75 shadow-sm">
+						<div class="input-group-prepend bg-mycolor text-white">
+							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Importe</span>
+						</div>
+						<input id="inputTotalManualReceipt" type="number" class="form-control text-center" onkeypress="return keyPressModifyManualReceipt(event)">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cerrar</button>
+				<button type="button" id="buttonConfirmModifyManualReceipt" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalDeleteManualReceipt" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-mycolor">
+				<h5 class="modal-title text-white">Borrar recibo manual</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-center" id="textDeleteManualReceipt"></p>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cerrar</button>
+				<button type="button" id="buttonConfirmDeleteManualReceipt" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/manualReceiptsReceived.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		let heightwindow = ($(document).height() * 60) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+	});
+	getManualReceiptReceived();
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 2) {
+			getManualReceiptReceived();
+		}
+	});
+</script>
+{% endblock %}
+{% endblock %}

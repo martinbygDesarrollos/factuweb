@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/png" sizes="32x32" href="{{ path_for('Start') }}img/favicon.ico">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha512-XKa9Hemdy1Ui3KSGgJdgMyYlUg1gM+QhL6cnlyTe2qzMCYm4nAZ1PsVerQzTTXzonUR+dmswHqgJPuwCq1MaAg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/stylesDefault/globalStyles.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/stylesDefault/containerTable.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/stylesDefault/slider.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/stylesDefault/toggle.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/buttonUp.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/progressBar.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/alerts.css{{ versionerp }}">
+	<title>{% block title %}Efactura{% endblock %}</title>
+</head>
+<body class="d-flex flex-column" style="background-image: url('{{ path_for('Start')}}img/backGround.png'); background-repeat: no-repeat; background-attachment: fixed; background-size: cover;">
+	<div class="page-contentClass page-content" id="content">
+		<div class="d-flex justify-content-between">
+			<button id="sidebarCollapse" type="button" class="btn background-template-color text-template-color m-2"></button>
+			{% if systemSession %}
+			<a href="{{path_for('SignOut')}}" class="btn btn-danger text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+			{% else %}
+			<a href="{{path_for('SignIn')}}" class="btn btn-success text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Iniciar sesión"><i class="fas fa-sign-in-alt"></i></a>
+			{% endif %}
+		</div>
+		<div class="container-fluid">
+			<div class="row justify-content-center">
+				<div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+					{% block content %}
+
+					{% endblock %}
+				</div>
+			</div>
+		</div>
+	</div>
+	{% include("slider.twig") %}
+	{% include("footer.twig")%}
+	<div id="modalResponse" class="modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div id="modalColourResponse" class="modal-header">
+					<span id="modalTitleResponse" class="modal-title"></span>
+					<button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p id="modalMessageResponse" class="text-center"></p>
+				</div>
+				<div class="modal-footer">
+					<button id="modalButtonResponse" type="button" accesskey="o" class="btn background-template-color text-template-color shadow-sm" ><u>O</u>k</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="modalConfirm" class="modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div id="modalConfirmColor" class="modal-header">
+					<span id="modalConfirmTitle" class="modal-title"></span>
+					<button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p id="modalConfirmMessage" class="text-center"></p>
+				</div>
+				<div class="modal-footer justify-content-between">
+					<button id="modalConfirmButtonNO" type="button" class="btn btn-danger shadow-sm" >Volver</button>
+					<button id="modalConfirmButtonSI" type="button" class="btn btn-success shadow-sm" >Confirmar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="modalLoad" class="modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-body background-template-color2  border-template" >
+					<p class="text-center text-template-background font-italic mt-3 mb-2">Cargando...</p>
+					<div class="progress">
+						<div class="progress-bar background-template-color progressBar" role="progressbar" style="width: 20%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="idBasicAlert" class="alert alert-dismissible" role="alert" hidden>
+		<i class="fas fa-info-circle" hidden></i>
+		<p id="alertTitleResponse" hidden></p>
+	</div>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/base.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/modalAccountState.js{{ versionerp }}"></script>
+</body>
+</html>

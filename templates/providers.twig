@@ -1,0 +1,134 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
+			<h5>Proveedores</h5>
+			<div>
+				<button type="button" class="btn background-template-color2" data-toggle="modal" data-target="#modalExportProviders">Exportar</button>
+			</div>
+		</div>
+		<div class="card-body">
+			<div class="row ml-1 mb-2" >
+				<div class="input-group m-1" style="min-width: 100px; max-width: 250px;">
+					<input id="inputToSearch" type="text" class="form-control form-control-sm shadow-sm" style="min-width: 250px;" onchange="searchProviders(this)" onkeyup="this.onchange()" placeholder="Buscar nombre...">
+				</div>
+				<div class="form-check m-1" style="min-width: 100px; max-width: 200px;">
+					<input class="form-check-input" type="checkbox" onclick="providersWithBalance(this)" checked>
+					<label class="form-check-label" for="flexCheckDefault">Proveedores con saldo</label>
+				</div>
+			</div>
+			<div id="containerTable">
+				<table class="table table2">
+					<thead class="background-template-color text-template-color" >
+						<tr>
+							<th class="text-right toHidden1" scope="col" style="width: 10%;">Documento</th>
+							<th class="text-right" scope="col" style="width: 15%;">Razón social</th>
+							<th class="text-right toHidden2" style="width: 15%;" scope="col">Dirección</th>
+							<th class="text-right toHidden2" scope="col" style="width: 10%;">Teléfono</th>
+							<th class="text-right toHidden2" scope="col" style="width: 17%;">Correo</th>
+							<th class="text-right toHidden1" style="min-width: 7em; width: 10%;" scope="col">Saldo $</th>
+							<th class="text-right toHidden1" style="min-width: 7em; width: 10%;" scope="col">Saldo U$S</th>
+							<th class="text-center" style="min-width: 6em;width: 8%;" scope="col">Acción</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyProviders">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalUpdateProvider" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="titleUpdateClient">Modificar proveedor</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<input type="text" class="form-control form-control-sm shadow-sm" id="documentUpdateProvider" readonly>
+				</div>
+
+				<div class="form-group">
+					<label for="nameBusinessUpdateProvider">Razón social</label>
+					<input type="text" class="form-control form-control-sm shadow-sm" id="nameBusinessUpdateProvider" onkeypress="return keyPressModalProvider(event,this.value, 80)">
+				</div>
+
+				<div class="form-group">
+					<label for="addressUpdateProvider">Dirección</label>
+					<input type="text" class="form-control form-control-sm shadow-sm" id="addressUpdateProvider" onkeypress="return keyPressModalProvider(event,this.value, 80)">
+				</div>
+				<div class="form-group">
+					<label for="phoneNumberUpdateProvider">Teléfono</label>
+					<input type="number" class="form-control form-control-sm shadow-sm" id="phoneNumberUpdateProvider" onkeypress="return keyPressModalProvider(event,this.value, 9)">
+				</div>
+				<div class="form-group">
+					<label for="emailUpdateProvider">Correo</label>
+					<input type="text" class="form-control form-control-sm shadow-sm" id="emailUpdateProvider" onkeypress="return keyPressModalProvider(event,this.value, 80)">
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="buttonUpdateProvider" type="button" class="btn btn-success shadow-sm" onkeypress="return keyPressModalProvider(event,null,null)">Modificar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- Modal que se muestra cuando se quieren exportar proveedores deudores, se pide fecha y está el botón de exportar -->
+<div class="modal fade" id="modalExportProviders" tabindex="-1" role="dialog" aria-labelledby="exportClientsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header background-template-color">
+        <h5 class="modal-title text-template-color" >Exportar proveedores con saldo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<div class="form-group col-md">
+			<label class="form-label-sm" for="idInputDateExportProviders">Hasta </label>
+			<input type="date" class="form-control form-control-sm shadow-sm text-center" id="idInputDateExportProviders">
+		</div>
+      </div>
+      <div class="modal-footer justify-content-between">
+		<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+		<button class="btn background-template-color2 btn-sm shadow-sm" onclick="exportProvidersDeudores()" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
+	  </div>
+    </div>
+  </div>
+</div>
+
+
+{% include("buttonUp.twig") %}
+{% include("progressBar.twig") %}
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/providers.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		let heightwindow = ($(document).height() * 55) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+
+		$('#idInputDateExportProviders').val(getCurrentDate());
+
+	});
+	getProviders();
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 4) {
+			getProviders();
+		}
+	});
+</script>
+{% endblock %}
+{% endblock %}

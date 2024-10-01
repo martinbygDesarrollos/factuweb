@@ -1,0 +1,234 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color">
+			<h5 class="font-italic">Facturación batch</h5>
+			<button class="btn btn-sm background-template-color2 text-template-background" onclick="downloadFeeService()"><i class="fas fa-cloud-download-alt"></i> Exportar</button>
+		</div>
+		<div class="card-body">
+			<div class="d-flex justify-content-between mb-3">
+				<div class="input-group">
+					<input id="inputToSearch" type="text"  class="form-control form-control-sm shadow-sm m-1" onchange="searchClientFeeService(this)" onkeyup="this.onchange()" placeholder="Buscar cliente...">
+				</div>
+				<div class="d-flex flex-row-reverse">
+					<a class="btn btn-sm background-template-color2 text-template-background shadow-sm m-1" onclick="goToClients()" style="text-decoration: none;">Nueva cuota&nbsp;<i class="far fa-share-square"></i></a>
+					<button type="button" id="buttonModalInvoiceAllFeeService" class="btn btn-sm background-template-color2 text-template-background shadow-sm m-1" data-toggle="modal" data-target="#modalInvoiceAllFeeService" data-toggle="tooltip" data-placement="bottom" title="Se facturaran todos las cuotas facturables a la fecha.">
+						Facturar &nbsp; <i class="fas fa-receipt"></i>
+					</button>
+				</div>
+			</div>
+			<div id="containerTable">
+				<table class="table">
+					<thead class="background-template-color text-template-color">
+						<tr>
+							<th class="text-right" scope="col" style="width:18%;">Cliente</th>
+							<th class="text-right" scope="col" style="width:18%;">Servicio</th>
+							<th class="text-right toHidden2 notShow" scope="col" style="width: 8%;">Período</th>
+							<th class="text-right toHidden2 notShow" scope="col" style="width: 8%;">IVA</th>
+							<!--th class="text-right toHidden2" scope="col"></th-->
+							<th class="text-right toHidden2 notShow" scope="col" style="width: 8%;">Costo</th>
+							<th class="text-right toHidden2" scope="col" style="width: 8%;">Importe</th>
+							<th class="text-right toHidden2" scope="col" style="width: 8%;">UI</th>
+							<th class="text-right toHidden2" scope="col" style="width: 8%;">Fecha</th>
+							<th class="text-center" scope="col" style="width:8%;">Vigente</th>
+							<th class="text-center" style="min-width: 6em; width:8%;" scope="col">Acción</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyFeeServices">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalModifyFeeService" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="exampleModalLongTitle">Modificar servicio</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<input type="text" class="form-control form-control-sm text-center shadow-sm" id="inputModifyFeeClient" readonly>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="form-group">
+						<label for="selectModifyFeeServices" class="text-mycolor">Servicios</label>
+						<select id="selectModifyFeeServices" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm">
+						</select>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="form-group  w-100">
+						<label class="text-mycolor" for="exampleFormControlTextarea1">Descripcíon</label>
+						<textarea class="form-control shadow-sm" id="textAreaServiceSelected" style="resize: none;" rows="2" maxlength="80" readonly></textarea>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="form-group row">
+						<label for="selectNewFeeMonth" class="col-sm-3 col-form-label text-mycolor">Periodo</label>
+						<div class="col-sm-9">
+							<select id="selectModifyFeeMonth" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm">
+								<option selected value="0">Mensual</option>
+								{% for period in periods %}
+								{% if period == "B" %}
+								<option value="22">Bimestral</option>
+								{% elseif period == "T" %}
+								<option value="33">Trimestral</option>
+								{% elseif period == "S" %}
+								<option value="66">Semestral</option>
+								{% endif %}
+								{% endfor %}
+								<option value="1">Enero</option>
+								<option value="2">Febrero</option>
+								<option value="3">Marzo</option>
+								<option value="4">Abril</option>
+								<option value="5">Mayo</option>
+								<option value="6">Junio</option>
+								<option value="7">Julio</option>
+								<option value="8">Agosto</option>
+								<option value="9">Septiembre</option>
+								<option value="10">Octubre</option>
+								<option value="11">Noviembre</option>
+								<option value="12">Diciembre</option>
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="buttonModifyFeeServiceConfirm" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalInvoiceAllFeeService" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Facturar cuotas</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="text-center" id="messageInvoiceAllService"></h5>
+				<br><hr>
+				<div class="form-row">
+					<div class="form-group col-md-6">
+						<label for="inputDateEmittedInvoiceAllService">Fecha emisión</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateEmittedInvoiceAllService" onchange="calculateExpirationDateAllService()">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputDateExpirationInvoiceAllService">Fecha vencimiento</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateExpirationInvoiceAllService">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow" data-dismiss="modal">Cancelar</button>
+				<button type="button" class="btn btn-success shadow" id="inputConfirmationButtonInvoiceAllService" onclick="invoiceAllFeeService()">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" id="modalCheckInFeeService">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="text-template-color">Facturar servicio</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p id="textCheckInFeeService" class="text-center"></p>
+				<div class="form-row">
+					<div class="form-group col-md-6">
+						<label for="inputDateEmittedInvoiceService">Fecha emisión</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateEmittedInvoiceService" onchange="calculateExpirationDate()">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="inputDateExpirationInvoiceService">Fecha vencimiento</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateExpInvoiceService">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmNewFeeService" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalDeleteFeeService" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="text-template-color">Borrar cuota</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p id="idParagraphFeeService" class="text-center"></p>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmDeleteFeeService" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalSeeVoucherFee" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<button id="buttonExportVoucherFee" class="btn btn-sm background-template-color2 text-template-background shadow-sm ml-1 mr-3"><i class="fas fa-print"></i> Imprimir</button>
+				<button id="buttonCancelVoucherFee" style="visibility: hidden;" class="btn btn-sm background-template-color2 text-template-background shadow-sm ml-1"><i class="fas fa-ban"></i> Anular</button>
+				<button type="button" id="buttonCloseVoucherFee" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div id="seeVoucherIsAnuladoFee" class="alert-danger justify-content-center p-3 fade" style="border-left: 0.3rem solid;" hidden>
+				<h6><i class="fas fa-info-circle mt-1 mr-2"></i>Este comprobante se encuentra anulado por DGI</h6>
+				<p id="seeVoucherIsAnuladoMotivoFee"></p>
+			</div>
+			<div id="containerIframe" class="modal-body">
+				<iframe id="frameSeeVoucherFee" frameborder="0" width="100%" style='pointer-events: none;'></iframe>
+			</div>
+		</div>
+	</div>
+</div>
+{% include("modalCancelVoucher.twig") %}
+{% include("buttonUp.twig") %}
+{% include("progressBar.twig") %}
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/feeServices.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/accountState.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		let heightwindow = ($(document).height() * 55) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+	});
+	loadFeeServices();
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) -4) {
+			loadFeeServices();
+		}
+	});
+</script>
+{% endblock %}
+{% endblock %}

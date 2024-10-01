@@ -1,0 +1,296 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color">
+			<div class="d-flex">
+				<h5 class="font-italic">Estado de cuenta de&nbsp;</h5>{{ nameSelected }}
+			</div>
+			<div>
+				<button type="button" class="btn btn-sm background-template-color2 text-template-background shadow m-1" name="{{ dateFrom }}" onclick="prepareModalAccountState('{{prepareFor}}')">{{ dateFromToFromat }}&nbsp; <i class="far fa-calendar-alt"></i></button>
+				{% if prepareFor == "CLIENT" %}
+				<button type="button" class="btn btn-sm background-template-color2 text-template-background shadow m-1" onclick="showModalReceipt()" accesskey="r" onblur="modalManualReceiptFocus()"><u>R</u>ecibo &nbsp; <i class="fas fa-receipt"></i></button>
+				{% elseif prepareFor == "PROVIDER" %}
+				<button type="button" class="btn btn-sm background-template-color2 text-template-background shadow m-1" data-toggle="modal" data-target="#modalModifyDeleteManualReceipt" accesskey="r"><u>R</u>ecibo &nbsp; <i class="fas fa-receipt"></i></button>
+				{% endif %}
+				<a class="btn btn-sm background-template-color2 text-template-background shadow  m-1" accesskey="i" href="data:application/pdf;base64,{{ fileAccountSate }} " download="EC_{{ documentSelected }}_{{ listAccountState.DATEENDING }}.pdf">PDF &nbsp; <i class="fas fa-download"></i></a>
+				<button class="btn btn-sm background-template-color2 text-template-background shadow  m-1" accesskey="i" onclick="exportAccountStateExcel('{{prepareFor}}', '{{id}}', '{{dateInit}}', '{{dateEnding}}', '{{typeCoin}}', '{{config}}')" >E<u>x</u>cel &nbsp; <i class="fas fa-download"></i></button>
+			</div>
+		</div>
+		<div class="card-body">
+			<div id="containerTable">
+				<table id="tableAccountSate" class="table table-sm table-striped">
+					<thead class="background-template-color text-template-color">
+						<tr>
+							<th class="text-right" style="min-width: 150px;" scope="col">Fecha</th>
+							<th class="text-right" scope="col">Documento</th>
+							<th class="text-right" scope="col">Moneda</th>
+							<th class="text-right" scope="col">Debe</th>
+							{% if prepareFor == "CLIENT" %}
+							<th class="text-center" style="width: 20px;" scope="col"><input type="checkbox" id="inputSelectedAll" onclick="selectAllVouchers(this)"></th>
+							{% endif %}
+							<th class="text-right" scope="col">Haber</th>
+							<th class="text-right" scope="col">Saldo</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyAccountState">
+						{% for accountState in listAccountState.listResult %}
+						<tr>
+							{% if accountState.DOCUMENTO == "Saldo inicial" %}
+							<td class="text-right">{{ accountState.FECHA }}</td>
+							{% else %}
+							<td class="text-right"><button type="button" id="{{ accountState.FECHA }}" onclick="showItemModalModifyAccountState(this)" data-toggle="tooltip" data-placement="right" title="Utilizar como fecha desde en estado de cuenta" class="btn btn-link btn-sm mr-4"><i class="fas fa-i-cursor"></i></button>{{ accountState.FECHA }}</td>
+							{% endif %}
+							{% if accountState.DOCUMENTO == "Saldo inicial" %}
+							<td class="text-right">{{ accountState.DOCUMENTO }}</td>
+							{% elseif accountState.DOCUMENTO != "Recibo manual"  %}
+							{% if prepareFor == "CLIENT" %}
+							<td class="text-right td-hover pointerToHover" id="{{ accountState.id }}" onclick="openModalVoucher(this, 'CLIENT', 'accountState')">{{ accountState.DOCUMENTO }} <i class="fas fa-eye text-mycolor"></i></td>
+							{% else %}
+							<td class="text-right td-hover pointerToHover" id="{{ accountState.id }}" onclick="openModalVoucher(this, 'PROVIDER', 'accountState')">{{ accountState.DOCUMENTO }} <i class="fas fa-eye text-mycolor"></i></td>
+							{% endif %}
+							{% else %}
+							<td class="text-right">{{ accountState.DOCUMENTO }}</td>
+							{% endif %}
+							{% if accountState.MONEDA == "USD" %}
+							<td class="text-right">U$S</td>
+							{% else %}
+							<td class="text-right">$</td>
+							{% endif %}
+							{% if accountState.DEBE == 0%}
+							<td> </td>
+							{%else %}
+							<td class="text-right">{{ accountState.DEBE }}</td>
+							{% endif %}
+							{% if prepareFor == "CLIENT" %}
+							{% if accountState.DOCUMENTO == "Saldo inicial" or accountState.id == null or accountState.isCobranza == 1 %}
+							<td class="text-center"></td>
+							{% else %}
+							<td class="text-center"><input type="checkbox" id="{{ accountState.id }}" onclick="checkVoucher(this)"></td>
+							{% endif %}
+							{% endif %}
+							{% if accountState.HABER == 0%}
+							<td> </td>
+							{%else %}
+							<td class="text-right">{{ accountState.HABER }}</td>
+							{% endif %}
+							<td class="text-right">{{ accountState.SALDO }}</td>
+						</tr>
+						{% endfor %}
+						<tr>
+							<td></td>
+							<td></td>
+							{% if prepareFor == "CLIENT" %}
+							<td></td>
+							{% endif %}
+							<td></td>
+							<td></td>
+							<td class="text-right font-weight-bold">Total al&nbsp;{{ listAccountState.DATEENDING }}</td>
+							<td class="text-right font-weight-bold">{{ listAccountState.SALDOTOTAL }}</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							{% if prepareFor == "CLIENT" %}
+							<td></td>
+							{% endif %}
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						{% if listAccountState.BALANCEUYU and listAccountState.BALANCEUSD %}
+						<tr>
+							<td></td>
+							<td class="text-right font-weight-bold">Saldo a la fecha  $</td>
+							{% if prepareFor == "CLIENT" %}
+							<td></td>
+							{% endif %}
+							<td class="text-right font-weight-bold">{{ listAccountState.BALANCEUYU }}</td>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td class="text-right font-weight-bold">Saldo a la fecha  U$S</td>
+							{% if prepareFor == "CLIENT" %}
+							<td></td>
+							{% endif %}
+							<td class="text-right font-weight-bold">{{ listAccountState.BALANCEUSD }}</td>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						{% endif %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalModifyAccountState" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Estado de cuenta</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-row">
+					<div class="col">
+						<input id="inputDateFrom" type="date" class="form-control shadow-sm" onkeypress="keyPressUpdateAccountSate(event);">
+					</div>
+					<div class="col">
+						<input id="inputDateTo" type="date" class="form-control shadow-sm" value="{{ dateTo }}" onkeypress="keyPressUpdateAccountSate(event);">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cerrar</button>
+				<button id="buttonConfirmUpdateAccountState" name="{{ prepareFor }}" type="button" class="btn btn-success shadow-sm" onclick="updateAccountState(this)" onkeypress="keyPressUpdateAccountSate(event);">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalModifyDeleteManualReceipt" tabindex="-1" role="dialog" >
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Recibo Manual</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div id="modalBodyModify" class="modal-body">
+				<div class="d-flex justify-content-center">
+					<div class="form-group">
+						<label for="inputDateManualReceiptProvider">Fecha</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="form-group">
+						<label for="inputTotalManualReceiptProvider">Importe</label>
+						<input type="number" class="form-control form-control-sm text-center shadow-sm" id="inputTotalManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button type="button" id="buttonConfirmManualReceiptProvider" class="btn btn-success shadow-sm" onclick="createManualReceiptProvider()" onkeypress="return keyPressManualReceiptProvider(event)">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalNewManualReceipt" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Nuevo recibo</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<input id="idDocumentBusiness" type="text" value="{{ documentSelected }}" style="display: none;">
+			<div class="modal-body">
+				<div id="containerBusinessInfo" style="display: none;" class="card mb-2">
+					<div class="card-body">
+						<h6 class="card-subtitle mb-2 text-muted">Información empresa</h6>
+						<div class="form-group">
+							<label for="inputAddressNewManualReceiptClient">Dirección</label>
+							<input type="text" class="form-control form-control-sm shadow-sm" id="inputAddressNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 50);">
+						</div>
+						<div class="form-group">
+							<label for="inputCityNewManualReceiptClient">Ciudad</label>
+							<input type="text" class="form-control form-control-sm shadow-sm" id="inputCityNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 40);">
+						</div>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center">
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonOfficialReceiptClient" checked onKeyPress="return keyPressManualReceipt(event, null, null);">
+						<label class="form-check-label" for="radioButtonOfficialReceipt">eRecibo Oficial</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
+						<label class="form-check-label" for="radioButtonManualReceipt">Recibo Manual</label>
+					</div>
+				</div>
+				<div id="containerInputReason">
+					<div class="form-group">
+						<label for="inputReasonNewManualReceiptClient">Razón</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputReasonNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 80);">
+					</div>
+				</div>
+				<div class="containerInputReason">
+					<div class="form-group">
+						<label for="inputDateNewManualReceiptClient">Fecha</label>
+						<input type="date" class="form-control form-control-sm text-center shadow-sm" onchange="refreshCurrentQuote()" id="inputDateNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
+					</div>
+				</div>
+				{% if prepareFor == "CLIENT" and typeCoinSelected == "USD" %}
+				<div class="containerInputReason">
+					<div class="form-group">
+						<!--div class="input-group-prepend">
+							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Cambio</span>
+						</div-->
+						<label for="inputUSDValueNewManualReceiptClient">Cambio</label>
+						<div class="d-flex">
+							<input id="inputUSDValueNewManualReceiptClient" type="number" pattern="/^-?\d+\.?\d*$/" class="form-control text-center w-75" value="{{ currentQuote }}"  onKeyPress="return keyPressManualReceipt(event, this, 10);">
+							<button id="btnRefreshQuote" class="btn btn-sm background-template-color2 text-template-background shadow-lg w-25" onclick="refreshCurrentQuote()"><i class="fas fa-sync"></i></button>
+						</div>
+
+					</div>
+				</div>
+				{% endif %}
+				<div class="containerInputReason">
+					<div class="form-group">
+						<label for="inputTotalNewManualReceiptClient">Importe a cancelar</label>
+						<input type="number" class="form-control form-control-sm text-center shadow-sm" pattern="/^-?\d+\.?\d*$/" id="inputTotalNewManualReceiptClient" onchange="calculateDiscontToNoteCredit()" onKeyPress="return keyPressManualReceipt(event, this.value, 20);">
+					</div>
+				</div>
+				<div class="containerInputReason" id="containerDiscountManualReceiptClient">
+					<div class="form-group">
+						<input type="checkbox" class="" onchange="changeDiscManualReceipt()" id="checkDiscountManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
+						<label for="checkDiscountManualReceiptClient">Agregar descuento</label>
+					</div>
+				</div>
+				<div class="containerInputReason" id="divDiscManualReceiptClient" hidden >
+					<div class="form-group">
+						<label for="inputDiscountNewManualReceiptClient">Descuento</label>
+						<input type="number" class="form-control form-control-sm text-center shadow-sm" onchange="calculateDiscontToNoteCredit()" id="inputDiscountNewManualReceiptClient" onkeyup="this.onchange()" onKeyPress="return keyPressManualReceipt(event, null, null);">
+					</div>
+				</div>
+				<div class="containerInputReason" id="divAmountToCancelClient" hidden >
+					<div class="form-group">
+						<label for="">Importe a pagar</label>
+						<input type="number" class="form-control form-control-sm text-center shadow-sm" id="amountToCancelManualReceipt" onKeyPress="return keyPressManualReceipt(event, null, null);" onchange="calculateDiscontToNoteCredit2()">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="buttonConfirmNewManualReceiptClient" name="{{ documentSelected }}" type="button" onclick="createManualReceiptEmitted(this)"  onKeyPress="return keyPressManualReceipt(event, null, null);" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% include("modalSeeVoucher.twig") %}
+{% include("modalCancelVoucher.twig") %}
+{% include("buttonUp.twig") %}
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/accountState.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+{% endblock %}
+{% endblock %}

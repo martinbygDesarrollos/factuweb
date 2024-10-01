@@ -1,0 +1,647 @@
+<?php
+
+
+require_once 'ctr_users.php';
+require_once 'ctr_vouchers_emitted.php';
+require_once 'ctr_vouchers_received.php';
+
+require_once '../src/class/clients.php';
+require_once '../src/utils/handle_date_time.php';
+
+class ctr_clients{
+
+	//buscar un listado de clientes
+	public function searchClientsToSale($textToSearch){
+		$clientsClass = new clients();
+		$restController = new ctr_rest();
+		$response = new \stdClass();
+		$response->result = 2;
+		$response->listResult = array();
+		$rut = $_SESSION['systemSession']->rut;
+		$token = $_SESSION['systemSession']->tokenRest;
+
+		$responseDataLocal = $clientsClass->getClientsListByDocumentOrName($textToSearch);
+		$responseDataOrmen = $restController->buscarCliente($rut, $textToSearch, $token);
+		$responseDataDgi = $restController->buscarClienteDGI($textToSearch, $token);
+
+		$response->listResult = array_merge($responseDataLocal->listResult, $responseDataOrmen->listResult);
+		$response->listResult = array_merge($response->listResult, $responseDataDgi->listResult);
+
+		return $response;
+	}
+
+	//buscar datos de cliente segun documento
+	public function searchClientToSale($documentClient){
+		$response = new \stdClass();
+		$responseGetBusiness = ctr_users::getBusinesSession();
+		if($responseGetBusiness->result == 2){
+			$responseGetClient = clients::getClient($documentClient, $responseGetBusiness->idBusiness);
+			if($responseGetClient->result == 2){
+				$responseGetClient->fromRest = 0;
+				return $responseGetClient;
+			}else{
+				//traer datos de la base de ormen
+				$responseOrmenClient = ctr_rest::consultarCliente($responseGetBusiness->infoBusiness->rut, $documentClient);
+				if($responseOrmenClient->result == 2){
+					$object = new \stdClass();
+					$object->id = null;
+					$object->docReceptor = $responseOrmenClient->cliente->document;
+					$object->nombreReceptor = $responseOrmenClient->cliente->name;
+					$object->direccion = null;
+					$object->localidad = null;
+					$object->departamento = null;
+					foreach ($responseOrmenClient->cliente->contacts as $value) {
+						if ( $value->contactType == 1 ){
+							$object->correo = $value->value;
+						}else{
+							$object->celular = $value->value;
+						}
+					}
+					$object->idEmpresa = null;
+					$response->result = 2;
+					$response->objectResult = $object;
+					return $response;
+				}else{
+					//verificar si es un rut
+					$responseValidateRut = validate::validateRut($documentClient);
+					//verificar si es una cédula
+					$responseValidateCi = validate::validateCI($documentClient);
+					$ciLimpia = preg_replace( '/\D/', '', $documentClient );
+					$validationDigit = $ciLimpia[-1];
+					$responseGetToken = ctr_rest::getToken();
+					if($responseGetToken->result == 2){
+						$token = $responseGetToken->token;
+					}else return $responseGetToken;
+
+					if($responseValidateRut->result == 2){ //es un rut
+						$responseGetClient = ctr_rest::consultarRut($responseGetBusiness->infoBusiness->rut, $documentClient, $token);
+						if($responseGetClient->result == 2){
+							$response->result = 2;
+							$response->objectResult = $responseGetClient->empresa;
+							$response->fromRest = 0;
+							//guardar datos en base local
+						}else return $responseGetClient;
+					}
+					else if ( $responseValidateCi == $validationDigit ){ //es una cédula
+						$responseDataOrmen = ctr_rest::buscarCliente($responseGetBusiness->infoBusiness->rut, $documentClient, $token);
+						if ( $responseDataOrmen->result == 2 && $responseDataOrmen->listResult[0]->document != null){
+							$object = new \stdClass();
+							$object->id = null;
+							$object->docReceptor = $responseDataOrmen->listResult[0]->document;
+							$object->nombreReceptor = $responseDataOrmen->listResult[0]->name;
+							$object->direccion = null;
+							$object->localidad = null;
+							$object->departamento = null;
+							$object->correo = null;
+							$object->celular = null;
+							$object->idEmpresa = null;
+							$response->result = 2;
+							$response->objectResult = $object;
+							return $response;
+						}else{
+							$result = ctr_rest::buscarClienteGenaroUyCedula($documentClient);
+							return $result;
+						}
+					}
+					//else return $responseValidateRut;
+					//si resulta que es una cedula buscamos el cliente localmente, sino se encuentra de manera local se devuelve solo el nombre
+				}
+			}
+		}else return $responseGetBusiness;
+		return $response;
+	}
+
+	//controla que la convinacion de tipo de comprobante y documento de cliente sea valida para realizar la venta. Efactura solo con rut ETicket solo con ci
+	public function isValidForEmit($typeVoucher, $documentClient){
+		$response = new \stdClass();
+
+		$responseValidateRut = validate::validateRUT($documentClient);
+		$resultValidateCI = validate::validateCI($documentClient);
+
+		$validationDigit = intval($documentClient[-1]);
+		if ($resultValidateCI === $validationDigit)
+			$resultValidateCI = true;
+		else
+			$resultValidateCI = false;
+
+
+		if($typeVoucher == 111 && $responseValidateRut->result == 2){
+			$response->result = 2;
+		}else if($typeVoucher == 111 && $responseValidateRut->result == 1){
+			$response->result = 1;
+			$response->message = $responseValidateRut->message;
+		}else if($typeVoucher == 111 && $resultValidateCI){
+			$response->result = 1;
+			$response->message = "Para ventas a un cliente particular debe seleccionar ETicket en tipo de comprobantes";
+		}else if($typeVoucher == 101 && $responseValidateRut->result == 2){
+			$response->result = 1;
+			$response->message = "Por ventas a empresa debe seleccionar EFactura en tipo de comprobantes.";
+		}else if($typeVoucher == 101 && $resultValidateCI){
+			$response->result = 2;
+		}else if($typeVoucher == 101 && !$resultValidateCI){
+			$response->result = 1;
+			$response->message = "La cédula ingresada no es valida, por favor vuelva a ingresarlo.";
+		}
+
+		return $response;
+	}
+
+	//verifica si al cliente se le puede facturar un servicio.
+	public function getBillableClients($dateEmitted){
+		$response = new \stdClass();
+
+		$responseGetBusiness = ctr_users::getBusinesSession();
+		if($responseGetBusiness->result == 2){
+			$responseGetClients = clients::getBillableClients($responseGetBusiness->idBusiness, $dateEmitted);
+			if($responseGetClients->result == 2){
+				$response->result = 2;
+				$response->clients = $responseGetClients->listResult;
+			}else return $responseGetClients;
+		}else return $responseGetBusiness;
+
+		return $response;
+	}
+
+	//obtiene los saldos totales del cliente a la fecha
+	public function getBalanceClient($documentClient){
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+			$resultGetClient = clients::getClient($documentClient, $resultMyBusiness->idBusiness);
+			if($resultGetClient->result == 2){
+				$resultBalanceToDate = ctr_vouchers_emitted::getBalanceToDateEmitted($resultGetClient->objectResult->id, $resultMyBusiness->idBusiness);
+				if(!is_null($resultBalanceToDate->balanceUYU) || !is_null($resultBalanceToDate->balanceUSD)){
+					$response->result = 2;
+					$response->balanceUYU = number_format($resultBalanceToDate->balanceUYU,2,",",".");
+					$response->balanceUSD = number_format($resultBalanceToDate->balanceUSD,2,",",".");
+				}else{
+					$response->result = 0;
+					$response->message = "Ocurrió un error y no se obtuvo el resultado de los saldos actuales para este cliente";
+				}
+			}else return $resultGetClient;
+		}else return $resultMyBusiness;
+
+		return $response;
+	}
+
+	//Busca un cliente por documento
+	public function findClientWithDoc($docReceiver){
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+			$resultGetClient = clients::getClient($docReceiver, $resultMyBusiness->idBusiness);
+			if($resultGetClient->result == 2){
+				$response->result = 2;
+				$response->client = $resultGetClient->objectResult;
+			}else return $resultGetClient;
+		}else return $resultMyBusiness;
+
+		return $response;
+	}
+
+	//Busca un cliente por id de cliente
+	public function getClientWithId($idReceiver){
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+			$resultGetClient = clients::getClientWithId($idReceiver);
+			if($resultGetClient->result == 2){
+				$response->result = 2;
+				$response->client = $resultGetClient->objectResult;
+			}else return $resultGetClient;
+		}else return $resultMyBusiness;
+
+		return $response;
+	}
+
+	public function updateClient($nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idReceiver){
+		$response = new \stdClass();
+
+		$responseGetBusiness = ctr_users::getBusinesSession();
+		if($responseGetBusiness->result == 2){
+			$responseGetInfoBusiness = ctr_users::getBusinessInformation($responseGetBusiness->idBusiness);
+			if($responseGetInfoBusiness->result == 2){
+				$responseGetClient = clients::getClientWithId($idReceiver);
+				if($responseGetClient->result == 2){
+					$resultUpdateClient = clients::updateClient($nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idReceiver);
+					if($resultUpdateClient->result == 2){
+						$arrayContacts = ctr_clients::prepareContactToSend($email, $numberMobile);
+						$documentType = 1;
+						if(validate::validateRut($responseGetClient->objectResult->docReceptor))
+							$documentType = 2;
+						$responseSendRest = ctr_rest::modificarCliente($responseGetInfoBusiness->objectResult->rut, $responseGetClient->objectResult->docReceptor, $documentType, $nameReceiver, 1, $arrayContacts);
+						if($responseSendRest->result == 2){
+							$response->result = 2;
+							$response->message = "EL cliente fue modificado correctamente.";
+						}else{
+							$response->result = 1;
+							$response->message = "El cliente fue modificado correctamente únicamente para este sistema.";
+						}
+					}else return $resultUpdateClient;
+				}else return $responseGetClient;
+			}else return $responseGetInfoBusiness;
+		}else return $responseGetBusiness;
+
+		return $response;
+	}
+
+	public function updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver){
+		$response = new \stdClass();
+		$clientClass = new clients();
+		$userController = new ctr_users();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$validateClass = new validate();
+
+		$responseGetBusiness = $userController->getBusinesSession();
+		if($responseGetBusiness->result == 2){
+			$idBusiness = $responseGetBusiness->idBusiness;
+			$rut = $responseGetBusiness->infoBusiness->rut;
+		}else return $responseGetBusiness;
+
+		$resultUpdateClient = $clientClass->updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idBusiness);
+		if($resultUpdateClient->result == 2){
+			$arrayContacts = $clientController->prepareContactToSend($email, $numberMobile);
+			$documentType = 1;
+			if ( $validateClass->validateRUT($documentReceiver) ){
+				$documentType = 2;
+			}else{
+				$ciLimpia = preg_replace( '/\D/', '', $documentReceiver );
+				$validationDigit = $ciLimpia[-1];
+				$validCi = $validateClass->validateCI($documentReceiver);
+				if ($validationDigit == $validCi)
+					$documentType = 3;
+			}
+
+			$responseSendRest = $restController->modificarCliente($rut, $documentReceiver, $documentType, $nameReceiver, 1, $arrayContacts);
+			if($responseSendRest->result == 2){
+				$response->result = 2;
+				$response->message = "EL cliente fue modificado correctamente.";
+			}else{
+				$response->result = 1;
+				$response->message = "El cliente fue modificado correctamente únicamente para este sistema.";
+			}
+		}else return $resultUpdateClient;
+		return $response;
+	}
+
+	public function createModifyClient($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver){
+		$clientClass = new clients();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$arrayErrors = array();
+		$response = new \stdClass();
+		$validateClass = new validate();
+
+		//si el dato es vacio lo paso a null
+		$locality = $locality == "" ? null : $locality;
+		$department = $department == "" ? null : $department;
+		$email = $email == "" ? null : $email;
+		$numberMobile = $numberMobile == "" ? null : $numberMobile;
+		$addressReceiver = $addressReceiver == "" ? null : $addressReceiver;
+
+		$responseGetBusiness = ctr_users::getBusinesSession();
+		if($responseGetBusiness->result == 2){
+			$idBusiness = $responseGetBusiness->idBusiness;
+			$rut = $responseGetBusiness->infoBusiness->rut;
+		}else return $responseGetBusiness;
+		$objClient = $clientClass->getClient($documentReceiver, $idBusiness);
+		if ( $objClient->result == 2 ){ //el cliente se encuentra en el sistema hay que modificar
+			$resultModify = $clientController->updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver);
+			if ( $resultModify->result != 2 ){
+				array_push( $arrayErrors, $resultModify->message );
+				$response->result = $resultModify->result;
+				if ( $resultModify->result == 1 ) $response->result = 2; /*** si $resultModify es result 1 significa que en ormen no se modificó y localmente si*/
+			}else $response->result = 2;
+		}else{ //hay que crear el cliente
+			$resultNewClient = $clientClass->insertClient($documentReceiver, $nameReceiver, $addressReceiver, $locality, $department, $email, $numberMobile, $idBusiness);
+			if ( $resultNewClient->result != 2 ){
+				array_push( $arrayErrors, $resultNewClient->message );
+			}else $response->result = 2;
+		}
+
+		$arrayContacts = $clientController->prepareContactToSend($email, $numberMobile);
+		$documentType = 1;
+		if ( $validateClass->validateRUT($documentReceiver) ){
+			$documentType = 2;
+		}else{
+			$ciLimpia = preg_replace( '/\D/', '', $documentReceiver );
+			$validationDigit = $ciLimpia[-1];
+			$validCi = $validateClass->validateCI($documentReceiver);
+			if ($validationDigit == $validCi)
+				$documentType = 3;
+		}
+		$resultOrmenClient = $restController->consultarCliente($rut, $documentReceiver);
+		if ( $resultOrmenClient->result == 2 ){ //ntonces el cliente ya esta guardado en ormen
+			$responseSendRest = $restController->modificarCliente($rut, $documentReceiver, $documentType, $nameReceiver, 1, $arrayContacts);
+			if($responseSendRest->result == 2){
+				$response->result = 2;
+				$response->message = "EL cliente fue modificado correctamente.";
+			}else{
+				$response->result = 1;
+				$response->message = "El cliente fue modificado correctamente únicamente para este sistema.";
+			}
+		}else{ //no se encuentra cliente en ormen, se agrega
+			$object = array(
+				'document' => $documentReceiver,
+				'name' => $nameReceiver,
+				'notificationMethods' => [1],
+				'documentType' => $documentType,
+				'contacts' => $arrayContacts
+			);
+			$responseSendRest = $restController->nuevoCliente($rut, $object);
+			if($responseSendRest->resultado->codigo == 200){
+				$response->result = 2;
+				$response->message = "EL cliente fue creado correctamente.";
+			}else{
+				$response->result = 1;
+				$response->message = $responseSendRest->resultado->error;
+			}
+		}
+		return $response;
+	}
+
+	public function prepareContactToSend($emails, $numbers){
+		$newArray = array();
+
+		if(!is_null($emails)){
+			$arrayValue = explode(";", $emails);
+			foreach ($arrayValue as $key => $value) {
+				$valueContact = ctr_rest::prepareContactDetail(1, $value);
+				$newArray[] = $valueContact;
+			}
+		}
+
+		if(!is_null($numbers)){
+			$arrayValue = explode(";", $numbers);
+			foreach ($arrayValue as $key => $value) {
+				$valueContact = ctr_rest::prepareContactDetail(5, $value);
+				$newArray[] = $valueContact;
+			}
+		}
+
+		return $newArray;
+	}
+
+	//lista de clientes con los parametros acomodados para ser mostrados en pantalla montos con .00
+	public function getListClientsView($lastId, $textToSearch, $withBalance){
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+			$resultListClient = clients::getListClientsView($lastId, $textToSearch, $withBalance, $resultMyBusiness->idBusiness);
+			if($resultListClient->result == 2){
+				$listClientsWithBalance = array();
+				foreach($resultListClient->listResult as $key => $value){
+					$resultBalances = ctr_vouchers_emitted::getBalanceToDateEmitted($value['id'], $resultMyBusiness->idBusiness);
+					$value['saldoUYU'] = number_format($resultBalances->balanceUYU,2,",",".");
+					$value['saldoUSD'] = number_format($resultBalances->balanceUSD,2,",",".");
+					$listClientsWithBalance[] = $value;
+				}
+				$response->result = 2;
+				$response->listResult = $listClientsWithBalance;
+				$response->lastId = $resultListClient->lastId;
+			}else return $resultListClient;
+		}else $resultMyBusiness;
+
+		return $response;
+	}
+
+	// lista de clientes para la datalist de sugerencias
+	public function getClientsForModal($suggestionClient){
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+			$resultGetClients = clients::getClientsForModal($suggestionClient, $resultMyBusiness->idBusiness);
+			if($resultGetClients->result == 2){
+				$response->result = 2;
+				$response->listPeople = $resultGetClients->listResult;
+			}else return $resultGetClients;
+		}else return $resultMyBusiness;
+
+		return $response;
+	}
+
+	public function getContactsString($listContacts){
+		$contacts = array('email' => null, "celular" => null);
+
+		foreach($listContacts as $key => $contact){
+			$contactTypeString = null;
+			if($contact->tipoContacto == "CORREO ELECTRONICO") $contactTypeString = "email";
+			else if($contact->tipoContacto == "TELEFONO MOVIL") $contactTypeString = "celular";
+
+			if(!is_null($contactTypeString)){
+				if(!is_null($contacts[$contactTypeString]))
+					$contacts[$contactTypeString] .= ";" . $contact->datoContacto;
+				else
+					$contacts[$contactTypeString] = $contact->datoContacto;
+			}
+		}
+
+		return $contacts;
+	}
+
+	//agrega los clientes obtenidos de los cfe para agregarlos en la base de datos
+	public function insertClientFirstLogin($rut, $documentClient, $nameClient){
+		$clientController = new ctr_clients();
+		$response = new \stdClass();
+		$arrayErrors = array(); //usarlo
+		$responseMyBusiness = ctr_users::getBusinesSession();
+		if($responseMyBusiness->result == 2){
+			$arrayLetters = array(" ","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z");
+			$documentClient = str_replace($arrayLetters, "", strtolower($documentClient));
+			$responseValidateRut = validate::validateRut($documentClient);
+			if($responseValidateRut->result == 2){
+				$responseGetToken = ctr_rest::getToken();
+				if($responseGetToken->result == 2){
+					$responseSendRest = ctr_rest::consultarRut($rut, $documentClient, $responseGetToken->token);
+					if($responseSendRest->result == 2){
+						$contacts = ctr_clients::getContactsString($responseSendRest->empresa->contactos);
+						$business = $responseSendRest->empresa;
+						$responseSendQuery = clients::insertClient($documentClient, $business->razonSocial, $business->direccion, $business->localidad, $business->departamento, $contacts['email'], $contacts['celular'], $responseMyBusiness->idBusiness);
+						if($responseSendQuery->result == 2){
+							$responseClientEfact = $clientController->newClientEfactura($documentClient, $business->razonSocial, $contacts['email'], $contacts['celular']);
+							$logFile = fopen("../lognuevo.txt", 'a') or die("Error creando archivo");
+							fwrite($logFile, "\n".date("d/m/Y H:i:s ")."Primer login. Nuevo cliente en EFactura, documento: ".$documentClient);
+							fwrite($logFile, "\n".date("d/m/Y H:i:s ")."Respuesta: ".$responseClientEfact->result." ".$responseClientEfact->message);
+							fclose($logFile);
+							$response->result = 2;
+							$response->message = "Cliente agregado";
+							$response->id = $responseSendQuery->id;
+						}else return $responseSendQuery;
+					}else {
+						error_log("CONSULTA RUT CON ERROR ".$responseSendRest->message);
+						return $responseSendRest;
+					}
+				}else return $responseGetToken;
+			}else{
+				$responseSendQuery = clients::insertClient($documentClient, $nameClient, null, null, null, null, null, $responseMyBusiness->idBusiness);
+				if($responseSendQuery->result == 2){
+					$responseClientEfact = $clientController->newClientEfactura($documentClient, $nameClient, null, null);
+					$logFile = fopen("../lognuevo.txt", 'a') or die("Error creando archivo");
+					fwrite($logFile, "\n".date("d/m/Y H:i:s ")."Primer login! Nuevo cliente en EFactura, documento: ".$documentClient);
+					fwrite($logFile, "\n".date("d/m/Y H:i:s ")."Respuesta: ".$responseClientEfact->result." ".$responseClientEfact->message);
+					fclose($logFile);
+					$response->result = 2;
+					$response->message = "Cliente agregado";
+					$response->id = $responseSendQuery->id;
+				}else return $responseSendQuery;
+			}
+		}else return $responseMyBusiness;
+		return $response;
+	}
+
+	//se pasan los datos del cliente nuevo para que se guarde en efactura
+	public function newClientEfactura($document, $name, $mail, $mobile){
+		$response = new \stdClass();
+		$restController = new ctr_rest();
+		$validateClass = new validate();
+		$responseMyBusiness = ctr_users::getBusinesSession();
+		$documentType = 1;
+		if($validateClass->validateRut($document)->result == 2 )
+			$documentType = 2;
+
+		$contacts = $this->prepareContactToSend($mail, $mobile);
+
+		$object = array(
+			'document' => $document,
+			'name' => $name,
+			'notificationMethods' => [1],
+			'documentType' => $documentType,
+			'contacts' => $contacts
+		);
+
+		$responseRest = $restController->nuevoCliente($responseMyBusiness->infoBusiness->rut, $object);
+		if ( $responseRest->resultado->codigo != 200 ){
+			$response->result = 1;
+			$response->message = $responseRest->resultado->error;
+		}else{
+			$response->result = 2;
+			$response->message = "Cliente con documento ".$document." ingresado correctamente.";
+		}
+
+		return $response;
+	}
+
+	//se obtienen todos los clientes que se encuentran en la base local y se guardan en efactura
+	public function loadCustomersEfactura(){
+		$response = new \stdClass();
+		$response->result = 2;
+		$arrayErrors = array();
+		$clientClass = new clients();
+		$restController = new ctr_rest();
+		$validateClass = new validate();
+		$responseMyBusiness = ctr_users::getBusinesSession();
+		if ( isset($responseMyBusiness)){
+			if ( $responseMyBusiness->result == 2 ){
+				//obtener todos los clientes que se registraron localmente para esta empresa
+				$listClients = $clientClass->getAllCustomersByBusiness($responseMyBusiness->idBusiness);
+				if (isset($listClients)){
+					if ( $listClients->result == 2 ){
+						if ( count($listClients->listResult) >0 ){
+							foreach ($listClients->listResult as $value) {
+								$documentType = 1;
+								if($validateClass->validateRut($value['docReceptor'])->result == 2 )
+									$documentType = 2;
+
+								$contacts = $this->prepareContactToSend($value['correo'], $value['celular']);
+
+								$object = array(
+									'document' => $value['docReceptor'],
+									'name' => $value['nombreReceptor'],
+									'notificationMethods' => [1],
+									'documentType' => $documentType,
+									'contacts' => $contacts);
+								$responseRest = $restController->nuevoCliente($responseMyBusiness->infoBusiness->rut, $object);
+								if ( $responseRest->resultado->codigo != 200 ){
+									$response->result = 1;
+									array_push($arrayErrors, $responseRest->resultado->codigo.": ".$responseRest->resultado->error);
+								}else
+									array_push($arrayErrors, $responseRest->resultado->codigo.": "."Cliente con documento ".$value['docReceptor']." ingresado correctamente.");
+							}
+						}else{
+							$response->result = 2;
+							$response->message = "No se encontraron clientes.";
+						}
+					}
+				}
+			}else array_push($arrayErrors, $responseMyBusiness->message);
+		}else array_push($arrayErrors, $responseMyBusiness->message);
+
+		$responseUpdate = $this->updateCustomersEfactura();
+
+		$response->message = array_merge($arrayErrors, $responseUpdate->message);
+		//$arrayErrors;
+		return $response;
+	}
+
+	//se obtienen todos los clientes que se encuentran en la base local y se modifican los datos en efactura
+	public function updateCustomersEfactura(){
+		$response = new \stdClass();
+		$response->result = 2;
+		$arrayErrors = array();
+		$clientClass = new clients();
+		$restController = new ctr_rest();
+		$validateClass = new validate();
+		$responseMyBusiness = ctr_users::getBusinesSession();
+		if ( isset($responseMyBusiness)){
+			if ( $responseMyBusiness->result == 2 ){
+				//obtener todos los clientes que se registraron localmente para esta empresa
+				$listClients = $clientClass->getAllCustomersByBusiness($responseMyBusiness->idBusiness);
+				if (isset($listClients)){
+					if ( $listClients->result == 2 ){
+						foreach ($listClients->listResult as $value) {
+							$documentType = 1;
+							if($validateClass->validateRut($value['docReceptor'])->result == 2 )
+								$documentType = 2;
+							$contacts = $this->prepareContactToSend($value['correo'], $value['celular']);
+							$responseRest = $restController->modificarCliente($responseMyBusiness->infoBusiness->rut, $value['docReceptor'], $documentType, $value['nombreReceptor'], 1, $contacts);
+							if ( $responseRest->result != 2 ){
+								$response->result = 1;
+								array_push($arrayErrors, "500: ".$responseRest->message);
+							}else
+								array_push($arrayErrors, "200: ".$responseRest->message);
+						}
+					}
+				}
+			}else array_push($arrayErrors, $responseMyBusiness->message);
+		}else array_push($arrayErrors, $responseMyBusiness->message);
+
+		$response->message = $arrayErrors;
+		return $response;
+	}
+
+
+
+	public function exportExcelDeudores($dateTo){
+		//misma consulta que getListClientsView pero esta no tiene limite por paginacion y no manda lastid ni texto
+
+		$response = new \stdClass();
+
+		$resultMyBusiness = ctr_users::getBusinesSession();
+		if($resultMyBusiness->result == 2){
+
+			$resultListClient = clients::getListDeudoresToExport($resultMyBusiness->idBusiness, $dateTo);
+
+			if($resultListClient->result == 2){
+				$listClientsWithBalance = array();
+				foreach($resultListClient->listResult as $key => $value){
+					$resultBalances = ctr_vouchers_emitted::getBalanceToDateEmitted($value['id'], $resultMyBusiness->idBusiness);
+					$value['saldoUYU'] = $resultBalances->balanceUYU;
+					$value['saldoUSD'] = $resultBalances->balanceUSD;
+					$listClientsWithBalance[] = $value;
+				}
+				$response->result = 2;
+				$response->listResult = $listClientsWithBalance;
+			}else return $resultListClient;
+		}else $resultMyBusiness;
+
+		return $response;
+
+
+	}
+}

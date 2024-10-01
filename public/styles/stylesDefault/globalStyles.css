@@ -1,0 +1,126 @@
+html,
+body {
+    height: 100%;
+}
+.page-contentClass{
+    flex: 1 0 auto;
+}
+
+#sticky-footer {
+    flex-shrink: none;
+}
+
+.border-template{
+    border: 0.5px solid #bdc3c7;
+    border-radius: 2px;
+}
+
+/* color principal de fondo  */
+.background-template-color{
+    background-color: #37A398;
+}
+
+/* color secundario de fondo */
+.background-template-color2{
+    background-color: #63BBB2;
+}
+
+/* color de fondo segun el texto  */
+.background-template-text{
+    background-color: #1D635D;
+}
+
+/* color de texto segun el fondo */
+.text-template-background{
+    color: #1D635D;
+}
+
+/* color de texto principal */
+.text-template-color{
+    color:  #F5F3F3;
+}
+
+.progressBar{
+  animation-name: loadProgress;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-direction: alternate;
+}
+
+@keyframes loadProgress{
+  from {
+    width: 0%;
+}
+to {
+    width: 100%;
+}
+}
+
+.turnI{
+    animation-name: rotation;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+@keyframes rotation {
+  0% {
+    transform:rotate(0deg);
+}
+100% {
+    transform:rotate(360deg);
+}
+}
+
+@media (max-width: 1200px) {
+  html, body{
+    font-size:1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body{
+    font-size:1rem;
+  }
+}
+
+span.shortcut {
+  display: block;
+  font-size: x-small;
+  /* width: 100px; */
+  /* padding: 0 20px; */
+  margin-bottom: -5px;
+  /* margin: 0; */
+  word-break: keep-all;
+  text-align: center;
+}
+
+span.maintext {
+  display: block;
+  /* font-size: x-small; */
+  margin-top: -7px;
+  /* margin: 0; */
+  word-break: keep-all;
+  text-align: center;
+}
+
+.overflow-example {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.custom-text {
+  display: block;
+  width: 100%;
+  height: calc(1.5em + 0.5rem + 2px);
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  font-size: .875rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}

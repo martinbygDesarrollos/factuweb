@@ -1,0 +1,137 @@
+:root {
+  --first-color: #37A398;
+  --second-color: #1D635D;
+}
+
+#containerTable {
+  overflow: auto;
+  scroll-margin-top: 10px;
+}
+
+#containerTable thead{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+
+#containerTable::-webkit-scrollbar {
+  -webkit-appearance: none;
+}
+
+#containerTable::-webkit-scrollbar:vertical {
+  width:10px;
+}
+
+#containerTable::-webkit-scrollbar-button:increment,
+#containerTable::-webkit-scrollbar-button {
+  display: none;
+}
+
+#containerTable::-webkit-scrollbar:horizontal {
+  height: 10px;
+}
+
+#containerTable::-webkit-scrollbar-thumb {
+  background-color: #37A398;
+  border: 2px solid #1D635D;
+}
+
+#containerTable::-webkit-scrollbar-track {
+  margin-top: 1px;
+}
+
+.table{
+  table-layout: fixed;
+}
+
+
+/*las tablas con la clase table2 son las tablas que al hacer clic en una fila sucede una accion*/
+.table2 tbody tr:hover{
+  background-color:#F5F3F3;
+  cursor: pointer;
+}
+
+/*cuando el cursor pasa encima de el elemento que tiene esta clase se cambia el cursor*/
+.pointerToHover:hover{
+  cursor: pointer;
+}
+
+.removedElement{
+  display:none;
+}
+
+@media (max-width: 1200px) {
+  .table{
+    table-layout: auto;
+  }
+  .notShow{
+    display:none;
+  }
+  .card-body{
+    padding:0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .notShowInPhone{
+    display:none;
+  }
+
+   #containerTable::-webkit-scrollbar {
+    display:none;
+  }
+
+  .card-body{
+    padding:0.5rem;
+  }
+}
+
+
+
+
+.tableCustomScroll {
+  overflow: auto;
+  max-height: 60vh;
+  scroll-margin-top: 10px;
+}
+
+.tableCustomScroll thead{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+}
+
+.tableCustomScroll::-webkit-scrollbar {
+  -webkit-appearance: none;
+}
+
+.tableCustomScroll::-webkit-scrollbar:vertical {
+  width:10px;
+}
+
+.tableCustomScroll::-webkit-scrollbar-button:increment,
+.tableCustomScroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+.tableCustomScroll::-webkit-scrollbar:horizontal {
+  height: 10px;
+}
+
+.tableCustomScroll::-webkit-scrollbar-thumb {
+  background-color: var(--first-color);
+  border: 2px solid var(--second-color);
+}
+
+.tableCustomScroll::-webkit-scrollbar-track {
+  margin-top: 1px;
+}
+
+
+.voucherDgiAnulado{
+  color: #bd2130;
+  font-weight: 400;
+}

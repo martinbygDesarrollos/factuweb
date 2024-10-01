@@ -1,0 +1,204 @@
+<div class="vertical-nav bg-light" id="sidebar">
+    <div class="py-4 px-3 mb-3 background-template-color">
+        <div class="media d-flex justify-content-center ">
+            <img src="{{path_for('Start')}}img/LogoHeader.png" alt="..." width="150">
+        </div>
+        <h4 class="text-template-background text-center font-italic ml-1">Efactura</h4>
+        {% if systemSession %}
+        <span class="text-template-background text-center font-italic ml-1 m-0">{{ systemSession.business }}</span>
+        {% endif %}
+    </div>
+
+    <ul class="nav flex-column bg-white mb-0">
+        <li class="nav-item">
+            <a href="{{ path_for('Start') }}" class="nav-link text-dark font-italic bg-light">
+                <i class="fas fa-home text-template-background mr-2"></i> Inicio
+            </a>
+        </li>
+        {% if systemSession %}
+        {% if systemSession.permission.VENTAS == 'SI' %}
+        <li class="nav-item">
+            <a onclick="showMenuClient('SALE')" class="nav-link text-dark font-italic bg-light">
+                <div class="d-flex justify-content-between">
+                    Ventas <i class="fas fa-chevron-down text-template-background mt-1"></i>
+                </div>
+            </a>
+        </li>
+        <ul id="listSaleMenu" style="display: none;" class="nav flex-column bg-white mb-0">
+            <li class="nav-item">
+                <a href="{{ path_for('Sale') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i></i>Venta
+                </a>
+            </li>
+            {% if systemSession.permission.POINTOFSALE == 'SI' %}
+                <li class="nav-item">
+                    <a href="{{ path_for('PointSale') }}" class="nav-link text-dark font-italic bg-light">
+                        <i class="fas fa-receipt text-template-background ml-3 mr-2"></i></i>Punto de venta
+                    </a>
+                </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{{ path_for('PriceList') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Lista de artículos
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+        {% if systemSession.permission.CLIENT == 'SI' %}
+        <li class="nav-item">
+            <a onclick="showMenuClient('CLIENT')" class="nav-link text-dark font-italic bg-light">
+                <div class="d-flex justify-content-between">
+                    Clientes <i class="fas text-template-background fa-chevron-down  mt-1"></i>
+                </div>
+            </a>
+        </li>
+        <ul id="listClientMenu" style="display: none;" class="nav flex-column bg-white mb-0">
+            <li class="nav-item">
+                <a href="{{ path_for('VouchersEmitted') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Comprobantes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{path_for('Clients')}}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-users text-template-background ml-3 mr-2"></i>Clientes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark font-italic bg-light" onclick="prepareModalAccountState('CLIENT')">
+                    <i class="fas fa-clipboard-list text-template-background ml-3 mr-2"></i>Estado de cuenta
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ path_for('ManualReceiptsClients') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i></i>Recibos
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+         {% if systemSession.permission.PROVIDER == 'SI' %}
+        <li class="nav-item">
+            <a onclick="showMenuClient('PROVIDER')" class="nav-link text-dark font-italic bg-light">
+                <div class="d-flex justify-content-between">
+                    Proveedores <i class="fas text-template-background fa-chevron-down  mt-1"></i>
+                </div>
+            </a>
+        </li>
+        <ul id="listProviderMenu" style="display: none;" class="nav flex-column bg-white mb-0">
+            <li class="nav-item">
+                <a href="{{ path_for('VouchersReceived') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Comprobantes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ path_for('Providers') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-users text-template-background ml-3 mr-2"></i>Proveedores
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark font-italic bg-light" onclick="prepareModalAccountState('PROVIDER')">
+                    <i class="fas fa-clipboard-list text-template-background ml-3 mr-2"></i>Estado de cuenta
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ path_for('ManualReceiptsProvides') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Recibos
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+         {% if systemSession.permission.SERVICE == 'SI' %}
+        <li class="nav-item">
+            <a onclick="showMenuClient('SERVICE')" class="nav-link text-dark font-italic bg-light">
+                <div class="d-flex justify-content-between">
+                    Servicios <i class="fas fa-chevron-down text-template-background mt-1"></i>
+                </div>
+            </a>
+        </li>
+        <ul id="listServiceMenu" style="display: none;" class="nav flex-column bg-white mb-0">
+            <li class="nav-item">
+                <a href="{{ path_for('FeeServices') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Facturación batch
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ path_for('Services') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-list text-template-background ml-3 mr-2"></i>Servicios
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+        {% if systemSession.permission.ACCOUNTING == 'SI' %}
+        <li class="nav-item">
+            <a href="{{path_for('Accounting')}}" class="nav-link text-dark font-italic bg-light">Contabilidad</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a href="{{path_for('Settings')}}" class="nav-link text-dark font-italic bg-light">
+                <i class="fas fa-cog text-template-background mr-2"></i> Configuraciones
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="modal fade" id="modalAccountState" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header background-template-color">
+                <span class="modal-title text-template-color">Estado de cuenta</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <input id="inputPerson" type="text" class="form-control form-control-sm shadow-sm" list="listPeople" onkeypress="return keyPressModal(event, null, null)">
+                        <datalist id="listPeople"></datalist>
+                    </div>
+                    <div class="form-group ">
+                        <button class="btn btn-sm background-template-color2 tex-template-background" onclick="cleanInputsAccountState()" type="button"><i class="fas fa-eraser"></i></button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="checkDateInitFromBeginning">Estado de cuenta completo</label>
+                        <input type="checkbox" class="shadow-sm" id="checkDateInitFromBeginning" onchange="changeDateInitFromBeginning()" onkeypress="return keyPressModal(event, null, null)">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="inputDateInit">Desde</label>
+                        <input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateInit" onkeypress="return keyPressModal(event, null, null)">
+                    </div>
+                    <div class="form-group col">
+                        <label for="inputDateEnding">Hasta</label>
+                        <input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateEnding" onkeypress="return keyPressModal(event, null, null)">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" id="inputTypeCoinUYU" name="rd" class="custom-control-input" checked onkeypress="return keyPressModal(event, null, null)">
+                        <label class="custom-control-label green" for="inputTypeCoinUYU">Pesos Uruguayos</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" id="inputTypeCoinUSD" name="rd" class="custom-control-input" onkeypress="return keyPressModal(event, null, null)">
+                        <label class="custom-control-label green" for="inputTypeCoinUSD">Dolares</label>
+                    </div>
+                </div>
+                <div id="containerClashCollectionClient" style="visibility: hidden;" class="d-flex justify-content-center mt-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="inputIncludeCashCollection">
+                        <label class="form-check-label" for="flexCheckDefault">
+                            Incluir contados pendientes
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+                <button id="btnConfirmModalAccountState" class="btn btn-success text-white shadow-sm" onkeypress="return keyPressModal(event, null, null)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>

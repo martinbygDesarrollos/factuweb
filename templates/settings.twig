@@ -1,0 +1,394 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px; width: 80%;">
+		<div class="card-header d-flex justify-content-between background-template-color">
+			<h5 class="text-template-color font-italic">Configuraciones</h5>
+		</div>
+		<div class="card-body">
+			<div class="row">
+				<div class="nav flex-column nav-pills ml-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="option-initContainer" data-toggle="pill" href="#initContainer" role="tab">Inicio</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-profile-tab" data-toggle="pill" href="#visibilityContainer" role="tab" aria-controls="v-pills-profile" aria-selected="false">Visualización</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-messages-tab" data-toggle="pill" href="#accountStateContainer" role="tab" aria-controls="v-pills-messages" aria-selected="false">Estado de cuenta</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-services-tab" data-toggle="pill" href="#serviceContainer" role="tab" aria-controls="v-pills-services-tab" aria-selected="false">Servicios</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-i-invoice-tab" data-toggle="pill" href="#indicatorsContainer" role="tab" aria-controls="v-pills-i-invoice-tab" aria-selected="false">Indicadores de Facturación</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-invoice-tab" data-toggle="pill" href="#billingContainer" role="tab" aria-controls="v-pills-invoice-tab" aria-selected="false">Facturación</a>
+					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-branchCompany-tab" data-toggle="pill" href="#bCompanyContainer" onclick="loadBranchCompany()" role="tab" aria-controls="v-pills-branchCompany-tab" aria-selected="false">Sucursales</a><!-- href="#bCompanyContainer" -->
+					{% if systemSession.superUser == 'SI' %}
+					<a class="btn background-template-color2 text-template-background mb-2" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Administrador</a>
+					{% endif %}
+				</div>
+				<div class="tab-content col ml-1">
+					<!-- INICIO -->
+					<div class="tab-pane fade active show border-template shadow p-2" id="initContainer" role="tabpanel">
+						<p class="text-center text-template-background font-italic h5 mt-1">Inicio</p>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="VER_COTIZACION_INICIO" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Mostrar cotizaciones en pantalla.</p>
+						</div>
+					</div>
+					<!-- VISUALIZACIONES -->
+					<div class="tab-pane fade border-template shadow p-2" id="visibilityContainer" role="tabpanel" aria-labelledby="v-pills-messages-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Visualización</p>
+						<div class="d-flex justify-content-left">
+							<div class="form-group">
+								<label for="formGroupExampleInput">Formato de rut</label>
+								<select class="custom-select custom-select-sm m-1" id="FORMATO_DE_RUT" onchange="updateFormatRut(this)" style="width: 250px;">
+									<option value="1111">Simple (ej.: 123123123123)</option>
+									<option value="2631">Espaciado (ej.: 12 312312 123 1)</option>
+									<option value="3333">Ternario (ej.: 123 123 123 123)</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<!-- ESTADO DE CUENTA -->
+					<div class="tab-pane fade border-template shadow p-2" id="accountStateContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Estado de cuenta</p>
+						<div class="input-group mb-2">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="VER_SALDOS_ESTADO_CUENTA" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Mostrar saldos a la fecha en el estado de cuenta.</p>
+						</div>
+						<div class="input-group mb-2">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="VER_SALDOS_ESTADO_CUENTA_PDF" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Mostrar saldos a la fecha en el estado de cuenta(PDF).</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Incluir contados pendientes en estado de cuenta.</p>
+						</div>
+						<hr>
+						<div class="d-flex justify-content-left">
+							<div class="form-group">
+								<label for="formGroupExampleInput">Plazo en dias para estado de cuenta.</label>
+								<input type="number" class="form-control form-control-sm text-center shadow-sm" id="INTERVALO_FECHA_ACCOUNT_SATE" style="width: 100px;">
+							</div>
+						</div>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-sm btn-success shadow-sm" onclick="updateDeadlineInDays()">Confirmar</button>
+						</div>
+						<hr>
+
+						<div class="form-group">
+							<label for="formGroupExampleInput">Fecha "Desde" sugerida en estado de cuenta.</label>
+							<select class="custom-select custom-select-sm shadow-sm" id="FECHA_DESDE_ACCOUNT_SATE" onchange="updateEndDate()" style="width: 150px;">
+								<option value="MES_ACTUAL">Mes actual</option>
+								<option value="MES_SIGUIENTE">Mes siguiente</option>
+							</select>
+						</div>
+					</div>
+					<!-- SERVICIOS -->
+					<div class="tab-pane fade border-template shadow p-2" id="serviceContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Servicios</p>
+						<div class="input-group mt-3">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="REALIZAR_FACTURA_POR_SERVICIO" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Emitir un comprobante por servicio facturado.</p>
+						</div>
+						<hr>
+						<div class="d-flex justify-content-left">
+							<div class="form-group">
+								<label for="formGroupExampleInput">Sufijo en detalle de factura.</label>
+								<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" id="SUFIJO_NOMBRE_SERVICIO_FACTURA" onchange="updateSuffixNameService()" style="width: 240px;">
+									<option value="NINGUNO" >Ninguno</option>
+									<option value="FECHA_ANTERIOR">Fecha anterior emisión</option>
+									<option value="FECHA_ACTUAL">Fecha emisión</option>
+									<option value="FECHA_POSTERIOR">Fecha posterior emisión</option>
+								</select>
+							</div>
+						</div>
+						<hr>
+						<div class="d-flex justify-content-left">
+							<div class="form-group">
+								<label for="formGroupExampleInput">Formato de sufijo.</label>
+								<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" id="SUFIJO_FORMATO_SERVICIO_FACTURA" onchange="updateSuffixFormatService()" style="width: 240px;">
+									<option value="NUMERICA">Numérica (MM/AAAA)</option>
+									<option value="TEXTUAL">Textual (MES)</option>
+								</select>
+							</div>
+						</div>
+						<hr>
+						<div class="d-flex justify-content-left">
+							<div class="form-group">
+								<label for="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO">Días para fecha de vencimiento.</label>
+								<input type="number" maxlength="3" class="form-control form-control-sm text-centershadow-sm" id="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO" style="width: 100px;">
+							</div>
+						</div>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updateExpirationDateSuggestion()">Confirmar</button>
+						</div>
+						<hr>
+						<div class="w-75 mt-3">
+							<h6 class="card-subtitle mb-2 text-mycolor">Período de facturación de servicios</h6>
+							<table class="table table-sm table-bordered">
+								<thead class="background-template-color text-template-color">
+									<tr>
+										<th class="text-center">Período</th>
+										<th class="text-center" scope="col">Acción</th>
+									</tr>
+								</thead>
+								<tbody id="tbodyPeriodInvoice">
+									<tr>
+										<td class="text-center">Mensual</td >
+										<td class="text-center w-25">
+											<input id="checkPeriodM" type="checkbox" checked disabled>
+										</td>
+									</tr>
+									<tr>
+										<td class="text-center">Bimestral</td >
+										<td class="text-center w-25">
+											<input id="checkPeriodB" type="checkbox">
+										</td>
+									</tr>
+									<tr>
+										<td class="text-center">Trimestral</td >
+										<td class="text-center w-25">
+											<input id="checkPeriodT" type="checkbox">
+										</td>
+									</tr>
+									<tr>
+										<td class="text-center">Semestral</td >
+										<td class="text-center w-25">
+											<input id="checkPeriodS" type="checkbox">
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updatePeriodInvoice()">Confirmar</button>
+						</div>
+					</div>
+					<!-- INDICADORES DE FACTURACION -->
+					<div class="tab-pane fade border-template shadow p-2" id="indicatorsContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Indicadores de Facturación</p>
+						<table class="table table-sm table-bordered">
+							<thead class="background-template-color text-template-color">
+								<tr>
+									<th class="text-right">IVA</th>
+									<th class="text-right">Valor</th>
+									<th class="text-center" scope="col">Acción</th>
+								</tr>
+							</thead>
+							<tbody id="tbodyBillingIndicators">
+								{% for iva in listIvas %}
+								<tr>
+									<td class="text-right">{{ iva.nombre }}</td >
+									<td class="text-center w-25">{{ iva.valor }}</td>
+									<td class="text-center w-25">
+										<input id="checkIVA{{ iva.id }}" type="checkbox">
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updateBillingIndicators()">Confirmar</button>
+						</div>
+					</div>
+					<!-- FACTURACION -->
+					<div class="tab-pane fade border-template shadow p-2" id="billingContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Facturación</p>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="IVA_INCLUIDO" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Facturar con IVA Incluido.</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="DESCUENTO_EN_PORCENTAJE" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Manipular descuento como porcentaje.</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="PERMITIR_PRODUCTOS_NO_INGRESADOS" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Facturar productos no ingresados.</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="PERMITIR_LISTA_DE_PRECIOS" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Facturar con lista de precios.</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="PERMITIR_NOTAS_DE_DEBITO" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Permitir facturar notas de débito.</p>
+						</div>
+						<hr>
+						<div class="input-group">
+							<div class="form-group">
+								<label for="formGroupExampleInput">Formato de ticket a imprimir.</label>
+								<select class="custom-select custom-select-sm m-1" id="" onchange="changeFormatTicket(this.value)" style="width: 250px;">
+									{% if formatTicket == "72x1000" %}<option value="72x1000" selected >Ticket A</option>{% else %}<option value="72x1000">Ticket A</option>{% endif %}
+									{% if formatTicket == "B/72x1000" %}<option value="B/72x1000" selected >Ticket B</option>{% else %}<option value="B/72x1000">Ticket B</option>{% endif %}
+									{% if formatTicket == "a4" %}<option value="a4" selected >A4</option>{% else %}<option value="a4">A4</option>{% endif %}
+									{% if formatTicket == "A5vertical" %}<option value="A5vertical" selected >A5 Vertical</option>{% else %}<option value="A5vertical">A5 Vertical</option>{% endif %}
+									{% if formatTicket == "A5horizontal" %}<option value="A5horizontal" selected >A5 Horizontal</option>{% else %}<option value="A5horizontal">A5 Horizontal</option>{% endif %}
+								</select>
+							</div>
+						</div>
+						<hr>
+						<div>
+							<div class="form-group w-100">
+								<label for="idTextareaAdendaConfiguration">Adenda.</label>
+								<textarea id="idTextareaAdendaConfiguration" class="form-control shadow-sm rounded-0" maxlength="200" rows="2">{{adenda}}</textarea>
+							</div>
+							<div class="d-flex flex-row-reverse">
+								<button class="btn btn-success btn-sm shadow-sm" onclick="saveAdendaDefault()">Guardar adenda</button>
+							</div>
+						</div>
+					</div>
+					<!-- SUCURSALES -->
+					<div class="tab-pane fade border-template shadow p-2 h-100 " id="bCompanyContainer" role="tabpanel" aria-labelledby="v-pills-branchCompany-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Sucursales</p>
+						<div class="justify-content-left">
+							<label>Sucursal principal</label>
+							<div class="d-flex form-group w-100">
+								<div class="form-group w-50 m-2">
+									<p class="font-italic text-right" id="nameSucursal"></p>
+									<p class="text-right" id="addressSucursal"></p>
+									<p class="text-right" id="phoneSucursal"></p>
+									<p class="text-right" id="phone2Sucursal"></p>
+									<p class="text-right" id="emailSucursal"></p>
+									<!--a class="text-right" style="text-decoration-style: none; "href="https://www.w3schools.com" target="_blank">Visit W3Schools.com!</a-->
+								</div>
+								<div class="form-group w-50 m-2">
+									<img class="text-left" src="" id="imgLogoSucursal" style="max-width: 50%;">
+								</div>
+							</div>
+							<hr>
+							<div class="form-group w-100">
+								<label for="SUCURSAL">Cambiar sucursal principal</label>
+								<select class="custom-select custom-select-sm m-1 w-100 h-50" id="SUCURSAL" style="min-width: 250px;">
+								</select>
+							</div>
+							<div class="d-flex flex-row-reverse">
+								<button class="btn btn-success btn-sm shadow-sm" onclick="updateDefaultBranchCompany()" >Confirmar</button>
+							</div>
+						</div>
+					</div>
+					<!-- ADMINISTRADOR -->
+					{% if systemSession.superUser == 'SI' %}
+					<div class="tab-pane fade border-template shadow p-2" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Administrador</p>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadDataFirstLogin();"><i id="iconButtonUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Obtener comprobantes por primera vez.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="updateSuperVouchers();"><i id="iconBtnUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Analizar y cargar comprobantes emitidos no encontrados.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadProductsFromDetails();"><i id="iconButtonGetDetailSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Cargar artículos por comprobantes emitidos.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadCustomers();" title="Se crean los clientes que se hayan encontrado en Sigecom y no en EFactura."><i id="iconBtnLoadCustomersEfactura" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Cargar clientes en EFactura.</p>
+						</div>
+						<hr>
+						<p class="text-left text-template-background font-italic h6 mt-1">Respaldos</p>
+						<div class="row d-flex justify-content-center m-1">
+							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="openSelectFile()"><i class="fas fa-file-archive"></i>&nbsp;Importar archivo de respaldo (.zip)</button>
+							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="exportBackUp()"><i class="fas fa-file-archive"></i>&nbsp;Exportar archivo de respaldo (.zip)</button>
+						</div>
+						<input type="file" id="inputSelectFileImport" onchange="importBackUp()" style="visibility: hidden;">
+						<hr>
+						<p class="text-left text-template-background font-italic h6 mt-1">Secciones</p>
+						<table class="table table-sm table-bordered">
+							<thead class="background-template-color text-template-color">
+								<tr>
+									<th class="text-center">Sección</th>
+									<th class="text-center" scope="col">Acción</th>
+								</tr>
+							</thead>
+							<tbody id="tbodyEnabledSections">
+								{% for s in section %}
+								<tr>
+									<td class="text-center">{{ s.seccion }}</td >
+									<td class="text-center w-25">
+										{% if s.permiso == 'SI' %}
+										<input id="checkEnable{{ s.id }}" type="checkbox" checked>
+										{% else %}
+										<input id="checkEnable{{ s.id }}" type="checkbox">
+										{% endif %}
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updateEnabledSections()">Confirmar</button>
+						</div>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/backup.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/configuration.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		loadConfiguration()
+		let heightwindow = ($(document).height() * 60) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+
+		//loadBranchCompany();
+	});
+
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,26 @@
+#idBasicAlert{
+    position: fixed;
+    opacity: 0.9;
+    left: 1vw;
+    /* right: 1.5%; */
+    bottom:1vh;
+    width: 50vw;
+    height: min-content;
+    padding: 0 8px;
+    display: flex;
+    margin: 0;
+    align-items: center;
+}
+
+#idBasicAlert p{
+    margin-top:1rem;
+}
+
+#idBasicAlert i{
+    margin: 0 4px;
+}
+
+
+#modalButtonResponse:focus{
+    background-color: #1D635D;
+}
