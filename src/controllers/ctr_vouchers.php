@@ -724,7 +724,7 @@ class ctr_vouchers{
 									'total'=>($cantidad * $item->precio),
 									'tipoCambio'=>1,
 									'totalusd'=>0,
-									'idCompra'=>$info->idCompra
+									'idCompra'=>$info->idCompra ? $info->idCompra : ""
 								);
 							}else{
 								$arrayDetail[] = array(
@@ -736,7 +736,7 @@ class ctr_vouchers{
 									'total'=>($cantidad * ($info->tipoCambio*$item->precio)),
 									'tipoCambio'=>$info->tipoCambio,
 									'totalusd'=>($cantidad * $item->precio),
-									'idCompra'=>$info->idCompra
+									'idCompra'=>$info->idCompra ? $info->idCompra : ""
 								);
 							}
 						}
