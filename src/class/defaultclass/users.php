@@ -8,10 +8,12 @@ class users{
 	public function setUpdatedDetails($idBusiness){
 		return DataBase::sendQuery("UPDATE empresas SET detallesObtenidos = ? WHERE idEmpresa = ?", array('ii', 1, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function itsSuperUser($userEmail){
 		$response = new \stdClass();
-		$responseQuery = DataBase::sendQuery("SELECT * FROM super_usuario WHERE correo = ?", array('s', $userEmail), "OBJECT");
+		$dbClass = new DataBase();
+
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM super_usuario WHERE correo = ?", array('s', $userEmail), "OBJECT");
 		if($responseQuery->result == 2)
 			$response->result = 2;
 		else if($responseQuery->result == 1){
@@ -24,29 +26,33 @@ class users{
 	}
 
 	public function getUserInsertedWithRutEmail($rut, $userName){
-		$responseQuery =  DataBase::sendQuery("SELECT U.idUsuario FROM usuarios AS U, empresas AS E WHERE U.idEmpresa = E.idEmpresa AND E.rut = ?  AND U.correo = ?", array('ss', $rut, $userName), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery =  $dbClass->sendQuery("SELECT U.idUsuario FROM usuarios AS U, empresas AS E WHERE U.idEmpresa = E.idEmpresa AND E.rut = ?  AND U.correo = ?", array('ss', $rut, $userName), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro un usuario con el correo: " . $userName . " en la empresa de rut: " . $rut . " en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getBusiness($rut){
-		$responseQuery =  DataBase::sendQuery("SELECT * FROM empresas WHERE rut = ?", array('s', $rut), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery =  $dbClass->sendQuery("SELECT * FROM empresas WHERE rut = ?", array('s', $rut), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No hay una empresa con el rut: " . $rut . " en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	//obtenes todos los datos de la empresa segùn su id
-	public function getBusinessWithId($idBusiness){
-		$responseQuery =  DataBase::sendQuery("SELECT * FROM empresas WHERE idEmpresa = ?", array('i', $idBusiness), "OBJECT");
+	public function getEmpresaById($idEmpresa){
+		$dbClass = new DataBase();
+		$responseQuery =  $dbClass->sendQuery("SELECT * FROM empresas WHERE idEmpresa = ?", array('i', $idEmpresa), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "El identificador ingresado no corresponde a una empresa registrada en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getSuggestionRut($rutPart){
-		$responseQuery =  DataBase::sendQuery("SELECT DISTINCT rut, nombre FROM empresas WHERE rut LIKE '" . $rutPart . "%'", null, "LIST");
+		$dbClass = new DataBase();
+		$responseQuery =  $dbClass->sendQuery("SELECT DISTINCT rut, nombre FROM empresas WHERE rut LIKE '" . $rutPart . "%'", null, "LIST");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "Actualmente no hay registros que mostrar con la sugerencia de rut '" . $rutPart . "' en la base de datos.";
 		return $responseQuery;
@@ -71,9 +77,11 @@ class users{
 	}*/
 
 	public function updateSession($idUser, $tokenRest){
-		$responseQuery = DataBase::sendQuery("UPDATE usuarios SET tokenRest = ? WHERE idUsuario = ?", array('si', $tokenRest, $idUser), "BOOLE");
+		$usersInstance = new users();
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("UPDATE usuarios SET tokenRest = ? WHERE idUsuario = ?", array('si', $tokenRest, $idUser), "BOOLE");
 		if($responseQuery->result == 2)
-			users::setNewTokenAndSession($idUser);
+			$usersInstance->setNewTokenAndSession($idUser);
 		return $responseQuery;
 	}
 
@@ -122,9 +130,10 @@ class users{
     	elseif (!empty($_SERVER['REMOTE_ADDR'])) return $_SERVER['REMOTE_ADDR'];
     	else "No detectado";
     }
-
+	//UPDATED
     public function getListConfigurationUser($idUser){
-    	$responseQuery = DataBase::sendQuery("SELECT * FROM configuraciones WHERE idUsuario = ?", array('i', $idUser), "LIST");
+		$dbClass = new DataBase();
+    	$responseQuery = $dbClass->sendQuery("SELECT * FROM configuraciones WHERE idUsuario = ?", array('i', $idUser), "LIST");
     	if($responseQuery->result == 1)
     		$responseQuery->message = "Actualmente no hay configuraciones ingresadas en la base de datos.";
     	return $responseQuery;
@@ -134,14 +143,16 @@ class users{
     * VL: se busca por id de usuario y por variable (ej INDICADORES_FACTURACION_USABLES) si ese usuario tiene permitida o no esa configuraciòn
     */
     public function getConfigurationUser($idUser, $variable){
-    	$responseQuery = DataBase::sendQuery("SELECT * FROM configuraciones WHERE idUsuario = ? AND variable = ?", array('is', $idUser, $variable), "OBJECT");
+		$dbClass = new DataBase();
+    	$responseQuery = $dbClass->sendQuery("SELECT * FROM configuraciones WHERE idUsuario = ? AND variable = ?", array('is', $idUser, $variable), "OBJECT");
     	if($responseQuery->result == 1)
     		$responseQuery->message = "No se encontro la configuracion seleccionada para este usuario.";
     	return $responseQuery;
     }
 
     public function updateConfigurationUser($idConfig, $idUser, $variable, $value){
-    	return DataBase::sendQuery("UPDATE configuraciones SET valor = ? WHERE id = ? AND idUsuario = ? AND variable = ?", array('siis', $value, $idConfig, $idUser, $variable), "BOOLE");
+		$dbClass = new DataBase();
+    	return $dbClass->sendQuery("UPDATE configuraciones SET valor = ? WHERE id = ? AND idUsuario = ? AND variable = ?", array('siis', $value, $idConfig, $idUser, $variable), "BOOLE");
     }
 
     public function insertConfigurationUser($idUser, $typeVariable, $variable, $value){
@@ -272,21 +283,50 @@ class users{
     }
 
     public function getPermission($section, $idBusiness){
-    	return DataBase::sendQuery("SELECT * FROM permisos_empresa WHERE seccion = ? AND idEmpresa = ?", array('si', $section, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+    	return $dbClass->sendQuery("SELECT * FROM permisos_empresa WHERE seccion = ? AND idEmpresa = ?", array('si', $section, $idBusiness), "OBJECT");
     }
 
     public function getPermissionsBusiness($idBusiness){
-    	return DataBase::sendQuery("SELECT * FROM permisos_empresa WHERE idEmpresa = ?", array('i', $idBusiness), "LIST");
+		$dbClass = new DataBase();
+    	return $dbClass->sendQuery("SELECT * FROM permisos_empresa WHERE idEmpresa = ?", array('i', $idBusiness), "LIST");
     }
-
+	//UPDATED
 	public function setPermissionsBusiness($idBusiness, $idPermission){
+		$dbClass = new DataBase();
 		$responseQuery = null;
 		$idPermission = explode(",", $idPermission);
-		DataBase::sendQuery("UPDATE permisos_empresa SET permiso = ? WHERE idEmpresa = ?", array('si', "NO", $idBusiness), "BOOLE");
+
+		$caseStatement = "";
+
 		foreach ($idPermission as $key => $value) {
-			$responseQuery = DataBase::sendQuery("UPDATE permisos_empresa SET permiso = ? WHERE idEmpresa = ? AND id = ?", array('sii', "SI", $idBusiness, $value), "BOOLE");
+			if(isset($value) && $value != ""){
+				$value = $value.trim();
+				$caseStatement .= "WHEN id = $value THEN 'SI' ";
+			}
 		}
+
+		$sql = "UPDATE permisos_empresa 
+            SET permiso = CASE 
+                $caseStatement
+                ELSE 'NO' 
+            END
+            WHERE idEmpresa = ?";
+		error_log("CONSULTA: $sql");
+		$responseQuery = $dbClass->sendQuery($sql, array('i', $idBusiness), "BOOLE");
 		return $responseQuery;
+
+
+		//PONE A TODOS EN NO
+		// $responseQuery = $dbClass->sendQuery("UPDATE permisos_empresa SET permiso = ? WHERE idEmpresa = ?", array('si', "NO", $idBusiness), "BOOLE");
+		// if($responseQuery->result == 2){
+		// 	foreach ($idPermission as $key => $value) {
+		// 		//PONE A LOS SELECCIONADOS EN SI
+		// 		$value = $value.trim();
+		// 		$responseQuery = $dbClass->sendQuery("UPDATE permisos_empresa SET permiso = ? WHERE idEmpresa = ? AND id = ?", array('sii', "SI", $idBusiness, $value), "BOOLE");
+		// 	}
+		// }
+		// return $responseQuery;
     }
 
     public function setDefaultPermission($idBusiness){
@@ -312,12 +352,15 @@ class users{
     }
 
     public function setNewTokenAndSession($idUser){
+		$usersInstance = new users();
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
     	$newToken = bin2hex(random_bytes((100 - (100 % 2)) / 2));
-    	$dateTokenGenerate = handleDateTime::getCurrentDateTimeInt();
-    	$responseQuery = DataBase::sendQuery('UPDATE usuarios SET token = ? , tokenFecha = ? WHERE idUsuario = ?', array('ssi', $newToken, $dateTokenGenerate, $idUser), "BOOLE");
+    	$dateTokenGenerate = $handleDateTimeClass->getCurrentDateTimeInt();
+    	$responseQuery = $dbClass->sendQuery('UPDATE usuarios SET token = ? , tokenFecha = ? WHERE idUsuario = ?', array('ssi', $newToken, $dateTokenGenerate, $idUser), "BOOLE");
     	if($responseQuery->result == 2){
     		$responseQuery = null;
-    		$responseQuery = users::getUserById($idUser);
+    		$responseQuery = $usersInstance->getUserById($idUser);
     		if($responseQuery->result == 2){
     			$objectSession = new \stdClass();
     			$objectSession->idUser = $responseQuery->objectResult->idUsuario;
@@ -325,11 +368,11 @@ class users{
     			$objectSession->rut = $responseQuery->objectResult->rut;
     			$objectSession->token = $responseQuery->objectResult->token;
     			$objectSession->tokenGenerate = $dateTokenGenerate;
-    			$objectSession->business = $responseQuery->objectResult->nombre;
-    			$objectSession->idBusiness = $responseQuery->objectResult->idEmpresa;
+    			$objectSession->empresa = $responseQuery->objectResult->nombre;
+    			$objectSession->idEmpresa = $responseQuery->objectResult->idEmpresa;
     			$objectSession->tokenRest = $responseQuery->objectResult->tokenRest;
-
-    			$responsePermission = users::getPermissionsBusiness($responseQuery->objectResult->idEmpresa);
+				
+    			$responsePermission = $usersInstance->getPermissionsBusiness($responseQuery->objectResult->idEmpresa);
     			if($responsePermission->result == 2){
     				$arraySecction = array();
     				foreach ($responsePermission->listResult as $key => $value)
@@ -338,9 +381,9 @@ class users{
     			}
 
     			$_SESSION['systemSession'] = $objectSession;
-    			error_log("session modificada");
+    			error_log("session modificada (iniciada)");
     			error_log("id en session ".$_SESSION['systemSession']->idUser);
-    			unset($responseQuery->objectResult);
+				unset($responseQuery->objectResult);
     		}
     	}else $responseQuery->message = "Un error interno no permitio iniciar sesión con este usuario.";
 
@@ -348,7 +391,8 @@ class users{
     }
 
     public function getUserById($idUser){
-    	$responseQuery = DataBase::sendQuery("SELECT * FROM usuarios AS U, empresas AS E WHERE U.idEmpresa = E.idEmpresa AND U.idUsuario = ?", array('i', $idUser), "OBJECT");
+    	$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM usuarios AS U, empresas AS E WHERE U.idEmpresa = E.idEmpresa AND U.idUsuario = ?", array('i', $idUser), "OBJECT");
     	if($responseQuery->result == 1)
     		$responseQuery->message = "El identificador ingresado no corresponde a un usuario registrado.";
 

@@ -5,20 +5,28 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 
 require_once '../src/controllers/ctr_users.php';
+require_once '../src/controllers/ctr_providers.php';
 require_once '../src/backup/ctr_backup.php';
+require_once '../src/controllers/ctr_products.php';
+require_once '../src/controllers/ctr_clients.php';
+
 
 return function (App $app){
 	$container = $app->getContainer();
-
+	$userController = new ctr_users();
+	$usersClass = new users();
+	$providerController = new ctr_providers();
 	$spreadsheetClass = new managment_spreadsheet();
+	$productController = new ctr_products();
+	$clientController = new ctr_clients();
 
-
-	$app->get('/ver-clientes', function($request, $response, $args)use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->get('/ver-clientes', function($request, $response, $args)use ($container, $userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
-			$responseGetPeriods = ctr_users::getVariableConfiguration("PERIODOS_FACTURACION_SERVICIOS");
+			$responseGetPeriods = $userController->getVariableConfiguration("PERIODOS_FACTURACION_SERVICIOS", $responseCurrentSession->currentSession);
 			if($responseGetPeriods->result == 2){
 				$list = explode(",", $responseGetPeriods->configValue);
 				$args['periods'] = $list;
@@ -27,9 +35,20 @@ return function (App $app){
 			return $this->view->render($response, "clients.twig", $args);
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName('Clients');
+	
+	//UPDATED
+	$app->get('/home', function ($request, $response, $args) use ($container, $userController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$args['systemSession'] = $responseCurrentSession->currentSession;
+			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+			// var_dump($args['systemSession']);
+			return $this->view->render($response, "home.twig", $args);
+		}else return $response->withRedirect($request->getUri()->getBaseUrl());
+	})->setName("Home");
 
-	$app->get('/ver-clientes/{clientWithBalance}', function($request, $response, $args)use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->get('/ver-clientes/{clientWithBalance}', function($request, $response, $args)use ($container, $userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
@@ -52,32 +71,32 @@ return function (App $app){
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	});
 
-	$app->get('/ver-proveedores', function($request, $response, $args) use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->get('/ver-proveedores', function($request, $response, $args) use ($container, $userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
 			$this->view->render($response, "providers.twig", $args);
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName('Providers');
-
-	$app->get('/configuraciones', function ($request, $response, $args) use ($container) {
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//WORKING
+	$app->get('/configuraciones', function ($request, $response, $args) use ($container, $userController, $usersClass) {
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
-			$args['resultPermissions'] = ctr_users::getListPermissions();
+			$args['resultPermissions'] = $userController->getListPermissions($responseCurrentSession->currentSession->idEmpresa);
 			//$args['arrayBranchCompany'] = ctr_users::getBranchCompanyByRut($responseCurrentSession->currentSession->rut);
 			//var_dump($args['arrayBranchCompany']);
-			$responseGetIvas = ctr_users::getListIvas();
+			$responseGetIvas = $userController->getListIvas();
 			if($responseGetIvas->result == 2)
 				$args['listIvas'] = $responseGetIvas->listResult;
-			$responseGetSectionPermissions = users::getPermissionsBusiness($responseCurrentSession->currentSession->idBusiness);
+			$responseGetSectionPermissions = $usersClass->getPermissionsBusiness($responseCurrentSession->currentSession->idEmpresa);
 			if($responseGetSectionPermissions->result == 2)
 				$args['section'] = $responseGetSectionPermissions->listResult;
-			$responseGetFormatTicket = ctr_users::getVariableConfiguration('FORMATO_TICKET');
+			$responseGetFormatTicket = $userController->getVariableConfiguration('FORMATO_TICKET', $responseCurrentSession->currentSession);
 			if($responseGetFormatTicket->result == 2)
 				$args['formatTicket'] = $responseGetFormatTicket->configValue;
-			$responseGetAdenda = ctr_users::getVariableConfiguration('ADENDA');
+			$responseGetAdenda = $userController->getVariableConfiguration('ADENDA', $responseCurrentSession->currentSession);
 			if($responseGetAdenda->result == 2)
 				$args['adenda'] = $responseGetAdenda->configValue;
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
@@ -85,8 +104,8 @@ return function (App $app){
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("Settings");
 
-	$app->get('/iniciar-sesion[/{user}[/{rut}]]', function ($request, $response, $args) use ($container) {
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->get('/iniciar-sesion[/{user}[/{rut}]]', function ($request, $response, $args) use ($container, $userController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result != 2){
 			if(isset($args['user']) && isset($args['rut'])){
 				$args['paramUser'] = $args['user'];
@@ -97,37 +116,37 @@ return function (App $app){
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("SignIn");
 
-	$app->get('/cerrar-session', function ($request, $response, $args) use ($container) {
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->get('/cerrar-session', function ($request, $response, $args) use ($container, $userController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2)
-			unset($_SESSION['systemSession']);//session_destroy();
+			session_destroy();
 		return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("SignOut");
 
-	$app->post('/signOutPost', function ($request, $response, $args) use ($container) {
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
-		if($responseCurrentSession->result == 2){
-			unset($_SESSION['systemSession']);//session_destroy();
-			$response = new \stdClass();
-			$response->result = 2;
-			$response->message = "No hay sesión activa";
-			return json_encode($response);
-		}else{
-			$response = new \stdClass();
-			$response->result = 2;
-			$response->message = "No hay sesión activa";
-			return json_encode($response);
-		}
-	});
+	// $app->post('/signOutPost', function ($request, $response, $args) use ($container, $userController) {
+	// 	$responseCurrentSession = $userController->validateCurrentSession();
+	// 	if($responseCurrentSession->result == 2){
+	// 		unset($_SESSION['systemSession']);//session_destroy();
+	// 		$response = new \stdClass();
+	// 		$response->result = 2;
+	// 		$response->message = "No hay sesión activa";
+	// 		return json_encode($response);
+	// 	}else{
+	// 		$response = new \stdClass();
+	// 		$response->result = 2;
+	// 		$response->message = "No hay sesión activa";
+	// 		return json_encode($response);
+	// 	}
+	// });
 
-	$app->post('/signIn', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/signIn', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result != 2){
 			$data = $request->getParams();
 			$rut = $data['rut'];
 			$user = $data['user'];
 			$password = $data['password'];
-			return json_encode(ctr_users::signIn($rut, $user, $password));
+			return json_encode($userController->signIn($rut, $user, $password));
 		}else{
 			$response = new \stdClass();
 			$response->result = 0;
@@ -136,8 +155,8 @@ return function (App $app){
 		}
 	});
 
-	$app->post('/signInFromIntranet', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/signInFromIntranet', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		error_log("validando session result ".$responseCurrentSession->result);
 		if($responseCurrentSession->result != 2){
 			$data = $request->getParams();
@@ -174,57 +193,63 @@ return function (App $app){
 		return json_encode(ctr_backup::importContentTable($tableToImport));
 	});
 
-	$app->post('/getSuggestionRut', function(Request $request, Response $response){
+	$app->post('/getSuggestionRut', function(Request $request, Response $response) use ($userController){
 		$data = $request->getParams();
 		$rutPart = $data['rutPart'];
-		return json_encode(ctr_users::getSuggestionRut($rutPart));
+		return json_encode($userController->getSuggestionRut($rutPart));
 	});
-
-	$app->post('/getBusinessForModal', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/getBusinessForModal', function(Request $request, Response $response) use ($userController, $clientController, $providerController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$suggestionPerson = $data['suggestionPerson'];
 			$prepareFor = $data['prepareFor'];
 
 			if($prepareFor == "CLIENT")
-				return json_encode(ctr_clients::getClientsForModal($suggestionPerson));
+				return json_encode($clientController->getClientsForModal($suggestionPerson, $responseCurrentSession->currentSession->idEmpresa));
 			else if($prepareFor == "PROVIDER")
-				return json_encode(ctr_providers::getProvidersForModal($suggestionPerson));
+				return json_encode($providerController->getProvidersForModal($suggestionPerson, $responseCurrentSession->currentSession->idEmpresa));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/searchClientsToSale', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	//UPDATED
+	$app->post('/searchClientsToSale', function(Request $request, Response $response) use ($userController, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$textToSearch = $data['textToSearch'];
-			return json_encode(ctr_clients::searchClientsToSale($textToSearch));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$textToSearch = $data['textToSearch'];
+				return json_encode($clientController->searchClientsToSale($textToSearch, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/searchClientToSale', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	//UPDATED
+	$app->post('/searchClientToSale', function(Request $request, Response $response) use ($userController, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$documentClient = $data['documentClient'];
-			return json_encode(ctr_clients::searchClientToSale($documentClient));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$documentClient = $data['documentClient'];
+				return json_encode($clientController->searchClientToSale($documentClient, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getListClients', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(NULL);
+	$app->post('/getListClients', function(Request $request, Response $response) use ($userController, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$lastId = $data['lastId'];
 			$textToSearch = $data['textToSearch'];
 			$withBalance = $data['withBalance'];
 
-			return json_encode(ctr_clients::getListClientsView($lastId, $textToSearch, $withBalance));
+			return json_encode($clientController->getListClientsView($lastId, $textToSearch, $withBalance, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/updateClient', function(Request $request, Response $response){
+	$app->post('/updateClient', function(Request $request, Response $response) use ($userController){
 		$responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
@@ -240,46 +265,57 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 	});
 
-//si el documento no está lo crea sino modifica el cliente
-	$app->post('/createModifyClient', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
+	//si el documento no está lo crea sino modifica el cliente
+	$app->post('/createModifyClient', function(Request $request, Response $response) use ($userController, $clientController){
+		// $responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
+		// if($responseCurrentSession->result == 2){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$documentReceiver = $data['documentReceiver'];
-			$nameReceiver = $data['nameReceiver'];
-			$numberMobile = $data['numberMobile'];
-			$addressReceiver = $data['addressReceiver'];
-			$locality = $data['locality'];
-			$department = $data['department'];
-			$email = $data['email'];
-			//echo "ruta";exit;
-			return json_encode(ctr_clients::createModifyClient($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver));
+			$responsePermissions = $userController->validatePermissions('CLIENT', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$documentReceiver = $data['documentReceiver'];
+				$nameReceiver = $data['nameReceiver'];
+				$numberMobile = $data['numberMobile'];
+				$addressReceiver = $data['addressReceiver'];
+				$locality = $data['locality'];
+				$department = $data['department'];
+				$email = $data['email'];
+				//echo "ruta";exit;
+				return json_encode($clientController->createModifyClient($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	//UPDATED
+	$app->post('/getClientSelected', function(Request $request, Response $response) use ($userController, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CLIENT', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$idReceiver = $data['idReceiver'];
+				return json_encode($clientController->getClientWithId($idReceiver));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	//UPDATED
+	$app->post('/findWithDocument', function(Request $request, Response $response) use ($userController, $clientController, $providerController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CLIENT', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$document = $data['document'];
+				$prepareFor = $data['prepareFor'];
+				if($prepareFor == "CLIENT")
+					return json_encode($clientController->findClientWithDoc($document, $responseCurrentSession->currentSession->idEmpresa));
+				else if($prepareFor == "PROVIDER")
+					return json_encode($providerController->findProviderWithDoc($document, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getClientSelected', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
-		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$idReceiver = $data['idReceiver'];
-			return json_encode(ctr_clients::getClientWithId($idReceiver));
-		}else return json_encode($responseCurrentSession);
-	});
-
-	$app->post('/findWithDocument', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
-		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$document = $data['document'];
-			$prepareFor = $data['prepareFor'];
-			if($prepareFor == "CLIENT")
-				return json_encode(ctr_clients::findClientWithDoc($document));
-			else if($prepareFor == "PROVIDER")
-				return json_encode(ctr_providers::findProviderWithDoc($document));
-		}else return json_encode($responseCurrentSession);
-	});
-
-	$app->post('/getBalanceClient', function(Request $request, Response $response){
+	$app->post('/getBalanceClient', function(Request $request, Response $response) use ($userController){
 		$responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
@@ -288,7 +324,7 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getBalanceProvider', function(Request $request, Response $response){
+	$app->post('/getBalanceProvider', function(Request $request, Response $response) use ($userController){
 		$responseCurrentSession = ctr_users::validateCurrentSession('PROVIDER');
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
@@ -296,17 +332,20 @@ return function (App $app){
 			return json_encode(ctr_providers::getBalanceProvider($documentProvider));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/getProvider', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('PROVIDER');
+	//WORKING
+	$app->post('/getProvider', function(Request $request, Response $response) use ($userController, $providerController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$idProvider = $data['idProvider'];
-			return json_encode(ctr_providers::getProvider($idProvider));
+			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$idProvider = $data['idProvider'];
+				return json_encode($providerController->getProvider($idProvider, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/modifyProvider', function(Request $request, Response $response){
+	$app->post('/modifyProvider', function(Request $request, Response $response) use ($userController){
 		$responseCurrentSession = ctr_users::validateCurrentSession('PROVIDER');
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
@@ -319,29 +358,32 @@ return function (App $app){
 			return json_encode(ctr_providers::modifyProvider($idProvider, $nameBusiness, $address, $phoneNumber, $email));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/getProviders', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('PROVIDER');
+	//UPDATED
+	$app->post('/getProviders', function(Request $request, Response $response) use ($userController, $providerController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$lastId = $data['lastId'];
-			$textToSearch = $data['textToSearch'];
-			$withBalance = $data['withBalance'];
-			return json_encode(ctr_providers::getProviders($lastId, $textToSearch, $withBalance));
+			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$lastId = $data['lastId'];
+				$textToSearch = $data['textToSearch'];
+				$withBalance = $data['withBalance'];
+				return json_encode($providerController->getProviders($lastId, $textToSearch, $withBalance, $responseCurrentSession->currentSession));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getLastAccountStateInfo', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/getLastAccountStateInfo', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$prepareFor = $data['prepareFor'];
-			return json_encode(ctr_users::getLastAccountStateInfo($prepareFor));
+			return json_encode($userController->getLastAccountStateInfo($prepareFor));
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/loadDataFirstLogin', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/loadDataFirstLogin', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			return json_encode(ctr_users::loadDataFirstLogin());
@@ -352,159 +394,147 @@ return function (App $app){
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//funciones para manejar datos de la configuracion del usuario
 
-
-	$app->post('/getConfiguration', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/getConfiguration', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$nameConfig = $data['nameConfiguration'];
-			return json_encode(ctr_users::getVariableConfiguration($nameConfig));
+			return json_encode($userController->getVariableConfiguration($nameConfig, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/loadConfiguration', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/loadConfiguration', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
-			return json_encode(ctr_users::getListConfigurationUser());
+			return json_encode($userController->getListConfigurationUser($responseCurrentSession->currentSession->idUser));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/updateVariableConfiguration', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//WORKING
+	$app->post('/updateVariableConfiguration', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$variable = $data['variable'];
 			$value = $data['value'];
-			return json_encode(ctr_users::updateVariableUser($variable, $value));
+			return json_encode($userController->updateVariableUser($variable, $value, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	$app->post('/getBusinesSession', function(Request $request, Response $response){
+	$app->post('/getBusinesSession', function(Request $request, Response $response) use ($userController){
 		//validamos la sesion del usuario
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){ //si la sesion es ok
 			return json_encode($responseCurrentSession);
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/getBranchCompanyByRut', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/getBranchCompanyByRut', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			return json_encode(ctr_users::getBranchCompanyByRut($responseCurrentSession->currentSession->rut));
+			return json_encode($userController->getBranchCompanyByRut($responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 			RUTAS PARA MANEJAR DATOS EN LA SESION
-
-	$app->post('/saveProductsInSession', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	//UPDATED
+	$app->post('/saveProductsInSession', function($request, $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$product = $data['product'];
-			return json_encode(products::saveProductsInSession($product));
+			return json_encode($productController->saveProductsInSession($product));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/getDataSession', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	//UPDATED
+	$app->post('/getDataSession', function($request, $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$index = $data['indexToSearch'];
-			return json_encode(ctr_users::getDataSession($index));
+			return json_encode($userController->getDataSession($index));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/updateDataSession', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	//UPDATED
+	$app->post('/updateDataSession', function($request, $response) use ($userController){
+		// $responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$index1 = $data['index0'];
-			$index2 = $data['index1'];
-			$newData = $data['newData'];
-			return json_encode(ctr_users::updateProductsDataSession($index1, $index2, $newData));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$index1 = $data['index0'];
+				$index2 = $data['index1'];
+				$newData = $data['newData'];
+				return json_encode($userController->updateProductsDataSession($index1, $index2, $newData));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/removedProductsSession', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	//UPDATED
+	$app->post('/removeProductsSession', function($request, $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			return json_encode(products::removedProductsSession());
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				return json_encode($productController->removeProductsSession());
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 			RUTAS PARA MANEJAR PERMISOS
-
-	$app->post('/updatePermissionSection', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//WORKING
+	$app->post('/updatePermissionSection', function($request, $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			if($responseCurrentSession->currentSession->superUser == "SI"){
 				$data = $request->getParams();
 				$idPermission = $data['idPermission'];
-				return  json_encode(ctr_users::setPermissionsBusiness($idPermission));
-			}
+				return  json_encode($userController->setPermissionsBusiness($idPermission, $responseCurrentSession->currentSession));
+			} else return json_encode(['result' => 0, 'message' => 'Exclusivo para usuarios administradores']);
 		}else return json_encode($responseCurrentSession);
 	});
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	$app->post('/loadCustomersEfactura', function(Request $request, Response $response){
+	$app->post('/loadCustomersEfactura', function(Request $request, Response $response) use ($userController){
 		$clientController = new ctr_clients();
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$result = $clientController->loadCustomersEfactura();
 			return json_encode($result);
 		}else return json_encode($responseCurrentSession);
 	});
-
-
-
-
 	//exportar a un doc excel todos los clientes que tienen saldo
-	$app->post('/exportExcelDeudores', function(Request $request, Response $response) use ($spreadsheetClass){
-
-		$data = $request->getParams();
-		$dateTo = $data['dateTo'];
-
-		$clientController = new ctr_clients();
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//WORKING
+	$app->post('/exportExcelDeudores', function(Request $request, Response $response) use ( $userController, $spreadsheetClass, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$listClientes = $clientController->exportExcelDeudores( $dateTo );
-
+			$data = $request->getParams();
+			$dateTo = $data['dateTo'];
+			$listClientes = $clientController->exportExcelDeudores( $dateTo, $responseCurrentSession->currentSession);
 			if ( $listClientes->result == 2 ){
-
 				$responseExcel = $spreadsheetClass->exportDeudoresExcel($listClientes->listResult);
 				return json_encode($responseExcel);
 			}else return json_encode($listClientes);
-
-
 		}else return json_encode($responseCurrentSession);
 	});
-
-
-
-
 	//exportar a un doc excel todos los clientes que tienen saldo
-	$app->post('/exportExcelDeudoresProveedores', function(Request $request, Response $response) use ($spreadsheetClass){
-
-		$data = $request->getParams();
-		$dateTo = $data['dateTo'];
-
-		$providerController = new ctr_providers();
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//WORKING
+	$app->post('/exportExcelDeudoresProveedores', function(Request $request, Response $response) use ($userController, $spreadsheetClass, $providerController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$listProvider = $providerController->exportExcelDeudores( $dateTo );
+			$data = $request->getParams();
+			$dateTo = $data['dateTo'];
+			$listProvider = $providerController->exportExcelDeudores( $dateTo, $responseCurrentSession->currentSession);
 			if ( $listProvider->result == 2 ){
-
 				$responseExcel = $spreadsheetClass->exportDeudoresExcelProviders($listProvider->listResult, $dateTo);
 				return json_encode($responseExcel);
 			}else return json_encode($listProvider);
-
-
 		}else return json_encode($responseCurrentSession);
 	});
 }

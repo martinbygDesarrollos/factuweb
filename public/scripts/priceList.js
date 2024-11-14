@@ -12,7 +12,7 @@ $('#modalCreateModifyProduct').on('shown.bs.modal', function () {
 });
 
 function loadHeadings(){
-	let response = sendPost("getHeadins");
+	let response = sendPost("getHeadings");
 	if(response.result == 2 && response.listResult.length > 0){
 		lista = response.listResult;
 		for (let i = 0; i < lista.length; i++) {
@@ -31,7 +31,7 @@ function loadPriceList(){
 	if ($('#inputToSearch').val() != null && $('#inputToSearch').val() != "" && $('#inputToSearch').val().length >= 3){
 		textToSearch = $('#inputToSearch').val();
 	}
-	headingValue = $('#selectHeadingPriceList').val();
+	headingValue = $('#selectHeadingPriceList').val() || null;
 	let response = sendPost("loadPriceList", {lastId: lastID, textToSearch: textToSearch, heading: headingValue});
 	//console.log(response);
 	if(response.result == 2){
@@ -103,23 +103,69 @@ function searchProductByHeading(){
 	}
 }
 
-function createRowProduct(idProduct, description, detail, band, heading, valueIVA, cost, amount, discount, symbolCoin){
-	let row = "<tr id='row"+ idProduct + "'>";
-	row += "<td class='text-left'>"+ description +"</td>";
-	row += "<td class='text-left notShowInPhone'>"+ detail +"</td>";
-	row += "<td class='text-left notShowInPhone'>"+ band +"</td>";
-	//row += "<td class='text-left notShowInPhone'>"+ heading +"</td>";
-	//row += "<td class='text-center notShowInPhone'>"+ symbolCoin +"</td>";
-	row += "<td class='text-right notShowInPhone'>"+ valueIVA +"</td>";
-	row += "<td class='text-right notShowInPhone'>"+ symbolCoin+"  "+cost +"</td>";
-	row += "<td class='text-right'>"+ symbolCoin+"  "+amount +"</td>";
-	//row += "<td class='text-right notShowInPhone'>"+ discount +"</td>";
-	row += "<td class='text-center'>";
-	row += "<button class='btn btn-sm background-template-color2 text-template-background mr-2' onclick='openModalModify("+ idProduct +")'><i class='fas fa-edit'></i></button>";
-	row += "<button id='"+ idProduct +"' name='"+ description +"' onclick='openModalDeleteProduct(this)' class='btn btn-sm btn-danger'><i class='fas fa-trash-alt'></i></button>";
-	row += "</td>";
-	row += "</tr>";
-	return row;
+// function createRowProduct(idProduct, description, detail, band, heading, valueIVA, cost, amount, discount, symbolCoin){
+// 	let row = "<tr id='row"+ idProduct + "'>";
+// 	row += "<td class='text-left'>"+ description +"</td>";
+// 	row += "<td class='text-left notShowInPhone'>"+ detail +"</td>";
+// 	row += "<td class='text-left notShowInPhone'>"+ band +"</td>";
+// 	//row += "<td class='text-left notShowInPhone'>"+ heading +"</td>";
+// 	//row += "<td class='text-center notShowInPhone'>"+ symbolCoin +"</td>";
+// 	row += "<td class='text-right notShowInPhone'>"+ valueIVA +"</td>";
+// 	row += "<td class='text-right notShowInPhone'>"+ symbolCoin+"  "+cost +"</td>";
+// 	row += "<td class='text-right'>"+ symbolCoin+"  "+amount +"</td>";
+// 	//row += "<td class='text-right notShowInPhone'>"+ discount +"</td>";
+// 	row += "<td class='text-center'>";
+// 	row += "<button class='btn btn-sm background-template-color2 text-template-background mr-2' onclick='openModalModify("+ idProduct +")'><i class='fas fa-edit'></i></button>";
+// 	row += "<button id='"+ idProduct +"' name='"+ description +"' onclick='openModalDeleteProduct(this)' class='btn btn-sm btn-danger'><i class='fas fa-trash-alt'></i></button>";
+// 	row += "</td>";
+// 	row += "</tr>";
+// 	return row;
+// }
+
+function createRowProduct(idProduct, description, detail, band, heading, valueIVA, cost, amount, discount, symbolCoin) {
+    // Determine the appropriate class based on the presence of brand and detail
+    let rowClass = '';
+    if (band && detail) {
+        rowClass = 'with-brand-and-detail';
+    } else if (band || detail) {
+        rowClass = 'with-brand-or-detail';
+    } else {
+        rowClass = 'with-nothing';
+    }
+
+    let row = `<tr id='row${idProduct}' class='${rowClass}'>`;
+    
+    row += `<td class='text-left'>
+    <span class='cell-truncate mainText' title='${description}'>
+        ${description}
+    </span>
+    ${detail ? `<span class='cell-truncate secondText' title='${detail}'>
+        ${detail}
+    </span>` : ''}
+    ${band ? `<span class='cell-truncate brand' title='${band}'>[ 
+        ${band} ]
+    </span>` : ''}
+    </td>`;
+
+    row += `<td class='text-right notShowInPhone'>${valueIVA}</td>`;
+    row += `<td class='text-right notShowInPhone'>${symbolCoin} ${cost}</td>`;
+    row += `<td class='text-right'>${symbolCoin} ${amount}</td>`;
+    row += `<td class='text-center'>
+              <button class='btn btn-sm background-template-color2 text-template-background mr-2' 
+                      onclick='openModalModify(${idProduct})'>
+                <i class='fas fa-edit'></i>
+              </button>
+              <button id='${idProduct}' 
+                      name='${description}' 
+                      onclick='openModalDeleteProduct(this)' 
+                      class='btn btn-sm btn-danger'
+                      style='width: 33.75px;'>
+                <i class='fas fa-trash-alt'></i>
+              </button>
+            </td>`;
+    
+    row += "</tr>";
+    return row;
 }
 
 function openModalNewProduct(){

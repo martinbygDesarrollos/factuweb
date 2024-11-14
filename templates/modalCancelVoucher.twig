@@ -8,7 +8,7 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="d-flex justify-content-center">
+				<div class="d-flex justify-content-center" style="flex-direction: column;">
 					<div class="form-group">
 						<label class="form-label-sm" for="inputDateVoucher">Fecha comprobante</label>
 						<input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateCancelVoucher" onkeypress="return keyPressModalCancelVoucher(event, this, 50)">
@@ -17,7 +17,7 @@
 				<div class="d-flex">
 					<div class="form-group w-100">
 						<label for="inputAdenda">Adenda</label>
-						<textarea id="inputCancelAppendix" class="form-control shadow-sm rounded-0" maxlength="200" style="resize: none;" rows="2" onkeypress="return keyPressModalCancelVoucher(event, this, 200)"></textarea>
+						<textarea id="inputCancelAppendix" class="form-control shadow-sm rounded-0" maxlength="200" style="resize: none;" rows="2" {#onkeypress="return keyPressModalCancelVoucher(event, this, 200)"#}></textarea>
 					</div>
 				</div>
 			</div>

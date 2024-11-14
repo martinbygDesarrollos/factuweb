@@ -10,18 +10,40 @@ require_once '../src/controllers/ctr_products.php';
 
 return function (App $app){
 	$container = $app->getContainer();
+	$userController = new ctr_users();
+	$productController = new ctr_products();
+	$voucherController = new ctr_vouchers();
+	$productsClass = new products();
 
-	$app->get('/ver-lista-precios', function($request, $response, $args)use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	$app->get('/ver-lista-precios', function($request, $response, $args) use ($container, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$args['systemSession'] = $responseCurrentSession->currentSession;
-			$responseGetIVA = ctr_vouchers::getIVAsAllowed();
-			if($responseGetIVA->result == 2)
-				$args['listIVA'] = $responseGetIVA->listResult;
-			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
-			return $this->view->render($response, "priceList.twig", $args);
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$args['systemSession'] = $responseCurrentSession->currentSession;
+				$responseGetIVA = $voucherController->getIVAsAllowed($responseCurrentSession->currentSession);
+				if($responseGetIVA->result == 2)
+					$args['listIVA'] = $responseGetIVA->listResult;
+				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+				return $this->view->render($response, "priceList.twig", $args);
+			} else return json_encode($responsePermissions);
 		}else return $response->withRedirect('iniciar-sesion');
 	})->setName('PriceList');
+
+	$app->get('/ver-caja', function($request, $response, $args) use ($container, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$args['systemSession'] = $responseCurrentSession->currentSession;
+				$responseGetIVA = $voucherController->getIVAsAllowed($responseCurrentSession->currentSession);
+				if($responseGetIVA->result == 2)
+					$args['listIVA'] = $responseGetIVA->listResult;
+				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+				return $this->view->render($response, "caja.twig", $args);
+			} else return json_encode($responsePermissions);
+		}else return $response->withRedirect('iniciar-sesion');
+	})->setName('Caja');
 
 	$app->post('/insertHeading', function(Request $request, Response $response){
 		$responseCurrentSession = ctr_users::validateCurrentSession(null);
@@ -34,9 +56,10 @@ return function (App $app){
 
 
 	//si se quiere insertar nuevos productos
-	$app->post('/insertProduct', function(Request $request, Response $response){
+	//UPDATED
+	$app->post('/insertProduct', function(Request $request, Response $response) use ($userController, $productController){
 
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$idHeading = $data['idHeading'];
@@ -53,13 +76,13 @@ return function (App $app){
 			$discount = $data['discount'];
 			$amount = $data['amount'];//importe
 
-			return json_encode(ctr_products::insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount));
+			return json_encode($productController->insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $responseCurrentSession->currentSession->idEmpresa));
 		}else return json_encode($responseCurrentSession);
 	});
 
 	//actualizar datos de producto
-	$app->post('/updateProduct', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/updateProduct', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$idProduct = $data['idProduct'];
@@ -75,7 +98,7 @@ return function (App $app){
 			$barcode = $data['barcode'];
 			$discount = $data['discount'];
 
-			return json_encode(ctr_products::updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode));
+			return json_encode($productController->updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -92,61 +115,81 @@ return function (App $app){
 
 
 	//añadir producto por codigo de barras
-	$app->post('/addProductByCodeBar', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	$app->post('/addProductByCodeBar', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$barcode = $data['barcode'];
-			return json_encode(ctr_products::addProductByCodeBar($barcode));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$barcode = $data['barcode'];
+				return json_encode($productController->addProductByCodeBar($barcode, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
 	//obtener un producto por su id
-	$app->post('/getProductById', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	$app->post('/getProductById', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$idProduct = $data['idProduct'];
-			return json_encode(ctr_products::getProductById($idProduct));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$idProduct = $data['idProduct'];
+				return json_encode($productController->getProductById($idProduct, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getSuggestionProductByDescription', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	// Obtener productos a partir de sus descripcion
+	$app->post('/getSuggestionProductByDescription', function(Request $request, Response $response) use ($userController, $productController){
+		// $responseCurrentSession = $userController->validateCurrentSession('VENTAS');
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$textToSearch = $data['textToSearch'];
-			return json_encode(ctr_products::getSuggestionProductByDescription($textToSearch));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$textToSearch = $data['textToSearch'];
+				return json_encode($productController->getSuggestionProductByDescription($textToSearch, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getSuggestionProductByDescriptionAndCoin', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	// $app->post('/getSuggestionProductByDescriptionAndCoin', function(Request $request, Response $response){
+	// 	$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	// 	if($responseCurrentSession->result == 2){
+	// 		$data = $request->getParams();
+	// 		$textToSearch = $data['textToSearch'];
+	// 		$coinToSearch = $data['coinToSearch'];
+	// 		return json_encode(ctr_products::getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch));
+	// 	}else return json_encode($responseCurrentSession);
+	// });
+
+	$app->post('/loadPriceList', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$textToSearch = $data['textToSearch'];
-			$coinToSearch = $data['coinToSearch'];
-			return json_encode(ctr_products::getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$lastId = $data['lastId'];
+				$textToSearch = $data['textToSearch'];
+				$heading = $data['heading'];
+				return json_encode($productController->loadPriceList($lastId, $textToSearch, $heading, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/loadPriceList', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	$app->post('/deleteProduct', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$lastId = $data['lastId'];
-			$textToSearch = $data['textToSearch'];
-			$heading = $data['heading'];
-			return json_encode(ctr_products::loadPriceList($lastId, $textToSearch, $heading));
-		}else return json_encode($responseCurrentSession);
-	});
-
-	$app->post('/deleteProduct', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
-		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$idProduct = $data['idProduct'];
-			return json_encode(ctr_products::deleteProduct($idProduct));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$idProduct = $data['idProduct'];
+				return json_encode($productController->deleteProduct($idProduct, $responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -160,10 +203,14 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getHeadins', function($request, $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+	$app->post('/getHeadings', function($request, $response) use ($userController, $productsClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			return json_encode(products::getHeading($responseCurrentSession->currentSession->idBusiness));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				return json_encode($productsClass->getHeading($responseCurrentSession->currentSession->idEmpresa));
+			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 }

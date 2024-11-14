@@ -48,8 +48,10 @@
 
 /*las tablas con la clase table2 son las tablas que al hacer clic en una fila sucede una accion*/
 .table2 tbody tr:hover{
-  background-color:#F5F3F3;
+  /* background-color:#F5F3F3; */
   cursor: pointer;
+  /* border: 2px solid #ccc; */
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.6);  /* subtle inner shadow */
 }
 
 /*cuando el cursor pasa encima de el elemento que tiene esta clase se cambia el cursor*/

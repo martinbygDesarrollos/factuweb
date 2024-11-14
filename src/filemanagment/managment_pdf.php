@@ -5,7 +5,8 @@ require_once URL_UTILS . 'pdf/fpdf.php';
 class managment_pdf{
 
 	public function generateAccountState($accountState, $addressee, $dateInit, $dateEnding, $prepareFor, $myBusiness){
-		$pdfFile = managment_pdf::createWithHeader($accountState['MAINCOIN'], $myBusiness->nombre);
+		$managmentPdfClass = new managment_pdf();
+		$pdfFile = $managmentPdfClass->createWithHeader($accountState['MAINCOIN'], $myBusiness->empresa);
 
 		$pdfFile->SetFont('Arial', "B", 12);
 		if($prepareFor == "CLIENT")
@@ -16,7 +17,7 @@ class managment_pdf{
 		$pdfFile->SetFont('Courier', "B", 12);
 		$pdfFile->Cell(195,10, "Desde " . $dateInit . " hasta " . $dateEnding,0,0,"R");
 		$pdfFile->Ln();
-		$pdfFile = managment_pdf::insertTable($accountState['listResult'], $pdfFile);
+		$pdfFile = $managmentPdfClass->insertTable($accountState['listResult'], $pdfFile);
 		$pdfFile->Ln();
 		$pdfFile->SetFont('Courier', "I", 12);
 

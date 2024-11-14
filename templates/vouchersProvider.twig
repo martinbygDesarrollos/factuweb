@@ -6,11 +6,11 @@
 	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
 		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
 			<h5>Comprobantes recibidos</h5>
-			<button class="btn btn-sm background-template-color2 text-template-background shadow-sm" data-toggle="modal" data-target="#modalExport" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
+			<button class="btn btn-sm background-template-color2 shadow-sm" data-toggle="modal" data-target="#modalExport" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
 		</div>
 		<div class="card-body">
-			<div class="row mb-2">
-				<div class="col m-1" style="min-width: 180px; max-width: 260px;">
+			<div class="form-row mb-3">
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
 					<div class="input-group">
 						<input id="inputToSearchProvider" type="text" class="form-control form-control-sm shadow-sm" onchange="searchVoucherProvider(this)" onkeyup="this.onchange()" placeholder="Buscar proveedor..." title="RUT o Razón Social del proveedor.">
 					</div>
@@ -21,7 +21,7 @@
 					</div>
 				</div>
 				{% if resultDatesVoucher.result == 2 %}
-				<div class="col m-1" style="min-width: 220px; max-width: 220px;">
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
 					<div class="input-group">
 						<input id="inputDateFilter" type="date" class="form-control form-control-sm shadow-sm" min="{{ resultDatesVoucher.objectResult.minDate }}" max="{{ resultDatesVoucher.objectResult.maxDate }}" value="{{resultDatesVoucher.objectResult.maxDate}}">
 						<div class="input-group-append">
@@ -30,7 +30,7 @@
 					</div>
 				</div>
 				{% endif %}
-				<div class="col m-1" style="min-width: 200px; max-width: 200px;">
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
 					<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changePaymentMethod(this)">
 						<option value="0" selected>Formas de pago</option>
 						<option value="1">Contado</option>
@@ -38,7 +38,7 @@
 					</select>
 				</div>
 				{% if resultTypeVouchers.result == 2 %}
-				<div class="col m-1" style="min-width: 250px;">
+				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
 					<select id="selectTypeVoucher" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changeTypeVoucher(this)">
 						<option value="0" selected>Todos los comprobantes</option>
 						{% for typeCFE in resultTypeVouchers.listResult %}
@@ -48,16 +48,16 @@
 				</div>
 				{% endif %}
 			</div>
-			<div id="containerTable">
-				<table class="table table2">
+			<div id="containerTable" style="max-height: 75vh;">
+				<table class="table table2 table-striped">
 					<thead class="background-template-color text-template-color">
 						<tr>
-							<th class="text-right" scope="col">Documento</th>
-							<th class="text-right" scope="col">Proveedor</th>
-							<th class="text-right toHidden1" scope="col">Fecha</th>
+							<th class="text-right col-2" scope="col">Documento</th>
+							<th class="text-right col-4" scope="col">Proveedor</th>
+							<th class="text-right toHidden1 col-3" scope="col">Fecha</th>
 							<!--th class="text-right toHidden1" scope="col">Pago</th-->
 							<!--th class="text-right toHidden1" scope="col">Moneda</th-->
-							<th class="text-right toHidden1" scope="col">Total</th>
+							<th class="text-right toHidden1 col-3" scope="col">Total</th>
 						</tr>
 					</thead>
 					<tbody id="tbodyVouchersReceived">
@@ -84,7 +84,7 @@
 </div-->
 
 <div class="modal fade" id="modalExport" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered" role="document">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 		<div class="modal-content">
 			<div class="modal-header background-template-color">
 				<span class="modal-title text-template-color">Exportar</span>
@@ -93,44 +93,62 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="form-row">
-					<div class="form-group col-md-6">
-						<label for="inputDateInitExport">Inicio</label>
-						<input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateInitExport" onchange="changeDateFinish()">
+				<div class="row mb-2">
+					<div class="col">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color">Inicio</span>
+							</div>
+							<input id="inputDateInitExport" type="date" class="form-control text-center">
+						</div>
 					</div>
-					<div class="form-group col-md-6">
-						<label for="inputDateFinishExport">Fin</label>
-						<input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateFinishExport">
+					<div class="col">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color">Fin</span>
+							</div>
+							<input id="inputDateFinishExport" type="date" class="form-control text-center">
+						</div>
 					</div>
 				</div>
-				<div class="d-flex justify-content-center">
-					{% if resultTypeVouchers.result == 2 %}
-					<select id="selectTypeVoucherExport" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm w-50">
-						<option value="0" selected>Todos los comprobantes</option>
-						{% for typeCFE in resultTypeVouchers.listResult %}
-						{% if typeCFE.nameCFE != null %}
-						<option value="{{ typeCFE.typeCFE }}">{{ typeCFE.nameCFE }}</option>
+				<div class="row mb-2">
+					<div class="col">
+						{% if resultTypeVouchers.result == 2 %}
+						<select id="selectTypeVoucherExport" class="custom-select shadow-sm">
+							<option value="0" selected>Todos los comprobantes</option>
+							{% for typeCFE in resultTypeVouchers.listResult %}
+							{% if typeCFE.nameCFE != null %}
+							<option value="{{ typeCFE.typeCFE }}">{{ typeCFE.nameCFE }}</option>
+							{% endif %}
+							{% endfor %}
+						</select>
 						{% endif %}
-						{% endfor %}
-					</select>
-					{% endif %}
-				</div>
-				<div class="d-flex justify-content-center mt-3">
-					<div class="form-check form-check-inline">
-						<input class="form-check-input text-template-color" type="radio" name="type" id="radioUnifyCoin" value="option1">
-						<label class="form-check-label" for="radioUnifyCoin">Unificado en pesos Uruguayos</label>
-					</div>
-					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="radio" name="type" id="iradioDiscriminateCoin" value="option2">
-						<label class="form-check-label" for="radioDiscriminateCoin">Discriminado por moneda</label>
 					</div>
 				</div>
-				<div class="d-flex justify-content-center mt-2">
-					<div class="form-check">
-						<input class="form-check-input" type="checkbox" id="includeReceipts" checked>
-						<label class="form-check-label" for="flexCheckChecked">
-							Incluir recibos de cobranza
-						</label>
+				<div class="row mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="type" id="radioUnifyCoin" value="option1">
+								<label class="form-check-label" for="radioUnifyCoin">Unificado en pesos Uruguayos</label>
+							</div>
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="type" id="radioDiscriminateCoin" value="option2">
+								<label class="form-check-label" for="radioDiscriminateCoin">Discriminado por moneda</label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" id="includeReceipts" checked>
+								<label class="form-check-label" for="includeReceipts">
+									Incluir recibos de cobranza
+								</label>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -142,7 +160,7 @@
 	</div>
 </div>
 {% include("modalSeeVoucher.twig") %}
-{% include("buttonUp.twig") %}
+{# {% include("buttonUp.twig") %} #}
 {%block script%}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/vouchersReceived.js{{ versionerp }}"></script>
@@ -153,7 +171,7 @@
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
 <script type="text/javascript">
 	$(document).ready( function(){
-		let heightwindow = ($(document).height() * 55) / 100;
+		let heightwindow = ($(document).height() * 65) / 100;
 		$('#containerTable').css('height', heightwindow+'px');
 	});
 	loadVouchersReceived();

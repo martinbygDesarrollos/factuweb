@@ -8,6 +8,7 @@ $('#modalResponse').on('shown.bs.modal', function(){
 })
 
 function selectClient(){
+	console.log("NUEVO CLIENTE SETTEADO")
 	let documentClient = $('#inputDocumentClient').val() || null;
 	let nameClient = $('#inputNameClient').val() || null;
 	let address = $('#inputAddressClient').val() || null;
@@ -59,7 +60,7 @@ function selectClient(){
 
 let clientSelected = [];
 function createClient(documentClient, nameClient, address, city, department, email, phone){
-	clientSelected.push({
+	clientSelected[0] = ({
 		document: documentClient,
 		name: nameClient,
 		address: address,
@@ -116,7 +117,7 @@ function setClientValues(name, documentC, address, city, department, email, phon
 	$('#inputPhoneClient').val(phone);
 }
 
-function cancelClinetSelected(){
+function cancelClientSelected(){
 	clientSelected = [];
 	$('#inputTextToSearchClient').val("");
 	$('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");

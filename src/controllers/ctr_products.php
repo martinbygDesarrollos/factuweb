@@ -10,10 +10,11 @@ require_once 'rest/ctr_rest.php';
 class ctr_products{
 
 	//Controla si la empresa esta autorizada para utilizar el rut seleccionado.
-	public function authorizedToUse($idIva){
+	public function authorizedToUse($idIva, $currentSession){
 		$response = new \stdClass();
+		$voucherController = new ctr_vouchers();
 
-		$responseGetIvas = ctr_vouchers::getIVAsAllowed();
+		$responseGetIvas = $voucherController->getIVAsAllowed($currentSession);
 		if($responseGetIvas->result == 2){
 			foreach ($responseGetIvas->listResult as $key => $value) {
 				if($value['idIVA'] == $idIva){
@@ -28,30 +29,32 @@ class ctr_products{
 		return $response;
 	}
 
-	public function deleteProduct($idProduct){
+	public function deleteProduct($idProduct, $idEmpresa){
 		$response = new \stdClass();
+		$productsClass = new products();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseDeleteProduct = products::deleteProduct($idProduct, $responseGetBusiness->idBusiness);
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+			$responseDeleteProduct = $productsClass->deleteProduct($idProduct, $idEmpresa);
 			if($responseDeleteProduct->result == 2){
 				$response->result = 2;
 				$response->message = "El artículo fue borrado correctamente del sistema.";
 			}else return $responseDeleteProduct;
-		}else return $responseGetBusiness;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
 
-	public function loadPriceList($lastId, $textToSearch, $heading){
+	public function loadPriceList($lastId, $textToSearch, $heading, $idEmpresa){
 		$response = new \stdClass();
+		$productsClass = new products();
+		return $productsClass->loadPriceList($idEmpresa, $lastId, $textToSearch, $heading);
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			return products::loadPriceList($responseGetBusiness->idBusiness, $lastId, $textToSearch, $heading);
-		}else return $responseGetBusiness;
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		// }else return $responseGetBusiness;
 
-		return $response;
+		// return $response;
 	}
 
 	public function insertHeading($nameHeading){
@@ -77,88 +80,147 @@ class ctr_products{
 
 		return $response;
 	}
-
-	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount){
+	//UPDATED
+	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $idEmpresa){
 		$response = new \stdClass();
+		$productsController = new ctr_products();
+		$productsClass = new products();
+		$othersClass = new others();
+		$handleDateTimeClass = new handleDateTime();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetHeading = products::getHeadingById($idHeading, $responseGetBusiness->idBusiness);
-			if($responseGetHeading->result == 2){
-				$responseGetProductByDescription = products::getProductByDescription($description, $responseGetBusiness->idBusiness);
-				if($responseGetProductByDescription->result != 2){
-					$responseGetIva = others::getValueIVA($idIva);
-					if($responseGetIva->result == 2){
-						$idNewInventory = null;
-						if(!is_null($inventory) && !is_null($minInventory)){
-							$dateInventory = handleDateTime::getCurrentDateTimeInt();
-							$responseInsertInventory = products::insertInventory($inventory, $minInventory, $dateInventory, $responseGetBusiness->idBusiness);
-							if($responseInsertInventory->result == 2)
-								$idNewInventory = $responseInsertInventory->id;
-							else return $responseInsertInventory;
-						}
-						$responseInsertProduct = products::insertProduct($idHeading, $idIva, $idNewInventory, $responseGetBusiness->idBusiness, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode);
-						if($responseInsertProduct->result == 2){
-							$response->result = 2;
-							$response->message = "El artículo fue ingresado correctamente.";
-						}else{
-							$response->result = 0;
-							$response->message = "Ocurrió un error y el artículo no pudo ingresarse en el sistema.";
-						}
-					}else return $responseGetIva;
-				}else{
-					$response->result = 0;
-					$response->message = "Ya existe un artículo con la descripción '" . $description . "'.";
-				}
-			}else return $responseGetHeading;
-		}else return $responseGetBusiness;
+		$responseGetHeading = $productsClass->getHeadingById($idHeading, $idEmpresa);
+		if($responseGetHeading->result == 2){
+			$responseGetProductByDescription = $productsClass->getProductByDescription($description, $idEmpresa);
+			if($responseGetProductByDescription->result != 2){
+				$responseGetIva = $othersClass->getValueIVA($idIva);
+				if($responseGetIva->result == 2){
+					$idNewInventory = null;
+					// if(!is_null($inventory) && !is_null($minInventory)){ // SI NO son NULL ni inventario ni minimo de inventario creo la fila inventario para el producto nuevo
+					$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
+					$responseInsertInventory = $productsClass->insertInventory($inventory, $minInventory, $dateInventory, $idEmpresa);
+					if($responseInsertInventory->result == 2)
+						$idNewInventory = $responseInsertInventory->id;
+					else return $responseInsertInventory;
+					// }
+					$responseInsertProduct = $productsClass->insertProduct($idHeading, $idIva, $idNewInventory, $idEmpresa, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode);
+					if($responseInsertProduct->result == 2){
+						$response->result = 2;
+						$response->message = "El artículo fue ingresado correctamente.";
+					}else{
+						$response->result = 0;
+						$response->message = "Ocurrió un error y el artículo no pudo ingresarse en el sistema.";
+					}
+				}else return $responseGetIva;
+			}else{
+				$response->result = 0;
+				$response->message = "Ya existe un artículo con la descripción '" . $description . "'.";
+			}
+		}else return $responseGetHeading;
 
 		return $response;
 	}
 
-	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode){
+	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $currentSession){
 		$response = new \stdClass();
+		$productsController = new ctr_products();
+		$productsClass = new products();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetProduct = products::getProductById($idProduct, $responseGetBusiness->idBusiness);
-			if($responseGetProduct->result == 2){
-				$responseGetHeading = products::getHeadingById($idHeading, $responseGetBusiness->idBusiness);
-				if($responseGetHeading->result == 2){
-					$responseIsAuthorized = ctr_products::authorizedToUse($idIva);
-					if($responseIsAuthorized->result == 2){
-						$responseGetProductByDescription = products::getProductByDescription($description, $responseGetBusiness->idBusiness);
-						if(($responseGetProductByDescription->result == 2 && $responseGetProductByDescription->objectResult->idArticulo == $idProduct) || ($responseGetProductByDescription->result != 2)){
-							$responseUpdateProduct = products::updateProduct($idHeading, $idIva, null, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $responseGetBusiness->idBusiness);
-							if($responseUpdateProduct->result == 2){
-								$response->result = 2;
-								$response->message = "El producto fue actualizado correctamente.";
-							}else return $responseUpdateProduct;
-						}else{
-							$response->result = 0;
-							$response->message = "La descripcíón que intenta asignarle a este artículo ya corresponde a otro distinto y el sistema no permite descripciones duplicadas.";
-						}
-					}else return $responseIsAuthorized;
-				}else return $responseGetHeading;
-			}else return $responseGetProduct;
-		}else return $responseGetBusiness;
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		$responseGetProduct = $productsClass->getProductById($idProduct, $currentSession->idEmpresa);
+		if($responseGetProduct->result == 2){
+			$responseGetHeading = $productsClass->getHeadingById($idHeading, $currentSession->idEmpresa);
+			if($responseGetHeading->result == 2){
+				$responseIsAuthorized = $productsController->authorizedToUse($idIva, $currentSession);
+				if($responseIsAuthorized->result == 2){
+					$responseGetProductByDescription = $productsClass->getProductByDescription($description, $currentSession->idEmpresa);
+					if(($responseGetProductByDescription->result == 2 && $responseGetProductByDescription->objectResult->idArticulo == $idProduct) || ($responseGetProductByDescription->result != 2)){
+						$responseUpdateProduct = $productsClass->updateProduct($idHeading, $idIva, null, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $currentSession->idEmpresa);
+						if($responseUpdateProduct->result == 2){
+							$response->result = 2;
+							$response->message = "El producto fue actualizado correctamente.";
+						}else return $responseUpdateProduct;
+					}else{
+						$response->result = 0;
+						$response->message = "La descripcíón que intenta asignarle a este artículo ya corresponde a otro distinto y el sistema no permite descripciones duplicadas.";
+					}
+				}else return $responseIsAuthorized;
+			}else return $responseGetHeading;
+		}else return $responseGetProduct;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
 
 	//busca un producto por el codigo de barra dentro de la base de datos.
-	public function addProductByCodeBar($barcode){
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			return products::addProductByCodeBar($barcode, $responseGetBusiness->idBusiness);
-		}else return $responseGetBusiness;
+	public function addProductByCodeBar($barcode, $idEmpresa){
+		$productsClass = new products();
+		return $productsClass->addProductByCodeBar($barcode, $idEmpresa);
+		// if($responseGetBusiness->result == 2){
+		// }else return $responseGetBusiness;
 	}
 
-	public function getProductById($idProduct){
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			return products::getProductById($idProduct, $responseGetBusiness->idBusiness);
-		}else return $responseGetBusiness;
+	public function getProductById($idProduct, $idEmpresa){
+		$productsClass = new products();
+		return $productsClass->getProductById($idProduct, $idEmpresa);
+		// if($responseGetBusiness->result == 2){objectResult
+		// }else return $responseGetBusiness;
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+	}
+	// UPDATED [MOVED FROM CLASS TO CONTROLLER]
+	public function saveProductsInSession ($productsToSave){
+		$response = new \stdClass();
+
+		if( isset($_SESSION['systemSession']) ){ //verifico si un usuario tiene una sesion iniciada
+			if ( isset($_SESSION['arrayProductsSales']) ){
+				array_push($_SESSION['arrayProductsSales'], $productsToSave);
+				$response->result = 2;
+				$response->data = $_SESSION['arrayProductsSales'];
+			}else{
+				$_SESSION['arrayProductsSales'][] = $productsToSave;
+				$response->result = 2;
+				$response->data = $_SESSION['arrayProductsSales'];
+			}
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+
+		return $response;
+	}
+
+	// UPDATED [MOVED FROM CLASS TO CONTROLLER]
+	public function removeProductsSession (){
+		$response = new \stdClass();
+
+		if( isset($_SESSION['systemSession']) ){ //verifico si un usuario tiene una sesion iniciada
+			if ( isset($_SESSION['arrayProductsSales']) ){//verifico si hay productos en esta sesion
+				foreach ($_SESSION['arrayProductsSales'] as $indice => $producto){
+					//for( var i = 0; i < arrayDetails.length; i++) {
+					if($producto["removed"] == false || $producto["removed"] == "false"){
+						//echo "este es el indice ".$indice." este es el value ".$producto["description"]." \n";
+						$_SESSION['arrayProductsSales'][$indice]["removed"] = "true";
+					}
+				}
+				//var_dump($_SESSION);
+				//exit;
+				//sleep(1);
+				$response->result = 2;
+				$response->message = "Se removieron todos los articulos.";
+			}
+			else{
+				$response->result = 2;
+				$response->message = "Actulamente no hay productos guardados.";
+			}
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+
+
+		return $response;
 	}
 
 	public function getProductByDescription($description){
@@ -179,19 +241,17 @@ class ctr_products{
 		}else return $responseGetBusiness;
 	}
 
-	public function getSuggestionProductByDescription($textToSearch){
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			return products::getSuggestionProductByDescription($textToSearch, $responseGetBusiness->idBusiness);
-		}else return $responseGetBusiness;
+	public function getSuggestionProductByDescription($textToSearch, $idEmpresa){
+		$productsClass = new products();
+		return $productsClass->getSuggestionProductByDescription($textToSearch, $idEmpresa);
 	}
 
-	public function getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch){
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			return products::getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch, $responseGetBusiness->idBusiness);
-		}else return $responseGetBusiness;
-	}
+	// public function getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch){
+	// 	$responseGetBusiness = ctr_users::getBusinesSession();
+	// 	if($responseGetBusiness->result == 2){
+	// 		return products::getSuggestionProductByDescriptionAndCoin($textToSearch, $coinToSearch, $responseGetBusiness->idBusiness);
+	// 	}else return $responseGetBusiness;
+	// }
 
 	//obtiene el cfe del comprobante seleccionado para ingresar todos los detalles a la lista de precio
 	public function getVoucherDetailJSON($idBusiness, $rut, $tipoCFE, $serieCFE, $numeroCFE){

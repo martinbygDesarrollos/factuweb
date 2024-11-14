@@ -27,7 +27,7 @@ function updateDataSession(indice0, indice1, data){ //arrayIndexSession tiene un
 async function removedAllProducts (){
 
 	return new Promise(resolve => {
-		resolve(sendAsyncPost('removedProductsSession'));
+		resolve(sendAsyncPost('removeProductsSession'));
 		/*setTimeout(
 	        function() {
 	          resolve("ok");

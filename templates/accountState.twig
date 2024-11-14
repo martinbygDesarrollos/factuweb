@@ -5,8 +5,8 @@
 <div class="d-flex justify-content-center">
 	<div class="card shadow mt-4 mb-2" style="min-width: 350px;">
 		<div class="card-header d-flex justify-content-between background-template-color text-template-color">
-			<div class="d-flex">
-				<h5 class="font-italic">Estado de cuenta de&nbsp;</h5>{{ nameSelected }}
+			<div class="d-flex" style="align-items: center;">
+				<h5 class="font-italic mb-0">Estado de cuenta de&nbsp;</h5>{{ nameSelected }}
 			</div>
 			<div>
 				<button type="button" class="btn btn-sm background-template-color2 text-template-background shadow m-1" name="{{ dateFrom }}" onclick="prepareModalAccountState('{{prepareFor}}')">{{ dateFromToFromat }}&nbsp; <i class="far fa-calendar-alt"></i></button>
@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<div class="card-body">
-			<div id="containerTable">
+			<div id="containerTable" style="max-height: 75vh;">
 				<table id="tableAccountSate" class="table table-sm table-striped">
 					<thead class="background-template-color text-template-color">
 						<tr>
@@ -169,7 +169,19 @@
 				</button>
 			</div>
 			<div id="modalBodyModify" class="modal-body">
-				<div class="d-flex justify-content-center">
+				<div class="">
+					<div class="row form-group mb-2">
+						<label class="col-2 m-auto" for="inputDateManualReceiptProvider">Fecha</label>
+						<input type="date" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputDateManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
+					</div>
+				</div>
+				<div class="">
+					<div class="row form-group mb-2">
+						<label class="col-2 m-auto" for="inputTotalManualReceiptProvider">Importe</label>
+						<input type="number" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputTotalManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
+					</div>
+				</div>
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group">
 						<label for="inputDateManualReceiptProvider">Fecha</label>
 						<input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
@@ -180,7 +192,7 @@
 						<label for="inputTotalManualReceiptProvider">Importe</label>
 						<input type="number" class="form-control form-control-sm text-center shadow-sm" id="inputTotalManualReceiptProvider" onkeypress="return keyPressManualReceiptProvider(event)">
 					</div>
-				</div>
+				</div> #}
 			</div>
 			<div class="modal-footer justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
@@ -203,18 +215,19 @@
 			<div class="modal-body">
 				<div id="containerBusinessInfo" style="display: none;" class="card mb-2">
 					<div class="card-body">
-						<h6 class="card-subtitle mb-2 text-muted">Información empresa</h6>
-						<div class="form-group">
-							<label for="inputAddressNewManualReceiptClient">Dirección</label>
-							<input type="text" class="form-control form-control-sm shadow-sm" id="inputAddressNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 50);">
+						<h6 class="card-subtitle mb-4 text-muted text-center">Información empresa</h6>
+						<div class="row form-group mb-2">
+							<label class="col-3 m-auto" for="inputAddressNewManualReceiptClient">Dirección</label>
+							<input type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputAddressNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 50);">
 						</div>
-						<div class="form-group">
-							<label for="inputCityNewManualReceiptClient">Ciudad</label>
-							<input type="text" class="form-control form-control-sm shadow-sm" id="inputCityNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 40);">
+						<div class="row form-group mb-2">
+							<label class="col-3 m-auto" for="inputCityNewManualReceiptClient">Ciudad</label>
+							<input type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputCityNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 40);">
 						</div>
 					</div>
 				</div>
-				<div class="d-flex justify-content-center">
+				{# ------------------------------------------------------------------------------------------------ #}
+				{# <div class="d-flex justify-content-center">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonOfficialReceiptClient" checked onKeyPress="return keyPressManualReceipt(event, null, null);">
 						<label class="form-check-label" for="radioButtonOfficialReceipt">eRecibo Oficial</label>
@@ -223,21 +236,40 @@
 						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
 						<label class="form-check-label" for="radioButtonManualReceipt">Recibo Manual</label>
 					</div>
+				</div> #}
+
+				<div class="row mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonOfficialReceiptClient" checked value="option1" style="cursor: pointer;">
+								<label class="form-check-label" for="radioButtonOfficialReceiptClient" style="cursor: pointer;">eRecibo Oficial</label>
+							</div>
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioButtonManualReceiptClient" value="option2" style="cursor: pointer;">
+								<label class="form-check-label" for="radioButtonManualReceiptClient" style="cursor: pointer;">Recibo Manual</label>
+							</div>
+						</div>
+					</div>
 				</div>
+				{# ------------------------------------------------------------------------------------------------ #}
+
 				<div id="containerInputReason">
-					<div class="form-group">
-						<label for="inputReasonNewManualReceiptClient">Razón</label>
-						<input type="text" class="form-control form-control-sm shadow-sm" id="inputReasonNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 80);">
+					<div class="row form-group mb-2">
+						<label class="col-4 m-auto" for="inputReasonNewManualReceiptClient">Razón</label>
+						<input type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputReasonNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, this.value, 80);">
 					</div>
 				</div>
 				<div class="containerInputReason">
-					<div class="form-group">
-						<label for="inputDateNewManualReceiptClient">Fecha</label>
-						<input type="date" class="form-control form-control-sm text-center shadow-sm" onchange="refreshCurrentQuote()" id="inputDateNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
+					<div class="row form-group mb-2">
+						<label class="col-4 m-auto" for="inputDateNewManualReceiptClient">Fecha</label>
+						<input type="date" class="form-control form-control-sm text-center col mr-3 shadow-sm" onchange="refreshCurrentQuote()" id="inputDateNewManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
 					</div>
 				</div>
 				{% if prepareFor == "CLIENT" and typeCoinSelected == "USD" %}
-				<div class="containerInputReason">
+				{# ------------------------------------------------------------------------------------------------ #}
+				
+				{# <div class="containerInputReason">
 					<div class="form-group">
 						<!--div class="input-group-prepend">
 							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Cambio</span>
@@ -247,32 +279,60 @@
 							<input id="inputUSDValueNewManualReceiptClient" type="number" pattern="/^-?\d+\.?\d*$/" class="form-control text-center w-75" value="{{ currentQuote }}"  onKeyPress="return keyPressManualReceipt(event, this, 10);">
 							<button id="btnRefreshQuote" class="btn btn-sm background-template-color2 text-template-background shadow-lg w-25" onclick="refreshCurrentQuote()"><i class="fas fa-sync"></i></button>
 						</div>
+					</div>
+				</div> #}
+
+				<div class="containerInputReason">
+					<div class="row form-group mb-2">
+						<label for="inputUSDValueNewManualReceiptClient" class="col-4 m-auto">Cambio</label>
+						<div class="col d-flex pl-0">
+							<input id="inputUSDValueNewManualReceiptClient" type="number" pattern="/^-?\d+\.?\d*$/" class="mr-2 col form-control form-control-sm" value="{{ currentQuote }}" onkeypress="return keyPressManualReceipt(event, this, 10);">
+							<button id="btnRefreshQuote" class="btn btn-sm background-template-color2 text-template-background shadow-lg w-25" onclick="refreshCurrentQuote()" style="max-width:40px"><i class="fas fa-sync"></i></button>
+						</div>
 
 					</div>
 				</div>
+				{# ------------------------------------------------------------------------------------------------ #}
+
 				{% endif %}
 				<div class="containerInputReason">
-					<div class="form-group">
-						<label for="inputTotalNewManualReceiptClient">Importe a cancelar</label>
-						<input type="number" class="form-control form-control-sm text-center shadow-sm" pattern="/^-?\d+\.?\d*$/" id="inputTotalNewManualReceiptClient" onchange="calculateDiscontToNoteCredit()" onKeyPress="return keyPressManualReceipt(event, this.value, 20);">
+					<div class="row form-group mb-2">
+						<label class="col-4 m-auto" for="inputTotalNewManualReceiptClient">Importe a cancelar</label>
+						<input type="number" class="form-control form-control-sm text-center col mr-3 shadow-sm" pattern="/^-?\d+\.?\d*$/" id="inputTotalNewManualReceiptClient" onchange="calculateDiscontToNoteCredit()" onKeyPress="return keyPressManualReceipt(event, this.value, 20);">
 					</div>
 				</div>
-				<div class="containerInputReason" id="containerDiscountManualReceiptClient">
+				{# ------------------------------------------------------------------------------------------------ #}
+				{# <div class="containerInputReason" id="containerDiscountManualReceiptClient">
 					<div class="form-group">
 						<input type="checkbox" class="" onchange="changeDiscManualReceipt()" id="checkDiscountManualReceiptClient" onKeyPress="return keyPressManualReceipt(event, null, null);">
 						<label for="checkDiscountManualReceiptClient">Agregar descuento</label>
 					</div>
+				</div> #}
+
+				<div id="containerDiscountManualReceiptClient" class="row containerInputReason mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" onchange="changeDiscManualReceipt()" id="checkDiscountManualReceiptClient" style="cursor: pointer;">
+								<label class="form-check-label" for="checkDiscountManualReceiptClient" style="cursor: pointer;">
+									Agregar descuento
+								</label>
+							</div>
+						</div>
+					</div>
 				</div>
+				{# ------------------------------------------------------------------------------------------------ #}
+
 				<div class="containerInputReason" id="divDiscManualReceiptClient" hidden >
-					<div class="form-group">
-						<label for="inputDiscountNewManualReceiptClient">Descuento</label>
-						<input type="number" class="form-control form-control-sm text-center shadow-sm" onchange="calculateDiscontToNoteCredit()" id="inputDiscountNewManualReceiptClient" onkeyup="this.onchange()" onKeyPress="return keyPressManualReceipt(event, null, null);">
+					<div class="row form-group mb-2">
+						<label class="col-4 m-auto" for="inputDiscountNewManualReceiptClient">Descuento</label>
+						<input type="number" class="form-control form-control-sm text-center col mr-3 shadow-sm" onchange="calculateDiscontToNoteCredit()" id="inputDiscountNewManualReceiptClient" onkeyup="this.onchange()" onKeyPress="return keyPressManualReceipt(event, null, null);">
 					</div>
 				</div>
 				<div class="containerInputReason" id="divAmountToCancelClient" hidden >
-					<div class="form-group">
-						<label for="">Importe a pagar</label>
-						<input type="number" class="form-control form-control-sm text-center shadow-sm" id="amountToCancelManualReceipt" onKeyPress="return keyPressManualReceipt(event, null, null);" onchange="calculateDiscontToNoteCredit2()">
+					<div class="row form-group mb-2">
+						<label class="col-4 m-auto" for="">Importe a pagar</label>
+						<input type="number" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="amountToCancelManualReceipt" onKeyPress="return keyPressManualReceipt(event, null, null);" onchange="calculateDiscontToNoteCredit2()">
 					</div>
 				</div>
 			</div>
@@ -285,7 +345,7 @@
 </div>
 {% include("modalSeeVoucher.twig") %}
 {% include("modalCancelVoucher.twig") %}
-{% include("buttonUp.twig") %}
+{# {% include("buttonUp.twig") %} #}
 {%block script%}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/accountState.js{{ versionerp }}"></script>

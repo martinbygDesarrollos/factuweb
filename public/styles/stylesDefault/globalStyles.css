@@ -124,3 +124,111 @@ span.maintext {
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
 }
+
+.custom-thing {
+  display: block;
+  width: 100%;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  font-size: .875rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+
+.cell-truncate {
+  /* max-width: 250px; */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  display: block;
+}
+
+.mainText{
+  font-size: medium;
+  font-weight: bold;
+}
+
+.secondText{
+  /* display: inline-block; */
+  font-size: smaller;
+}
+
+.brand{
+  /* display: inline-block; */
+  font-size: smaller;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+#tbodyProducts tr td, #tbodyServices tr td, #tbodyFeeServices tr td {
+  vertical-align: middle !important;
+}
+
+tr.with-nothing td {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+#tbodyServices tr.with-nothing td {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+tr.with-brand-and-detail td {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+#tbodyFeeServices tr td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-top: 0 !important;
+}
+
+tr.with-name-and-desc td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+tr.with-brand-or-detail td, tr.with-name-or-desc td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* #tbodyProducts tr td:nth-child(2) {
+  max-width: 80px !important;
+  min-width: 80px !important;
+} */
+/* .cell-truncate:hover::after {
+  content: attr(data-full-text);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background-color: #fff;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  white-space: normal;
+  max-width: 300px;
+  word-wrap: break-word;
+} */
+
+#tbodyClients tr td p, #tbodyProviders tr td p, #tbodyFeeServices tr td p{
+  margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#tbodyClients tr td, #tbodyProviders tr td {
+  overflow: hidden;
+}
+
+.nav-item:hover{
+  cursor: pointer;
+}

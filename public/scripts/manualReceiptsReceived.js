@@ -14,10 +14,27 @@ function getManualReceiptReceived(){
 	if(response.result == 2){
 		lastId = response.lastId;
 		let list = response.listResult;
-		for(var i = list.length - 1; i >= 0; i--){
-			let newRow = createNewRow(list[i].indice, list[i].fecha, list[i].rut, list[i].razonSocial, list[i].moneda, list[i].total);
+		console.log(list)
+		console.log(lastId)
+		// for(var i = list.length - 1; i >= 0; i--){ // ESTE FOR LO INVIERTE (IDK WHY)
+		// for(var i = 0; i <= list.length; i++){
+		// 	let newRow = createNewRow(list[i].indice, list[i].fecha, list[i].rut, list[i].razonSocial, list[i].moneda, list[i].total);
+		// 	console.log(list[i].indice + " " + list[i].fecha)
+		// 	$('#tbodyManualReceipt').append(newRow);
+		// }
+		for (const item of list) {
+			let newRow = createNewRow(
+			  item.indice,
+			  item.fecha,
+			  item.rut,
+			  item.razonSocial,
+			  item.moneda,
+			  item.total
+			);
+			// console.log(item.hasOwnProperty('indice') ? item.indice : null, item.fecha);
 			$('#tbodyManualReceipt').append(newRow);
 		}
+
 	}else if(response.result == 0) showReplyMessage(response.result, response.message, "Ocurrió un error", null);
 	resizeScreen();
 }

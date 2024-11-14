@@ -108,8 +108,10 @@ class utils{
 		}
 	}
 
-	public function formatDocuments($document){
-		$responseConfig = ctr_users::getVariableConfiguration("FORMATO_DE_RUT");
+	public function formatDocuments($document, $currentSession){
+		$userController = new ctr_users();
+
+		$responseConfig = $userController->getVariableConfiguration("FORMATO_DE_RUT", $currentSession);
 		if($responseConfig->result == 2){
 			if(strlen($document) == 8)
 				return substr($document,0,1) . "." . substr($document, 1, 3) . "." . substr($document,4,3) . "-". substr($document, 7, 1);

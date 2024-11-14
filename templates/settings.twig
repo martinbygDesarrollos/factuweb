@@ -3,7 +3,7 @@
 {% endblock %}
 {% block content %}
 <div class="d-flex justify-content-center">
-	<div class="card shadow mt-4 mb-2" style="min-width: 350px; width: 80%;">
+	<div class="card shadow mt-4 mb-2 w-100" style="min-width: 350px; width: 90%;">
 		<div class="card-header d-flex justify-content-between background-template-color">
 			<h5 class="text-template-color font-italic">Configuraciones</h5>
 		</div>
@@ -102,20 +102,20 @@
 					<!-- SERVICIOS -->
 					<div class="tab-pane fade border-template shadow p-2" id="serviceContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
 						<p class="text-center text-template-background font-italic h5 mt-1">Servicios</p>
-						<div class="input-group mt-3">
+						<div class="input-group align-items-center">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch m-0">
 									<input id="REALIZAR_FACTURA_POR_SERVICIO" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Emitir un comprobante por servicio facturado.</p>
+							<p class="ml-2 mb-0">Emitir un comprobante por servicio facturado.</p>
 						</div>
 						<hr>
-						<div class="d-flex justify-content-left">
-							<div class="form-group">
-								<label for="formGroupExampleInput">Sufijo en detalle de factura.</label>
-								<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" id="SUFIJO_NOMBRE_SERVICIO_FACTURA" onchange="updateSuffixNameService()" style="width: 240px;">
+						<div id="">
+							<div class="row form-group mb-2">
+								<label class="col-5 m-auto" for="SUFIJO_NOMBRE_SERVICIO_FACTURA">Sufijo en detalle de factura</label>
+								<select type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="SUFIJO_NOMBRE_SERVICIO_FACTURA" onchange="updateSuffixNameService()">
 									<option value="NINGUNO" >Ninguno</option>
 									<option value="FECHA_ANTERIOR">Fecha anterior emisión</option>
 									<option value="FECHA_ACTUAL">Fecha emisión</option>
@@ -123,8 +123,31 @@
 								</select>
 							</div>
 						</div>
+
+						{# <div class="d-flex w-100 align-items-center">
+							<div class="row m-0">
+								<label class="col" for="SUFIJO_NOMBRE_SERVICIO_FACTURA">Sufijo en detalle de factura.</label>
+								<select class="col custom-select custom-select-sm text-template-background shadow-sm" id="SUFIJO_NOMBRE_SERVICIO_FACTURA" onchange="updateSuffixNameService()">
+									<option value="NINGUNO" >Ninguno</option>
+									<option value="FECHA_ANTERIOR">Fecha anterior emisión</option>
+									<option value="FECHA_ACTUAL">Fecha emisión</option>
+									<option value="FECHA_POSTERIOR">Fecha posterior emisión</option>
+								</select>
+							</div>
+						</div> #}
 						<hr>
-						<div class="d-flex justify-content-left">
+
+						<div id="">
+							<div class="row form-group mb-2">
+								<label class="col-5 m-auto" for="SUFIJO_FORMATO_SERVICIO_FACTURA">Formato de sufijo</label>
+								<select type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="SUFIJO_FORMATO_SERVICIO_FACTURA" onchange="updateSuffixFormatService()">
+									<option value="NUMERICA">Numérica (MM/AAAA)</option>
+									<option value="TEXTUAL">Textual (MES)</option>
+								</select>
+							</div>
+						</div>
+
+						{# <div class="d-flex justify-content-left">
 							<div class="form-group">
 								<label for="formGroupExampleInput">Formato de sufijo.</label>
 								<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" id="SUFIJO_FORMATO_SERVICIO_FACTURA" onchange="updateSuffixFormatService()" style="width: 240px;">
@@ -132,19 +155,25 @@
 									<option value="TEXTUAL">Textual (MES)</option>
 								</select>
 							</div>
-						</div>
+						</div> #}
 						<hr>
-						<div class="d-flex justify-content-left">
+						<div id="">
+							<div class="row form-group mb-2">
+								<label class="col-5 m-auto" for="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO">Días para fecha de vencimiento</label>
+								<input type="number" maxlength="3" class="col mr-3 shadow-sm form-control form-control-sm text-centershadow-sm" id="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO">
+							</div>
+						</div>
+						{# <div class="d-flex justify-content-left">
 							<div class="form-group">
 								<label for="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO">Días para fecha de vencimiento.</label>
 								<input type="number" maxlength="3" class="form-control form-control-sm text-centershadow-sm" id="SUGERENCIA_VENCIMIENTO_FACTURA_SERVICIO" style="width: 100px;">
 							</div>
-						</div>
+						</div> #}
 						<div class="d-flex flex-row-reverse">
 							<button class="btn btn-success btn-sm shadow-sm" onclick="updateExpirationDateSuggestion()">Confirmar</button>
 						</div>
 						<hr>
-						<div class="w-75 mt-3">
+						<div class="w-100 mt-3">
 							<h6 class="card-subtitle mb-2 text-mycolor">Período de facturación de servicios</h6>
 							<table class="table table-sm table-bordered">
 								<thead class="background-template-color text-template-color">
@@ -209,7 +238,7 @@
 							</tbody>
 						</table>
 						<div class="d-flex flex-row-reverse">
-							<button class="btn btn-success btn-sm shadow-sm" onclick="updateBillingIndicators()">Confirmar</button>
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updateBillingIndicators()" title="Guardar"><i class="fas fa-save"></i> Guardar</button>
 						</div>
 					</div>
 					<!-- FACTURACION -->
@@ -261,7 +290,20 @@
 							<p class="ml-2">Permitir facturar notas de débito.</p>
 						</div>
 						<hr>
-						<div class="input-group">
+						<div id="">
+							<div class="row form-group mb-2">
+								<label class="col-5 m-auto" for="">Formato de ticket a imprimir</label>
+								<select type="text" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="SUFIJO_FORMATO_SERVICIO_FACTURA" onchange="changeFormatTicket(this.value)">
+									{% if formatTicket == "72x1000" %}<option value="72x1000" selected >Ticket A</option>{% else %}<option value="72x1000">Ticket A</option>{% endif %}
+									{% if formatTicket == "B/72x1000" %}<option value="B/72x1000" selected >Ticket B</option>{% else %}<option value="B/72x1000">Ticket B</option>{% endif %}
+									{% if formatTicket == "a4" %}<option value="a4" selected >A4</option>{% else %}<option value="a4">A4</option>{% endif %}
+									{% if formatTicket == "A5vertical" %}<option value="A5vertical" selected >A5 Vertical</option>{% else %}<option value="A5vertical">A5 Vertical</option>{% endif %}
+									{% if formatTicket == "A5horizontal" %}<option value="A5horizontal" selected >A5 Horizontal</option>{% else %}<option value="A5horizontal">A5 Horizontal</option>{% endif %}
+								</select>
+							</div>
+						</div>
+
+						{# <div class="input-group">
 							<div class="form-group">
 								<label for="formGroupExampleInput">Formato de ticket a imprimir.</label>
 								<select class="custom-select custom-select-sm m-1" id="" onchange="changeFormatTicket(this.value)" style="width: 250px;">
@@ -272,11 +314,11 @@
 									{% if formatTicket == "A5horizontal" %}<option value="A5horizontal" selected >A5 Horizontal</option>{% else %}<option value="A5horizontal">A5 Horizontal</option>{% endif %}
 								</select>
 							</div>
-						</div>
+						</div> #}
 						<hr>
 						<div>
 							<div class="form-group w-100">
-								<label for="idTextareaAdendaConfiguration">Adenda.</label>
+								<label for="idTextareaAdendaConfiguration">Adenda</label>
 								<textarea id="idTextareaAdendaConfiguration" class="form-control shadow-sm rounded-0" maxlength="200" rows="2">{{adenda}}</textarea>
 							</div>
 							<div class="d-flex flex-row-reverse">
@@ -309,7 +351,7 @@
 								</select>
 							</div>
 							<div class="d-flex flex-row-reverse">
-								<button class="btn btn-success btn-sm shadow-sm" onclick="updateDefaultBranchCompany()" >Confirmar</button>
+								<button class="btn btn-success btn-sm shadow-sm" onclick="updateDefaultBranchCompany()" ><i class="fas fa-save"></i> Guardar</button>
 							</div>
 						</div>
 					</div>
@@ -383,7 +425,7 @@
 <script type="text/javascript">
 	$(document).ready( function(){
 		loadConfiguration()
-		let heightwindow = ($(document).height() * 60) / 100;
+		let heightwindow = ($(document).height() * 65) / 100;
 		$('#containerTable').css('height', heightwindow+'px');
 
 		//loadBranchCompany();

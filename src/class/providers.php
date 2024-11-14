@@ -11,28 +11,34 @@ class providers{
 	}
 
 	public function getProvider($rut, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM proveedores WHERE rut = ? AND idEmpresa = ?", array('si', $rut, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM proveedores WHERE rut = ? AND idEmpresa = ?", array('si', $rut, $idBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro un proveedor con el rut '" . $rut . "' en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getProviderWithId($idProvider){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM proveedores WHERE idProveedor = ?", array('i', $idProvider), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM proveedores WHERE idProveedor = ?", array('i', $idProvider), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "El id del proveedor seleccionado no fue encontrado en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getLastId(){
-		$responseQuery = DataBase::sendQuery("SELECT MAX(idProveedor) AS lastId FROM proveedores", null, "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT MAX(idProveedor) AS lastId FROM proveedores", null, "OBJECT");
 		if($responseQuery->result == 2) return ($responseQuery->objectResult->lastId + 1);
 	}
-
+	//WORKING
 	public function getProviders($lastId, $textToSearch, $withBalance, $myBusiness){
+		$dbClass = new DataBase();
+		$providerClass = new providers();
+		$utilsClass = new utils();
 		$limitPage = 7;
 		if($lastId == 0) {
-			$lastId = providers::getLastId();
+			$lastId = $providerClass->getLastId();
 			$limitPage = 14;
 		}
 
@@ -51,16 +57,16 @@ class providers{
 
 		$sqlToSend .= " AND P.idProveedor < ? ORDER BY P.idProveedor DESC LIMIT " . $limitPage;
 
-		$responseQuery = DataBase::sendQuery($sqlToSend, array('ii', $myBusiness, $lastId), "LIST");
+		$responseQuery = $dbClass->sendQuery($sqlToSend, array('ii', $myBusiness, $lastId), "LIST");
 		if($responseQuery->result == 2){
 			$newLastId = $lastId;
 			$arrayResult = array();
 			foreach($responseQuery->listResult AS $key => $value){
 				if($newLastId > $value['idProveedor']) $newLastId = $value['idProveedor'];
 
-				$value['razonSocial'] = utils::stringToLowerWithFirstCapital($value['razonSocial']);
-				$value['direccion'] = utils::stringToLowerWithFirstCapital($value['direccion']);
-				$value['email'] = utils::stringToLower($value['email']);
+				$value['razonSocial'] = $utilsClass->stringToLowerWithFirstCapital($value['razonSocial']);
+				$value['direccion'] = $utilsClass->stringToLowerWithFirstCapital($value['direccion']);
+				$value['email'] = $utilsClass->stringToLower($value['email']);
 
 				$arrayResult[] = $value;
 			}
@@ -71,14 +77,15 @@ class providers{
 		}
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getSuggestionProviders($suggestionProvider, $myBusiness){
+		$dataBase = new DataBase();
 		$sql = null;
 		if(ctype_digit($suggestionProvider))
 			$sql = "SELECT DISTINCT * FROM proveedores WHERE idEmpresa = ? AND rut LIKE '%" . $suggestionProvider . "%'";
 		else $sql = "SELECT DISTINCT * FROM proveedores WHERE idEmpresa = ? AND razonSocial LIKE '%" . $suggestionProvider . "%'";
 
-		$responseQuery = DataBase::sendQuery($sql, array('i', $myBusiness), "LIST");
+		$responseQuery = $dataBase->sendQuery($sql, array('i', $myBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			foreach($responseQuery->listResult AS $key => $value){
@@ -95,7 +102,7 @@ class providers{
 	}
 
 
-
+	//[OK]
 	public function getProvidersToExport($idBusiness, $date){
 
 		$dataBase = new DataBase();

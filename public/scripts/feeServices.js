@@ -22,48 +22,68 @@ function loadFeeServices(){
 
 function createRow(idFee, idService, idClient, nameClient, nameService, date, period, valueIVA, coin, cost, amount, amountQuote, currentValue){
 	var coinUi = coin == "UI" ? "$" : coin;
-	var nullCell = "<td class='text-right toHidden2'> </td>";
-	var row = "<tr id='" + idFee + "'>";
-	row += "<td class='text-right pointerToHover'  onclick='showModifyModalFeeService(" + idFee + ")' >" + nameClient + "</td>";
-	row += "<td id='service" + idFee + "' class='text-right pointerToHover' onclick='showModifyModalFeeService(" + idFee + ")'>" + nameService + "</td>";
-	row += "<td id='period" + idFee + "' class='text-right toHidden2 pointerToHover notShow' onclick='showModifyModalFeeService(" + idFee + ")'>" + period + "</td>";
-	row += "<td class='text-right toHidden2 notShow' >" + valueIVA + "</td>";
+	var nullCell = "<td class='text-right'> </td>";
+	var row = "<tr id='" + idFee + "' onclick='showModifyModalFeeService(" + idFee + ")'>";
+	row += "<td class='text-left cell-truncate'> <p title='" + nameClient + "'> " + nameClient + "</p></td>";
+	row += "<td id='service" + idFee + "' class='text-right'> <span class='mainText' title='" + nameService + "'>" + nameService + "</span><br><span class='secondText'> " + period + " </span></td>";
+	// row += "<td id='period" + idFee + "' class='text-right' " + period + "</td>";
+	// row += "<td class='text-right toHidden2 notShow' >" + valueIVA + "</td>";
 	//row += "<td class='text-right toHidden2' >" + coin + "</td>";
-	row += "<td class='text-right toHidden2 notShow' >" + coinUi +"  "+ cost + "</td>";
+	// row += "<td class='text-right toHidden2 notShow' >" + coinUi +"  "+ cost + "</td>";
 	if(amountQuote){
-		row += "<td class='text-right toHidden2' >" + coinUi  +"  "+ amountQuote + "</td>";
-		row += "<td class='text-right toHidden2' >" + coin  +"  "+ amount + "</td>";
+		row += "<td class='text-right' >" + coinUi  +"  "+ amountQuote + "</td>";
+		row += "<td class='text-right' >" + coin  +"  "+ amount + "</td>";
 	}else{
-		row += "<td class='text-right toHidden2' >" + coin  +"  "+ amount + "</td>";
+		row += "<td class='text-right' >" + coin  +"  "+ amount + "</td>";
 		row += nullCell;
 	}
-	row += "<td class='text-right toHidden2' >" + date + "</td>";
+	row += "<td class='text-center' >" + date + "</td>";
 	row += "<td class='text-center p-1'>";
 	if(currentValue == 1)
-		row += "<label class='switch'><input id='inputCB" + idFee + "' type='checkbox' checked onclick='changeCurrentValue(this)'><span class='slider round'></span></label></td>";
+		row += "<label class='switch' onclick='handleButtonClick(event," + idFee + ")'><input id='inputCB" + idFee + "' disabled type='checkbox' checked ><span class='slider round'></span></label></td>";
 	else
-		row += "<label class='switch'><input id='inputCB" + idFee + "' type='checkbox' onclick='changeCurrentValue(this)'><span class='slider round'></span></label></td>";
+		row += "<label class='switch' onclick='handleButtonClick(event," + idFee + ")'><input id='inputCB" + idFee + "' disabled type='checkbox' ><span class='slider round'></span></label></td>";
 	row += "<td class='text-center'>";
-	row += "<button class='btn btn-sm background-template-color2 text-template-background mr-1' onclick='showModalCheckInService(" + idFee + ")' data-toggle='tooltip' data-placement='bottom' title='Facturar la cuota seleccionada'><i class='fas fa-receipt text-mycolor'></i></button>";
-	row += "<button class='btn btn-sm btn-danger' onclick='showModalDeleteFeeService(" + idFee + ")'><i class='fas fa-trash-alt text-mycolor'></i></button></td></tr>";
+	row += "<button class='btn btn-sm background-template-color2 text-template-background mr-1 facturar-btn' onclick='handleButtonClick(event," + idFee + ")' data-toggle='tooltip' data-placement='bottom' title='Facturar la cuota seleccionada'><i class='fas fa-receipt text-mycolor'></i></button>";
+	row += "<button class='btn btn-sm btn-danger delete-btn' onclick='handleButtonClick(event," + idFee + ")'><i class='fas fa-trash-alt text-mycolor'></i></button></td></tr>";
 
 	return row;
+}
+// onclick='handleButtonClick(event,"
+// onclick='showModalDeleteFeeService("
+// onclick='showModalCheckInService("
+function handleButtonClick(event, idFee) {
+	console.log(event.currentTarget)
+	console.log(idFee)
+	// Prevent the event from bubbling up to the table row
+	event.stopPropagation();
+
+	// Call the appropriate function based on the button clicked
+	if (event.currentTarget.classList.contains('facturar-btn')) {
+		showModalCheckInService(idFee);
+	} else if(event.currentTarget.classList.contains('delete-btn')){
+		showModalDeleteFeeService(idFee);
+	} else if(event.currentTarget.classList.contains('switch')){
+		changeCurrentValue(idFee);
+	}
 }
 
 function invoiceAllFeeService(){
 	let dateEmitted = $('#inputDateEmittedInvoiceAllService').val() || null;
 	let dateExpiration = $('#inputDateExpirationInvoiceAllService').val() || null;
-	let progressBarIdProcess = null;
+	// let progressBarIdProcess = null;
 	if(dateEmitted){
 		if(dateExpiration){
 
 			$('#modalInvoiceAllFeeService').modal("hide");
-			$('#progressbar').modal();
-			progressBarIdProcess = loadPrograssBar();
+			mostrarLoader(true)
+			// $('#progressbar').modal();
+			// progressBarIdProcess = loadPrograssBar();
 			sendAsyncPost("invoiceAllFeeService", {dateEmitted: dateEmitted, dateExpiration: dateExpiration})
-			.then(function(response){
-				$('#progressbar').modal("hide");
-				stopPrograssBar(progressBarIdProcess);
+				.then(function(response){
+				mostrarLoader(false)
+				// $('#progressbar').modal("hide");
+				// stopPrograssBar(progressBarIdProcess);
 				showReplyMessage(response.result, response.message, "Facturar servicios", "modalInvoiceAllFeeService");
 				$("#modalButtonResponse").click(function(){
 					if(response.result == 2){
@@ -72,11 +92,12 @@ function invoiceAllFeeService(){
 				});
 			})
 			.catch(function(response){
-				$('#progressbar').modal("hide");
-				stopPrograssBar(progressBarIdProcess);
+				mostrarLoader(false)
+				// $('#progressbar').modal("hide");
+				// stopPrograssBar(progressBarIdProcess);
 				showReplyMessage(response.result, response.message, "Facturar servicios", "modalInvoiceAllFeeService");
 			});
-		}else showReplyMessage(1, "Debe ingresar una fecha de vencimietno para los comprobantes emitidos.", "Campo vencimiento requerido", "modalInvoiceAllFeeService");
+		}else showReplyMessage(1, "Debe ingresar una fecha de vencimiento para los comprobantes emitidos.", "Campo vencimiento requerido", "modalInvoiceAllFeeService");
 	}else showReplyMessage(1, "Debe ingresar una fecha de emisión para el comprobante.", "Campo fecha emisión requerido", "modalInvoiceAllFeeService");
 }
 
@@ -134,10 +155,13 @@ function countBillableFeeService(){
 			let response = sendPost("getCountBillableFeeService", {date:dateEmitted, date2:dateExpiration });
 			console.log(response);
 			if (response.countBillable != 0){
-				if(response.result == 2)
-					$('#messageInvoiceAllService').html("¿Seguro que desea emitir las " + response.countBillable + " cuotas por servicio facturables con fecha "+dateEmitted +"?");
-				else
-					$('#messageInvoiceAllService').html("¿Seguro que desea emitir todas las cuotas por servicio facturables con fecha "+dateEmitted +"?");
+				if(response.result == 2){
+					if(response.countBillable > 1)
+						$('#messageInvoiceAllService').html("¿Emitir las " + response.countBillable + " cuotas por servicio facturables con fecha "+ dateEmitted.substr(8, 2) + "/" + dateEmitted.substr(5, 2) + "/" + dateEmitted.substr(0, 4) +"?");
+					else
+						$('#messageInvoiceAllService').html("¿Emitir la cuota por servicio facturables con fecha "+ dateEmitted.substr(8, 2) + "/" + dateEmitted.substr(5, 2) + "/" + dateEmitted.substr(0, 4) +"?");
+				} else
+					$('#messageInvoiceAllService').html("¿Emitir todas las cuotas por servicio facturables con fecha "+ dateEmitted.substr(8, 2) + "/" + dateEmitted.substr(5, 2) + "/" + dateEmitted.substr(0, 4) +"?");
 
 				//$('#inputDateEmittedInvoiceAllService').val(getCurrentDate());
 				//$('#inputDateExpirationInvoiceAllService').val(calculateDateExpiration($('#inputDateEmittedInvoiceAllService').val(), responseGetExpirationSuggestion.configValue));
@@ -149,7 +173,7 @@ function countBillableFeeService(){
 				$('#inputConfirmationButtonInvoiceAllService').prop( "disabled", false );
 			}
 			else{
-				$('#messageInvoiceAllService').html("No hay coutas para emitir con fecha "+dateEmitted);
+				$('#messageInvoiceAllService').html("No hay coutas para emitir con fecha "+ dateEmitted.substr(8, 2) + "/" + dateEmitted.substr(5, 2) + "/" + dateEmitted.substr(0, 4));
 				$('#inputConfirmationButtonInvoiceAllService').prop( "disabled", true );
 			}
 		})
@@ -164,21 +188,48 @@ function invoiceFeeService(idFeeService){
 
 	if(dateEmitted){
 		if(dateExpiration){
-			let response = sendPost('invoiceFeeService', {idFeeService: idFeeService, dateEmitted: dateEmitted, dateExpiration: dateExpiration});
-			if(response.result == 2){
-				let responseVoucher = sendPost("getLastVoucherEmitted");
-				if (responseVoucher.result == 2) {
-					let data = {id:responseVoucher.objectResult.id}
-					openModalVoucherFee(data, "CLIENT");
-					$('#buttonCloseVoucherFee').click(function(){
-						$('#modalCheckInFeeService').modal('hide');
-						window.location.reload();
-					});
-				}
-			}else{
-				showReplyMessage(response.result, response.message, "Facturar servicios", "modalCheckInFeeService");
-				$('#btnConfirmNewFeeService').prop('disabled', false);
-			}
+			// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+			$('#modalCheckInFeeService').modal('hide');
+			mostrarLoader(true)
+			sendAsyncPost("invoiceFeeService", {idFeeService: idFeeService, dateEmitted: dateEmitted, dateExpiration: dateExpiration})
+				.then(function(response){
+					mostrarLoader(false)
+					if(response.result == 2){
+						let responseVoucher = sendPost("getLastVoucherEmitted");
+						if (responseVoucher.result == 2) {
+							let data = {id:responseVoucher.objectResult.id}
+							openModalVoucherFee(data, "CLIENT");
+							$('#buttonCloseVoucherFee').click(function(){
+								$('#modalCheckInFeeService').modal('hide');
+								window.location.reload();
+							});
+						}
+					} else {
+						showReplyMessage(response.result, response.message, "Facturar servicios", null);
+						$('#btnConfirmNewFeeService').prop('disabled', false);
+					}
+				})
+				.catch(function(response){
+					showReplyMessage(response.result, response.message, "Error", null);
+					mostrarLoader(false)
+				});
+
+			// let response = sendPost('invoiceFeeService', {idFeeService: idFeeService, dateEmitted: dateEmitted, dateExpiration: dateExpiration});
+			// if(response.result == 2){
+			// 	let responseVoucher = sendPost("getLastVoucherEmitted");
+			// 	if (responseVoucher.result == 2) {
+			// 		let data = {id:responseVoucher.objectResult.id}
+			// 		openModalVoucherFee(data, "CLIENT");
+			// 		$('#buttonCloseVoucherFee').click(function(){
+			// 			$('#modalCheckInFeeService').modal('hide');
+			// 			window.location.reload();
+			// 		});
+			// 	}
+			// }else{
+			// 	showReplyMessage(response.result, response.message, "Facturar servicios", "modalCheckInFeeService");
+			// 	$('#btnConfirmNewFeeService').prop('disabled', false);
+			// }
+			// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 		}else showReplyMessage(1, "Debe ingresar una fecha de vencimietno para los comprobantes emitidos.", "Campo vencimiento requerido", "modalCheckInFeeService");
 	}else showReplyMessage(1, "Debe ingresar una fecha de emisión para el comprobante.", "Campo fecha emisión requerido", "modalCheckInFeeService");
@@ -212,7 +263,8 @@ function searchClientFeeService(inputText){
 }
 
 function showModalDeleteFeeService(idFeeService){
-	let nameClient = getCellValue($('#' + idFeeService + '').children(), 0);
+	// let nameClient = getCellValue($('#' + idFeeService + '').children(), 0);
+	let nameClient = $('tr[id="' + idFeeService + '"] td:first-child p').attr('title');
 	$('#idParagraphFeeService').text("¿Desea borrar la cuota de " + nameClient + " ?")
 	$('#modalDeleteFeeService').modal();
 	$('#btnConfirmDeleteFeeService').off('click');
@@ -228,21 +280,45 @@ function deleteFeeService(idFeeService){
 		$('#' + idFeeService).remove();
 }
 
-function changeCurrentValue(rowAction){
-	let idFeeService = rowAction.id;
-	idFeeService = idFeeService.replace("inputCB", "");
-	let response = sendPost("changeCurrentValueService", {idFeeService: idFeeService});
-	let checkBox = document.getElementById(rowAction.id);
-	let titleError = "Error desactivar cuota";
+// function changeCurrentValue(rowAction){
+// 	let idFeeService = rowAction.id;
+// 	idFeeService = idFeeService.replace("inputCB", "");
+// 	let response = sendPost("changeCurrentValueService", {idFeeService: idFeeService});
+// 	let checkBox = document.getElementById(rowAction.id);
+// 	let titleError = "Error desactivar cuota";
+// 	if(checkBox.checked)
+// 		titleError = "Error activar cuota";
+// 	if(response.result != 2){
+// 		showReplyMessage(response.result, response.message, titleError, null);
+// 		if(checkBox.checked)
+// 			checkBox.checked = false;
+// 		else
+// 			checkBox.checked = true;
+// 	}
+// }
+function changeCurrentValue(idFeeService){
+	console.log("change current value")
+	// let idFeeService = rowAction.id;
+	// idFeeService = idFeeService.replace("inputCB", "");
+	let checkBox = document.getElementById("inputCB" + idFeeService);
+	console.log(checkBox)
+	let titleError = "Error activar cuota";
 	if(checkBox.checked)
-		titleError = "Error activar cuota";
-	if(response.result != 2){
-		showReplyMessage(response.result, response.message, titleError, null);
-		if(checkBox.checked)
-			checkBox.checked = false;
-		else
-			checkBox.checked = true;
-	}
+		titleError = "Error desactivar cuota";
+	sendAsyncPost("changeCurrentValueService", {idFeeService: idFeeService})
+		.then(function(response){
+			if(response.result == 2){
+				if(checkBox.checked)
+					checkBox.checked = false;
+				else
+					checkBox.checked = true;
+			} else {
+				showReplyMessage(response.result, response.message, titleError, null);
+			}
+		})
+		.catch(function(response){
+			showReplyMessage(response.result, response.message, titleError, null);
+		});
 }
 
 $("#modalChangeService").on('hidden.bs.modal', function () {
@@ -254,6 +330,7 @@ $("#modalChangeService").on('hidden.bs.modal', function () {
 function showModifyModalFeeService(idFeeService){
 	let response = sendPost('getSelectedFeeService', {idFeeService: idFeeService});
 	if(response.result == 2){
+		console.log(response.feeService)
 		$('#inputModifyFeeClient').val(response.feeService.nombreCliente);
 		$('#textAreaServiceSelected').html(response.feeService.descripcion);
 		$('#selectModifyFeeMonth').val(response.feeService.periodo).change();
@@ -294,16 +371,40 @@ function modifyFeeService(idFeeService){
 	}
 }
 
+function goToClients(){
+	window.location.href = getSiteURL() + 'ver-clientes';
+}
+
 function downloadFeeService(){
-	let response = sendPost("getFeeServiceToExport", null);
-	if(response.result == 2){
-		const linkSource = `data:application/vnd.ms-excel;base64,${ response.file }`;
-		const downloadLink = document.createElement("a");
-		const fileName = "cuotas_por_servicios.xlsx";
-		downloadLink.href = linkSource;
-		downloadLink.download = fileName;
-		downloadLink.click();
-	}
+	mostrarLoader(true)
+	sendAsyncPost("getFeeServiceToExport", null)
+		.then(function(response){
+			mostrarLoader(false)
+			if(response.result == 2){
+				const linkSource = `data:application/vnd.ms-excel;base64,${ response.file }`;
+				const downloadLink = document.createElement("a");
+				const fileName = "cuotas_por_servicios.xlsx";
+				downloadLink.href = linkSource;
+				downloadLink.download = fileName;
+				downloadLink.click();
+			} else {
+				showReplyMessage(response.result, response.message, "Notificación", null);
+			}
+		})
+		.catch(function(response){
+			mostrarLoader(false)
+			showReplyMessage(response.result, response.message, "Notificación", null);
+		});
+
+	// let response = sendPost("getFeeServiceToExport", null);
+	// if(response.result == 2){
+	// 	const linkSource = `data:application/vnd.ms-excel;base64,${ response.file }`;
+	// 	const downloadLink = document.createElement("a");
+	// 	const fileName = "cuotas_por_servicios.xlsx";
+	// 	downloadLink.href = linkSource;
+	// 	downloadLink.download = fileName;
+	// 	downloadLink.click();
+	// }
 }
 
 function getCellValue(td, position){
@@ -331,12 +432,12 @@ function loadDataInvoiceService (nombreServicio, nombreReceptor, dateServiceInvo
 }
 
 
-function goToClients(){
-	var url = getSiteURL() + 'ver-clientes/unchecked';
-	window.location.href = url;
+// function goToClients(){
+// 	var url = getSiteURL() + 'ver-clientes/unchecked';
+// 	window.location.href = url;
 
-	//document.getElementById("checkboxClientWithBalance").checked = false;
-}
+// 	//document.getElementById("checkboxClientWithBalance").checked = false;
+// }
 
 function openModalVoucherFee(button, prepareFor){
 	let idVoucher = button.id;

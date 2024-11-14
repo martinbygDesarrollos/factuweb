@@ -23,117 +23,132 @@ class ctr_vouchers{
 	/*
 	* VL: Obtengo toda la informaciòn de los indicadores_facturacion (iva) segùn los permisos de acceso que tenga el usuario que inicia sesiòn
 	*/
-	public function getIVAsAllowed(){
+	//UPDATED
+	public function getIVAsAllowed($currentSession){
+		$othersClass = new others();
+		$userController = new ctr_users();
 		$response = new \stdClass();
-
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetConfig = ctr_users::getVariableConfiguration("INDICADORES_FACTURACION_USABLES");
-			if($responseGetConfig->result == 2){
-				$listIVA = explode(",", $responseGetConfig->configValue);//en configValue obtenemos los ids de los indicadores_facturacion a los que se tienen permisos
-				$arrayResult = array();
-				for($i = 0; $i < sizeof($listIVA); $i ++) {
-					$responseGetIVA = others::getValueIVA($listIVA[$i]);//$responseGetIVA tenemos toda la informaciòn de un indicadores_facturacion segùn el id
-					if($responseGetIVA->result == 2){
-						$newRow = array("idIVA" => $responseGetIVA->objectResult->id, "nombre" => $responseGetIVA->objectResult->nombre, "valor" => number_format($responseGetIVA->objectResult->valor,2,",","."));
-						$arrayResult[] = $newRow;
-					}
+		$responseGetConfig = $userController->getVariableConfiguration("INDICADORES_FACTURACION_USABLES", $currentSession);
+		if($responseGetConfig->result == 2){
+			$listIVA = explode(",", $responseGetConfig->configValue);//en configValue obtenemos los ids de los indicadores_facturacion a los que se tienen permisos
+			$arrayResult = array();
+			for($i = 0; $i < sizeof($listIVA); $i ++) {
+				$responseGetIVA = $othersClass->getValueIVA($listIVA[$i]);//$responseGetIVA tenemos toda la informaciòn de un indicadores_facturacion segùn el id
+				if($responseGetIVA->result == 2){
+					$newRow = array("idIVA" => $responseGetIVA->objectResult->id, "nombre" => $responseGetIVA->objectResult->nombre, "valor" => number_format($responseGetIVA->objectResult->valor,2,",","."));
+					$arrayResult[] = $newRow;
 				}
-				$response->result = 2;
-				$response->listResult = $arrayResult;
-			}else return $responseGetConfig;
-		}else return $responseGetBusiness;
+			}
+			$response->result = 2;
+			$response->listResult = $arrayResult;
+		}else return $responseGetConfig;
 
 		return $response;
 	}
-
-	public function consultCaes($typeCFE){
+	//UPDATED
+	public function consultCaes($typeCFE, $currentSession){
 		$response = new \stdClass();
-
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetCaes = ctr_rest::consultarCaes($responseGetBusiness->infoBusiness->rut);
-			if($responseGetCaes->result == 2){
-				foreach ($responseGetCaes->caes->caes as $key => $cae) {
-					if(strcmp($cae->cfeType, $typeCFE)){
-						if($cae->isUsable == true){
-							$response->result = 2;
-							$response->message ="USABLE";
-						}else{
-							$response->result = 0;
-							$response->message = "Actualmente no puede emitir " . utils::getNameVoucher($typeCFE,0) . ".";
-						}
-						break;
+		$restController = new ctr_rest();
+		$utilClass = new utils();
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		$responseGetCaes = $restController->consultarCaes($currentSession->rut, $currentSession->tokenRest);
+		if($responseGetCaes->result == 2){
+			foreach ($responseGetCaes->caes->caes as $key => $cae) {
+				if(strcmp($cae->cfeType, $typeCFE)){
+					if($cae->isUsable == true){
+						$response->result = 2;
+						$response->message ="USABLE";
+					}else{
+						$response->result = 0;
+						$response->message = "Actualmente no puede emitir " . $utilClass->getNameVoucher($typeCFE,0) . ".";
 					}
+					break;
 				}
-				if(!isset($response->result)){
-					$response->result = 0;
-					$response->message = "No se encontro información para CFEs de tipo: " . utils::getNameVoucher($typeCFE,0) . " entre los CAEs disponibles.";
-				}
-			}else return $responseGetCaes;
-		}else return $responseGetBusiness;
+			}
+			if(!isset($response->result)){
+				$response->result = 0;
+				$response->message = "No se encontro información para CFEs de tipo: " . $utilClass->getNameVoucher($typeCFE,0) . " entre los CAEs disponibles.";
+			}
+		}else return $responseGetCaes;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
 
 	//crea un comprobante para enviarlo a ormen luego de que se envia y es aceptado el comproabnte se registra en el sistema. ctr_rest es la comunicacion con ormen
-	public function createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idBuy){
+	//UPDATED
+	public function createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration = null, $adenda, $listDetail, $idBuy, $discountTipo, $mediosPago, $currentSession){
 		$response = new \stdClass();
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$receiver = null;
-			if(count($objClient) != 0){
-				$responseIsValid = ctr_clients::isValidForEmit($typeVoucher, $objClient[0]['document']);
-				if($responseIsValid->result == 2){
-					$receiver = ctr_rest::prepareReceptorToSend($objClient[0]['document'], $objClient[0]['name'], $objClient[0]['address'], $objClient[0]['city'], $objClient[0]["department"], "Uruguay");
-				}else return $responseIsValid;
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$userController = new ctr_users();
+		$voucherController = new ctr_vouchers();
+		$voucherEmittedController = new ctr_vouchers_emitted();
+
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		$receiver = null;
+		if(count($objClient) != 0){
+			$responseIsValid = $clientController->isValidForEmit($typeVoucher, $objClient[0]['document']);
+			if($responseIsValid->result == 2){
+				$receiver = $restController->prepareReceptorToSend($objClient[0]['document'], $objClient[0]['name'], $objClient[0]['address'], $objClient[0]['city'], $objClient[0]["department"], "Uruguay");
+			}else return $responseIsValid;
+		}
+		$arrayDetail = array();
+		foreach ($listDetail as $key => $detail){
+			$iva = 1;
+			if ($detail['idIva'] > 0 || $detail['idIva'] != null || $detail['idIva'] != ""){ // PARA QUE?????????????
+				$iva = $detail['idIva'];
+			}
+			if(isset($detail['discount']) && floatval($detail['discount']) > 0 ){ // EL PRODUCTO TIENE DESCUENTO
+				// if($discountTipo == 2){ // DESCUENTO EN PORCENTAJE
+				// 	$discount_percentage = floatval($detail['discount']);
+				// 	$original_price = floatval($detail['price']);
+				// 	$discount_amount = $original_price * ($discount_percentage / 100);
+				// 	$detail['price'] = $original_price - $discount_amount;
+				// }else{ // DESCUENTO EN PESOS
+				// 	$discount_amount = floatval($detail['discount']);
+				// 	$original_price = floatval($detail['price']);
+				// 	$detail['price'] = $original_price - $discount_amount;
+				// }
+				$arrayDetail[] = $restController->prepareDetalleToSend($detail['idIva'], $detail['description'], null, $detail['detail'], $detail['count'], null, $detail['price'], $discountTipo, -$detail['discount']);
+			} else {
+				$arrayDetail[] = $restController->prepareDetalleToSend($detail['idIva'], $detail['description'], null, $detail['detail'], $detail['count'], null, $detail['price']);
+			}
+		}
+		$responseGetGrossAmount = $userController->getVariableConfiguration("IVA_INCLUIDO", $currentSession);
+		if($responseGetGrossAmount->result == 2){
+			$grossAmount = 0;
+			if(strcmp($responseGetGrossAmount->configValue, "SI") == 0)
+				$grossAmount = 1;
+
+			$branchCompany = null;
+			$responseGetGrossAmount = $userController->getVariableConfiguration("SUCURSAL_IS_PRINCIPAL", $currentSession);
+			if ($responseGetGrossAmount->result == 2){
+				$branchCompany = $responseGetGrossAmount->configValue;
 			}
 
-			$arrayDetail = array();
-			//var_dump($listDetail);
-			//exit;
+			$responseCreateCFE = $voucherController->createNewCFE($typeVoucher, $dateVoucher, $grossAmount, $shapePayment, $dateExpiration, $typeCoin, $arrayDetail, $receiver, 0, null, $adenda, $branchCompany, $idBuy, $currentSession, $mediosPago);
+			if($responseCreateCFE->result == 2){
+				//$responseGetVouchers = ctr_vouchers_emitted::updateDataVoucherEmitted($responseGetBusiness->infoBusiness->rut);
+				$lastVoucher = $voucherEmittedController->getLastVoucherEmitted($currentSession->idEmpresa);
+				if ( $lastVoucher->result == 2 )
+					$lastVoucherId = $lastVoucher->objectResult->id;
+				else $lastVoucherId;
 
-			foreach ($listDetail as $key => $detail){
-				$iva = 1;
-				if ($detail['idIva'] > 0 || $detail['idIva'] != null || $detail['idIva'] != ""){
-					$iva = $detail['idIva'];
+				$responseGetVouchers = $voucherEmittedController->getVouchersEmittedFromRest($currentSession, 1, $lastVoucherId, null, null);
+				if($responseGetVouchers->result == 2){
+					$response->result = 2;
+					$response->message = "El comprobante fue emitido correctamente y ya se encuentra en el sistema.";
+				}else{
+					$response->result = 1;
+					$response->message = "El comprobante fue emitido correctamente pero un error no permitio traerlo al sistema. Actualice los comprobantes almacenados para obtenerlo.";
 				}
-				$arrayDetail[] = ctr_rest::prepareDetalleToSend($detail['idIva'], $detail['description'], null, $detail['detail'], $detail['count'], null, $detail['price']);
-			}
+			}else return $responseCreateCFE;
+		}else return $responseGetGrossAmount;
 
-			$responseGetGrossAmount = ctr_users::getVariableConfiguration("IVA_INCLUIDO");
-			if($responseGetGrossAmount->result == 2){
-				$grossAmount = 0;
-				if(strcmp($responseGetGrossAmount->configValue, "SI") == 0)
-					$grossAmount = 1;
-
-				$branchCompany = null;
-				$responseGetGrossAmount = ctr_users::getVariableConfiguration("SUCURSAL_IS_PRINCIPAL");
-				if ($responseGetGrossAmount->result == 2){
-					$branchCompany = $responseGetGrossAmount->configValue;
-				}
-
-
-				$responseCreateCFE = ctr_vouchers::createNewCFE($typeVoucher, $dateVoucher, $grossAmount, $shapePayment, $dateExpiration, $typeCoin, $arrayDetail, $receiver, 0, null, $adenda, $branchCompany, $idBuy);
-				if($responseCreateCFE->result == 2){
-					//$responseGetVouchers = ctr_vouchers_emitted::updateDataVoucherEmitted($responseGetBusiness->infoBusiness->rut);
-					$lastVoucher = ctr_vouchers_emitted::getLastVoucherEmitted();
-					if ( $lastVoucher->result == 2 )
-						$lastVoucherId = $lastVoucher->objectResult->id;
-					else $lastVoucherId;
-
-					$responseGetVouchers = ctr_vouchers_emitted::getVouchersEmittedFromRest($responseGetBusiness->infoBusiness->rut, 1, $lastVoucherId, null, null);
-					if($responseGetVouchers->result == 2){
-						$response->result = 2;
-						$response->message = "El comprobante fue emitido correctamente y ya se encuentra en el sistema.";
-					}else{
-						$response->result = 1;
-						$response->message = "El comprobante fue emitido correctamente pero un error no permitio traerlo al sistema. Actualice los comprobantes almacenados para obtenerlo.";
-					}
-				}else return $responseCreateCFE;
-			}else return $responseGetGrossAmount;
-
-		}else return $responseGetBusiness;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
@@ -198,54 +213,53 @@ class ctr_vouchers{
 
 		return $response;
 	}
-
-	public function exportCFEs($prepareFor, $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher){
+	//UPDATED
+	public function exportCFEs($prepareFor, $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher, $currentSession){
 		$response = new \stdClass();
+		$handleDateTimeClass = new handleDateTime();
+		$restController = new ctr_rest();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetInfoBusiness = ctr_users::getBusinessInformation($responseGetBusiness->idBusiness);
-			if($responseGetInfoBusiness->result == 2){
-				$dateTo = handleDateTime::getDateInt($dateTo) . "000000";
-				$dateFrom = handleDateTime::getDateInt($dateFrom) . "000000";
-				return ctr_rest::exportacion($responseGetInfoBusiness->objectResult->rut, $prepareFor, "application%2Fvnd.ms-excel", $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher);
-			}else return $responseGetInfoBusiness;
-		}else return $responseGetBusiness;
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		// $responseGetInfoBusiness = ctr_users::getBusinessInformation($currentSession->idEmpresa);
+		// if($responseGetInfoBusiness->result == 2){
+		$dateTo = $handleDateTimeClass->getDateInt($dateTo) . "000000";
+		$dateFrom = $handleDateTimeClass->getDateInt($dateFrom) . "000000";
+		return $restController->exportacion($currentSession->rut, $prepareFor, "application%2Fvnd.ms-excel", $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher, $currentSession->tokenRest);
+		// }else return $responseGetInfoBusiness;
+		// }else return $responseGetBusiness;
+
+		// return $response;
+	}
+	//UPDATED
+	public function createNewCFE($typeCFE, $dateVoucher, $grossAmount, $typePay, $dateExpiration, $typeCoin, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $currentSession, $mediosPago = null){
+		$response = new \stdClass();
+		$restController = new ctr_rest();
+		$voucherController = new ctr_vouchers();
+		$handleDateTimeClass = new handleDateTime();
+		$exchangeRate = null;
+		if(strcmp($typeCoin, "UYU") != 0){
+			$responseExchange = $voucherController->getQuote($typeCoin, $dateVoucher);
+			if($responseExchange->result == 2)
+				$exchangeRate = $responseExchange->currentQuote;
+			else return $responseExchange;
+		}
+		$dateVoucherINT = $handleDateTimeClass->getDateInt($dateVoucher);
+		if(!is_null($dateExpiration))
+			$dateExpiration = $handleDateTimeClass->getDateInt($dateExpiration);
+
+		return $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->tokenRest);
 
 		return $response;
 	}
 
-	public function createNewCFE($typeCFE, $dateVoucher, $grossAmount, $typePay, $dateExpiration, $typeCoin, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy){
-		$response = new \stdClass();
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseInfoBusiness = ctr_users::getBusinessInformation($responseGetBusiness->idBusiness);
-			if($responseInfoBusiness->result == 2){
-
-				$exchangeRate = null;
-				if(strcmp($typeCoin, "UYU") != 0){
-					$responseExchange = ctr_vouchers::getQuote($typeCoin, $dateVoucher);
-					if($responseExchange->result == 2)
-						$exchangeRate = $responseExchange->currentQuote;
-					else return $responseExchange;
-				}
-				$dateVoucherINT = handleDateTime::getDateInt($dateVoucher);
-				if(!is_null($dateExpiration))
-					$dateExpiration = handleDateTime::getDateInt($dateExpiration);
-
-				return ctr_rest::nuevoCFE($responseInfoBusiness->objectResult->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy);
-			}else return $responseInfoBusiness;
-		}else return $responseGetBusiness;
-
-		return $response;
-	}
-
+	//UPDATED
 	//obtiene la cotizacion de una moneda ingresada
 	public function getQuote($typeCoin, $dateQuote){
-
+		$restController = new ctr_rest();
 		if(is_null($dateQuote) || strlen($dateQuote) < 4)
 			$dateQuote = date('Y-m-d');
-		return ctr_rest::obtenerCotizacion($dateQuote, $dateQuote, $typeCoin);
+		return $restController->obtenerCotizacion($dateQuote, $dateQuote, $typeCoin);
 	}
 
 
@@ -269,12 +283,13 @@ class ctr_vouchers{
 
 		return $response;
 	}
-
+	//UPDATED
 	public function parceDateFormat($dateInit, $dateEnding){
-		$dateInitINT = handleDateTime::getDateInt($dateInit);
-		$dateEndingINT = handleDateTime::getDateInt($dateEnding);
+		$handleDateTimeClass = new handleDateTime();
+		$dateInitINT = $handleDateTimeClass->getDateInt($dateInit);
+		$dateEndingINT = $handleDateTimeClass->getDateInt($dateEnding);
 
-		return handleDateTime::setFormatBarDate($dateInitINT) . " al " . handleDateTime::setFormatBarDate($dateEndingINT);
+		return $handleDateTimeClass->setFormatBarDate($dateInitINT) . " al " . $handleDateTimeClass->setFormatBarDate($dateEndingINT);
 	}
 
 
@@ -336,74 +351,85 @@ class ctr_vouchers{
 
 		return $response;
 	}
-
-	public function getVoucherCFE($idVoucher, $prepareFor, $formatFile){
+	//UPDATED
+	public function getVoucherCFE($idVoucher, $prepareFor, $formatFile, $currentSession){
 		$response = new \stdClass();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$restController = new ctr_rest();
+		$vouchersReceivedClass = new vouchersReceived();
+		$provController = new ctr_providers();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetUser = ctr_users::getUserInSesion();
-			if($responseGetUser->result == 2){
-				if(strcmp($prepareFor, "CLIENT") == 0){
-					$responseGetVoucherClient = vouchersEmitted::getVoucherEmitted($idVoucher, $responseGetBusiness->idBusiness);
-					if($responseGetVoucherClient->result == 2){
-						$voucherClient = $responseGetVoucherClient->objectResult;
-						$responseRest = ctr_rest::consultarCFE($responseGetUser->objectResult->rut, null, $voucherClient->tipoCFE, $voucherClient->serieCFE, $voucherClient->numeroCFE, $formatFile);
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		// $responseGetUser = ctr_users::getUserInSesion();
+		// if($responseGetUser->result == 2){
+			if(strcmp($prepareFor, "CLIENT") == 0){
+				$responseGetVoucherClient = $vouchersEmittedClass->getVoucherEmitted($idVoucher, $currentSession->idEmpresa);
+				if($responseGetVoucherClient->result == 2){
+					$voucherClient = $responseGetVoucherClient->objectResult;
+					$responseRest = $restController->consultarCFE($currentSession->rut, null, $voucherClient->tipoCFE, $voucherClient->serieCFE, $voucherClient->numeroCFE, $formatFile, $currentSession->tokenRest);
+					if($responseRest->result == 2){
+						$response->result = 2;
+						$response->voucherCFE = $responseRest->cfe;
+					}else return $responseRest;
+				}else return $responseGetVoucherClient;
+			}else if(strcmp($prepareFor, "PROVIDER") == 0){
+				$responseGetVoucherProvider = $vouchersReceivedClass->getVoucherReceived($idVoucher, $currentSession->idEmpresa);
+				if($responseGetVoucherProvider->result == 2){
+					$responseGetProvider = $provController->getProvider($responseGetVoucherProvider->objectResult->idProveedor, $currentSession->idEmpresa);
+					if($responseGetProvider->result == 2){
+						$voucherProvider = $responseGetVoucherProvider->objectResult;
+						$responseRest = $restController->consultarCFE($currentSession->rut, $responseGetProvider->provider->rut, $voucherProvider->tipoCFE, $voucherProvider->serieCFE, $voucherProvider->numeroCFE, $formatFile, $currentSession->tokenRest);
 						if($responseRest->result == 2){
 							$response->result = 2;
 							$response->voucherCFE = $responseRest->cfe;
 						}else return $responseRest;
-					}else return $responseGetVoucherClient;
-				}else if(strcmp($prepareFor, "PROVIDER") == 0){
-					$responseGetVoucherProvider = vouchersReceived::getVoucherReceived($idVoucher, $responseGetBusiness->idBusiness);
-					if($responseGetVoucherProvider->result == 2){
-						$responseGetProvider = ctr_providers::getProvider($responseGetVoucherProvider->objectResult->idProveedor);
-						if($responseGetProvider->result == 2){
-							$voucherProvider = $responseGetVoucherProvider->objectResult;
-							$responseRest = ctr_rest::consultarCFE($responseGetUser->objectResult->rut, $responseGetProvider->provider->rut, $voucherProvider->tipoCFE, $voucherProvider->serieCFE, $voucherProvider->numeroCFE, $formatFile);
-							if($responseRest->result == 2){
-								$response->result = 2;
-								$response->voucherCFE = $responseRest->cfe;
-							}else return $responseRest;
-						}else return $responseGetProvider;
-					}else return $responseGetVoucherProvider;
-				}else{
-					$response->resutl = 0;
-					$response->message = "No se especifico el origen del comprobante que desea abrir.";
-				}
-			}else return $responseGetUser;
-		}else return $responseGetBusiness;
+					}else return $responseGetProvider;
+				}else return $responseGetVoucherProvider;
+			}else{
+				$response->resutl = 0;
+				$response->message = "No se especifico el origen del comprobante que desea abrir.";
+			}
+		// }else return $responseGetUser;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
 
 	//1 para clientes 2 para proveedores
-	public function insertReceiptHistory($document, $numTable, $action, $total, $dateReceipt, $typeCoin){
-		$dateInsertInt = handleDateTime::getDateTimeNowInt();
+	public function insertReceiptHistory($document, $numTable, $action, $total, $dateReceipt, $typeCoin, $currentSession){
+		$handleDateTimeClass = new handleDateTime();
+		$vouchersEmittedClass = new vouchersEmitted();
 
-		$responseGetUser = ctr_users::getUserInSesion();
-		if(!is_null($responseGetUser)){
-			if($responseGetUser->result == 2){
-				$responseGetBusiness = ctr_users::getBusinesSession();
-				if($responseGetBusiness->result == 2){
-					vouchersEmitted::insertReceiptHistory($dateInsertInt, $responseGetUser->objectResult->idUsuario, $numTable, $action, $total, $dateReceipt, $typeCoin, $document,$responseGetBusiness->idBusiness);
-				}
-			}
-		}
+		$dateInsertInt = $handleDateTimeClass->getDateTimeNowInt();
+
+		// $responseGetUser = ctr_users::getUserInSesion();
+		// if(!is_null($responseGetUser)){
+		// if($responseGetUser->result == 2){
+			// $responseGetBusiness = ctr_users::getBusinesSession();
+			// if($responseGetBusiness->result == 2){
+		$vouchersEmittedClass->insertReceiptHistory($dateInsertInt, $currentSession->idUser, $numTable, $action, $total, $dateReceipt, $typeCoin, $document, $currentSession->idEmpresa);
+			// }
+		// }
+		// }
 	}
 
 	//genera un estado de cuenta pdf para descargar .
-	public function exportAccountState($addressee, $dateInitINT, $dateEndingINT, $accountState, $prepareFor, $myBusiness){
+	//UPDATED
+	public function exportAccountState($addressee, $dateInitINT, $dateEndingINT, $accountState, $prepareFor, $currentSession){
+		$userController = new ctr_users();
+		$handleDateTimeClass = new handleDateTime();
+		$managmentPdfClass = new managment_pdf();
 		$response = new \stdClass();
 
 		if(!is_null($accountState)){
-			$variableShowBalance = ctr_users::getVariableConfiguration("VER_SALDOS_ESTADO_CUENTA_PDF");
+			$variableShowBalance = $userController->getVariableConfiguration("VER_SALDOS_ESTADO_CUENTA_PDF", $currentSession);
 			if($variableShowBalance->result == 2){
 				if($variableShowBalance->configValue == "NO"){
 					unset($accountState["BALANCEUSD"]);
 					unset($accountState["BALANCEUYU"]);
 				}
-				$resultPDF = managment_pdf::generateAccountState($accountState, $addressee, handleDateTime::setFormatBarDate($dateInitINT), handleDateTime::setFormatBarDate($dateEndingINT), $prepareFor, $myBusiness);
+				$resultPDF = $managmentPdfClass->generateAccountState($accountState, $addressee, $handleDateTimeClass->setFormatBarDate($dateInitINT), $handleDateTimeClass->setFormatBarDate($dateEndingINT), $prepareFor, $currentSession);
 				if(!is_null($resultPDF)){
 					$response->result = 2;
 					$response->fileGenerate = $resultPDF;
@@ -421,6 +447,7 @@ class ctr_vouchers{
 	}
 
 	//guarda el ultimo estado de cuenta generado para sugererirlo si abre el modal nuevamente
+	//[OK] MODIFICA LA SESSION PERO NO IMPORTARIA POR AHORA
 	public function saveInfoAccountStateTemp($idPerson, $document, $dateInit, $dateEnding, $typeCoin, $config, $prepareFor){
 		$response = new \stdClass();
 		if(isset($_SESSION['systemSession'])){
@@ -451,79 +478,96 @@ class ctr_vouchers{
 			$response->message = "Actualmente no hay sesión";
 		}
 	}
-
-	public function createCreditNoteToDiscount($documentClient, $dateVoucher, $typeCoin, $inputAmount, $details, $discount){
-
+	//UPDATED
+	public function createCreditNoteToDiscount($documentClient, $dateVoucher, $typeCoin, $inputAmount, $details, $discount, $currentSession){
 		$response = new \stdClass();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$userController = new ctr_users();
+		$voucherController = new ctr_vouchers();
+		$voucherEmittedController = new ctr_vouchers_emitted();
+		$validateClass = new validate();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$dateClass = new handleDateTime();
+		$utilsClass = new utils();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseInfoBusiness = ctr_users::getBusinessInformation($responseGetBusiness->idBusiness);
-			if($responseInfoBusiness->result == 2){
-				$objClient = ctr_clients::findClientWithDoc($documentClient);
-				$isRut = validate::validateRUT($objClient->client->docReceptor);
-				if( $isRut->result == 2 ){
-					$typeVoucher = 112;
-				}else{
-					$typeVoucher = 102;
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		// 	$responseInfoBusiness = ctr_users::getBusinessInformation($responseGetBusiness->idBusiness);
+		// 	if($responseInfoBusiness->result == 2){
+			
+		$objClient = $clientController->findClientWithDoc($documentClient, $currentSession->idEmpresa);
+		$isRut = $validateClass->validateRut($objClient->client->docReceptor);
+		
+		if( $isRut->result == 2 ){
+			$typeVoucher = 112;
+		}else{
+			$typeVoucher = 102;
+		}
+
+		$responseGetGrossAmount = $userController->getVariableConfiguration("IVA_INCLUIDO", $currentSession);
+		if($responseGetGrossAmount->result == 2){
+			$grossAmount = 0;
+			if(strcmp($responseGetGrossAmount->configValue, "SI") == 0)
+				$grossAmount = 1;
+		}
+
+		$exchangeRate = null;
+		if(strcmp($typeCoin, "UYU") != 0){
+			$responseExchange = $voucherController->getQuote($typeCoin, $dateVoucher);
+			if($responseExchange->result == 2)
+				$exchangeRate = $responseExchange->currentQuote;
+			else return $responseExchange;
+		}
+
+		$branchCompany = null;
+		$responseGetGrossAmount = $userController->getVariableConfiguration("SUCURSAL_IS_PRINCIPAL", $currentSession);
+		if ($responseGetGrossAmount->result == 2){
+			$branchCompany = $responseGetGrossAmount->configValue;
+		}
+
+		$shapePayment = 2;
+		$arrayDetails = array();
+		$arrayReference = array();
+		$vouchersSelected = explode(",", $details); //todos los ids de las facturas seleccionadas
+		for ($i=0; $i < count($vouchersSelected) ; $i++) {
+			$voucherDetail = $vouchersEmittedClass->getVoucherEmitted($vouchersSelected[$i], $currentSession->idEmpresa);
+			//se prepara un array referencias con todas los comprobantes que se seleccionaron para crear el recibo
+			$arrayReference [] = $restController->prepareReferenciasToSend($voucherDetail->objectResult->tipoCFE, $voucherDetail->objectResult->serieCFE, $voucherDetail->objectResult->numeroCFE, null, null);
+
+			//detalles de las facturas referenciadas
+			$responseRest = $restController->consultarCFE($currentSession->rut, null, $voucherDetail->objectResult->tipoCFE, $voucherDetail->objectResult->serieCFE, $voucherDetail->objectResult->numeroCFE, "application/json", $currentSession->tokenRest);
+			//busco todos los datos de esa factura para sacar el indice de facturacion
+			if($responseRest->result == 2){
+
+				$jsonPrintFormat = json_decode($responseRest->cfe->representacionImpresa); //datos de los productos
+				foreach ($jsonPrintFormat->detalles as $key => $itemDetail) {
+					$arrayDetails[] = $restController->prepareDetalleToSend($itemDetail->indFact, $itemDetail->nomItem, $itemDetail->codItem, $itemDetail->descripcion, $itemDetail->cantidad, $itemDetail->uniMedida, $itemDetail->precio);
 				}
+			}
 
-				$responseGetGrossAmount = ctr_users::getVariableConfiguration("IVA_INCLUIDO");
-				if($responseGetGrossAmount->result == 2){
-					$grossAmount = 0;
-					if(strcmp($responseGetGrossAmount->configValue, "SI") == 0)
-						$grossAmount = 1;
-				}
+			//metodo de pago
+			if ( $voucherDetail->objectResult->formaPago != $shapePayment )
+				$shapePayment = $voucherDetail->objectResult->formaPago;
+		}
+		$inputAmount = (($inputAmount * $discount) / 100);
+		$detalleCreditNote = $voucherController->prepareItemsToCreditNoteDiscount($inputAmount, $arrayDetails, $discount);
+		$dateVoucherINT = $dateClass->getDateInt($dateVoucher);
 
-				$exchangeRate = null;
-				if(strcmp($typeCoin, "UYU") != 0){
-					$responseExchange = ctr_vouchers::getQuote($typeCoin, $dateVoucher);
-					if($responseExchange->result == 2)
-						$exchangeRate = $responseExchange->currentQuote;
-					else return $responseExchange;
-				}
+		$receiver = $utilsClass->convertObjectClientToReceiver($objClient->client);
 
-				$shapePayment = 2;
-				$arrayDetails = array();
-				$arrayReference = array();
-				$vouchersSelected = explode(",", $details); //todos los ids de las facturas seleccionadas
-				for ($i=0; $i < count($vouchersSelected) ; $i++) {
-					$voucherDetail = vouchersEmitted::getVoucherEmitted($vouchersSelected[$i], $responseInfoBusiness->objectResult->idEmpresa);
-					//se prepara un array referencias con todas los comprobantes que se seleccionaron para crear el recibo
-					$arrayReference [] = ctr_rest::prepareReferenciasToSend($voucherDetail->objectResult->tipoCFE, $voucherDetail->objectResult->serieCFE, $voucherDetail->objectResult->numeroCFE, null, null);
-
-					//detalles de las facturas referenciadas
-					$responseRest = ctr_rest::consultarCFE($responseInfoBusiness->objectResult->rut, null, $voucherDetail->objectResult->tipoCFE, $voucherDetail->objectResult->serieCFE, $voucherDetail->objectResult->numeroCFE, "application/json");
-					//busco todos los datos de esa factura para sacar el indice de facturacion
-					if($responseRest->result == 2){
-
-						$jsonPrintFormat = json_decode($responseRest->cfe->representacionImpresa); //datos de los productos
-						foreach ($jsonPrintFormat->detalles as $key => $itemDetail) {
-							$arrayDetails[] = ctr_rest::prepareDetalleToSend($itemDetail->indFact, $itemDetail->nomItem, $itemDetail->codItem, $itemDetail->descripcion, $itemDetail->cantidad, $itemDetail->uniMedida, $itemDetail->precio);
-						}
-					}
-
-					//metodo de pago
-					if ( $voucherDetail->objectResult->formaPago != $shapePayment )
-						$shapePayment = $voucherDetail->objectResult->formaPago;
-				}
-				$inputAmount = (($inputAmount * $discount) / 100);
-				$detalleCreditNote = ctr_vouchers::prepareItemsToCreditNoteDiscount($inputAmount, $arrayDetails, $discount);
-				$dateVoucherINT = handleDateTime::getDateInt($dateVoucher);
-
-				$receiver = utils::convertObjectClientToReceiver($objClient->client);
-
-				return ctr_rest::nuevoCFE($responseInfoBusiness->objectResult->rut, $typeVoucher, $dateVoucherINT, $grossAmount, $shapePayment , null, $typeCoin, $exchangeRate, $detalleCreditNote, $receiver , 0, $arrayReference, null, null, null);
-			}else return $responseInfoBusiness;
-		}else return $responseGetBusiness;
+		return $restController->nuevoCFE($currentSession->rut, $typeVoucher, $dateVoucherINT, $grossAmount, $shapePayment , null, $typeCoin, $exchangeRate, $detalleCreditNote, $receiver , 0, $arrayReference, null, $branchCompany, null, null, $currentSession->tokenRest);
+		// 	}else return $responseInfoBusiness;
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
 
 	public function prepareItemsToCreditNoteDiscount($inputAmount, $arrayDetails, $discount){
+		$othersClass = new others();
 
         $responseArray = array();
-        $listInvoiceInd = others::getListIva();
+        $listInvoiceInd = $othersClass->getListIva();
         $totalAllInvoiceSelected = 0;
         foreach( $arrayDetails as $key => $value){
         	$totalAllInvoiceSelected += $value['precio'];
@@ -558,8 +602,8 @@ class ctr_vouchers{
         }
         return $responseArray;
 	}
-
-	public function getExcelAccountSate($entity, $idEntity, $dateInit, $dateFinish, $typeCoin, $config){ //client o provider, 123, , , UYU,
+	//UPDATED
+	public function getExcelAccountSate($entity, $idEntity, $dateInit, $dateFinish, $typeCoin, $config, $currentSession){ //client o provider, 123, , , UYU,
 
 		$response = new \stdClass();
 		$resultAccountState = null;
@@ -577,44 +621,44 @@ class ctr_vouchers{
 		$dateInitBar = $dateClass->setFormatBarDate($dateInitINT);
 		$dateFinishBar = $dateClass->setFormatBarDate($dateFinishINT);
 
-		$responseGetBusiness = $userController->getBusinesSession();
-		if($responseGetBusiness->result == 2){
+		// $responseGetBusiness = $userController->getBusinesSession();
+		// if($responseGetBusiness->result == 2){
 
-			$idBusiness = $responseGetBusiness->idBusiness;
-			$nameBusiness = $responseGetBusiness->infoBusiness->nombre;
+		$idBusiness = $currentSession->idEmpresa;
+		$nameBusiness = $currentSession->empresa;
 
-			if ( $entity == "CLIENT" ){
-				$resultAccountState = $vouchersEmittedClass->getAccountState($idEntity, $dateInitINT, $dateFinishINT, $typeCoin, $idBusiness, $config);
-				if ( $resultAccountState->result != 0 ){
-					$resultGetClient = $clientController->getClientWithId($idEntity);//obtengo todos los datos de ese cliente a partir de ese id
-					if ( $resultGetClient->result == 2 ) {
-						$accountState = $resultAccountState->listResult;
-						$resultExcel = $spreadsheetClass->accountState($accountState, $resultGetClient->client->docReceptor, $resultGetClient->client->nombreReceptor, $dateInitBar, $dateFinishBar, $entity, $idBusiness, $nameBusiness);
-						$response->result = 2;
-						$response->name = $resultExcel;
-						return $response;
-					}else return $resultGetClient;
-				}else return $resultAccountState;
+		if ( $entity == "CLIENT" ){
+			$resultAccountState = $vouchersEmittedClass->getAccountState($idEntity, $dateInitINT, $dateFinishINT, $typeCoin, $idBusiness, $config);
+			if ( $resultAccountState->result != 0 ){
+				$resultGetClient = $clientController->getClientWithId($idEntity);//obtengo todos los datos de ese cliente a partir de ese id
+				if ( $resultGetClient->result == 2 ) {
+					$accountState = $resultAccountState->listResult;
+					$resultExcel = $spreadsheetClass->accountState($accountState, $resultGetClient->client->docReceptor, $resultGetClient->client->nombreReceptor, $dateInitBar, $dateFinishBar, $entity, $idBusiness, $nameBusiness);
+					$response->result = 2;
+					$response->name = $resultExcel;
+					return $response;
+				}else return $resultGetClient;
+			}else return $resultAccountState;
+		}
+		elseif ( $entity == "PROVIDER" ) {
+			$resultProvAccountState = $vouchersReceivedClass->getAccountState($idEntity, $dateInitINT, $dateFinishINT, $typeCoin, $idBusiness);
+			if ($resultProvAccountState->result != 0){
+				$resultGetProv = $provController->getProvider($idEntity);
+				if ( $resultGetProv->result == 2 ) {
+					$accountState = $resultProvAccountState->listResult;
+					$resultExcel = $spreadsheetClass->accountState($accountState, $resultGetProv->provider->rut, $resultGetProv->provider->razonSocial, $dateInitBar, $dateFinishBar, $entity, $idBusiness, $nameBusiness);
+					$response->result = 2;
+					$response->name = $resultExcel;
+					return $response;
+				}else return $resultGetClient;
 			}
-			elseif ( $entity == "PROVIDER" ) {
-				$resultProvAccountState = $vouchersReceivedClass->getAccountState($idEntity, $dateInitINT, $dateFinishINT, $typeCoin, $idBusiness);
-				if ($resultProvAccountState->result != 0){
-					$resultGetProv = $provController->getProvider($idEntity);
-					if ( $resultGetProv->result == 2 ) {
-						$accountState = $resultProvAccountState->listResult;
-						$resultExcel = $spreadsheetClass->accountState($accountState, $resultGetProv->provider->rut, $resultGetProv->provider->razonSocial, $dateInitBar, $dateFinishBar, $entity, $idBusiness, $nameBusiness);
-						$response->result = 2;
-						$response->name = $resultExcel;
-						return $response;
-					}else return $resultGetClient;
-				}
-			}
-		}else return $responseGetBusiness;
+		}
+		// }else return $responseGetBusiness;
 	}
 
 
-
-	public function getListVouchers( $dateinit, $datefinish, $prepareFor, $typeVoucher, $lastId, $limit, $isCobranza, $clientDocument ){
+	//UPDATED // VER VER VER ACA ACA ACA
+	public function getListVouchers( $dateinit, $datefinish, $prepareFor, $typeVoucher, $lastId, $limit, $isCobranza, $clientDocument, $currentSession ){
 
 		$response = new \stdClass();
 		$vouchersEmittedClass = new vouchersEmitted();
@@ -626,7 +670,7 @@ class ctr_vouchers{
 		//isCobranza 1 incluir recibos, 0 sin recibos
 
 
-		$idBusiness = $_SESSION['systemSession']->idBusiness;
+		// $idBusiness = $_SESSION['systemSession']->idBusiness;
 
 		$dateinit = str_replace("-", "", $dateinit);
 		$datefinish = str_replace("-", "", $datefinish);
@@ -634,14 +678,14 @@ class ctr_vouchers{
 		if ( $prepareFor == "CLIENT" ){
 
 			if ( $lastId == 0 ){
-				$lastId = $vouchersEmittedClass->getMaxIdVouchers($idBusiness);
+				$lastId = $vouchersEmittedClass->getMaxIdVouchers($currentSession->idEmpresa);
 			}
 
 			$idClient = "";
 			if ( isset($clientDocument) && $clientDocument != "" ){
 				//buscar id cliente segun el documento
 
-				$client = $clientController->findClientWithDoc($clientDocument);
+				$client = $clientController->findClientWithDoc($clientDocument, $currentSession->idEmpresa);
 				if($client->result == 2){
 					$idClient = $client->client->id;
 				}
@@ -650,7 +694,7 @@ class ctr_vouchers{
 
 			if ( !isset($isCobranza) ) $isCobranza = "";
 
-			$resultVouchers = $vouchersEmittedClass->getListVouchersEmitted( $dateinit, $datefinish, $idClient, $typeVoucher, $isCobranza, $lastId, $idBusiness, $limit );
+			$resultVouchers = $vouchersEmittedClass->getListVouchersEmitted( $dateinit, $datefinish, $idClient, $typeVoucher, $isCobranza, $lastId, $currentSession->idEmpresa, $limit );
 
 			if ( $resultVouchers->result == 2 ){
 				$newLastId = $lastId;
@@ -658,7 +702,7 @@ class ctr_vouchers{
 					if($newLastId > $value['id'])
 						$newLastId = $value['id'];
 
-					$responseRest = $restController->consultarCFE($_SESSION['systemSession']->rut, null, $value['tipoCFE'], $value['serieCFE'], $value['numeroCFE'], "application/json");
+					$responseRest = $restController->consultarCFE($currentSession->rut, null, $value['tipoCFE'], $value['serieCFE'], $value['numeroCFE'], "application/json", $currentSession->tokenRest);
 
 					if ( $responseRest->result == 2 ){
 
@@ -723,8 +767,8 @@ class ctr_vouchers{
 						$resultVouchers->listResult[$key]['fechaHoraEmision'] = substr($value['fechaHoraEmision'],0,4)."-".substr($value['fechaHoraEmision'],4,2)."-".substr($value['fechaHoraEmision'],6,2)." ".substr($value['fechaHoraEmision'],8,2).":".substr($value['fechaHoraEmision'],10,2)." ".substr($value['fechaHoraEmision'],12,2);
 
 
-					$resultVouchers->listResult[$key]['businessrut'] = $_SESSION['systemSession']->rut;
-					$resultVouchers->listResult[$key]['business'] = $_SESSION['systemSession']->business;
+					$resultVouchers->listResult[$key]['businessrut'] = $currentSession->rut;
+					$resultVouchers->listResult[$key]['business'] = $currentSession->idEmpresa;
 				}
 
 				$resultVouchers->lastId = $newLastId;

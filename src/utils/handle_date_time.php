@@ -101,12 +101,12 @@ class handleDateTime{
 	public function getNextTimeInt($newValue){
 		$newTime = strtotime ('+89 minute' , strtotime ($newValue)) ;
 		$newTime = date ('Y-m-d H:i:s' , $newTime);
-		return handleDateTime::getDateTimeInt($newTime);
+		return $this->getDateTimeInt($newTime);
 	}
 
 	//segun la fecha hora que llega por parametro y la fecha hora actual se retorna 0 o 2 si se tiene que cambiar o no el token
 	public function isTimeToChangeToken($nextChange){
-		$currentDateTime = handleDateTime::getCurrentDateTimeInt();
+		$currentDateTime = $this->getCurrentDateTimeInt();
 
 		if($nextChange <= $currentDateTime)
 			return 2;
@@ -239,9 +239,11 @@ class handleDateTime{
 		}
 	}
 
-	public function isBillableServicePeriod($typePeriod, $dateLastInvoice, $dateEmitted){
+	public function isBillableServicePeriod($typePeriod, $dateLastInvoice, $dateEmitted, $currentSession){
+		$userController = new ctr_users();
+		$handleDateTimeClass = new handleDateTime();
 		date_default_timezone_set('America/Montevideo');
-		$responseConfiguration = ctr_users::getVariableConfiguration("SUFIJO_NOMBRE_SERVICIO_FACTURA");
+		$responseConfiguration = $userController->getVariableConfiguration("SUFIJO_NOMBRE_SERVICIO_FACTURA", $currentSession);
 		if ($responseConfiguration && $responseConfiguration->result == 2){
 			if( strcmp($responseConfiguration->configValue, "FECHA_ANTERIOR") == 0)
 				$objectDateEmitted = date('Y-m',strtotime ('-1 month' , strtotime($dateEmitted))) . "-01";
@@ -251,7 +253,7 @@ class handleDateTime{
 				$objectDateEmitted = date('Y-m',strtotime ('+1 month' , strtotime($dateEmitted))) . "-01";
 		}
 
-		$dateInvoice = date('Y-m',strtotime(handleDateTime::dateToFormatHTML($dateLastInvoice))) . "-01";
+		$dateInvoice = date('Y-m',strtotime($handleDateTimeClass->dateToFormatHTML($dateLastInvoice))) . "-01";
 
 		if($objectDateEmitted >= $dateInvoice){
 			if($typePeriod == 22){

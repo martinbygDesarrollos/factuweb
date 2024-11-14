@@ -7,7 +7,7 @@
 		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
 			<h5>Clientes</h5>
 			<div>
-				<button type="button" class="btn background-template-color2" data-toggle="modal" data-target="#modalExportClients">Exportar</button>
+				<button type="button" class="btn background-template-color2 btn-sm shadow-sm" data-toggle="modal" data-target="#modalExportClients"> <i class="fas fa-cloud-download-alt"></i> Exportar</button>
 			</div>
 		</div>
 		<div class="card-body">
@@ -15,27 +15,37 @@
 				<div class="input-group m-1" style="min-width: 100px; max-width: 250px;">
 					<input id="inputToSearch" type="text" class="form-control form-control-sm shadow-sm" onchange="searchClient(this)" onkeyup="this.onchange()" placeholder="Buscar cliente...">
 				</div>
-				<div class="form-check m-1" style="min-width: 100px; max-width: 200px;">
+				<div class="form-check m-1 pl-0" style="min-width: 100px; max-width: 200px; display: flex; align-items: center;">
 					{% if paramCwb == "unchecked" %}
-					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)">
+					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" style="margin: .25rem; position: static;">
 					{% else %}
-					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" checked>
+					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" checked style="margin: .25rem; position: static;">
 					{% endif %}
-					<label class="form-check-label" for="flexCheckDefault">Clientes con saldo</label>
+					<label class="form-check-label ml-1" for="checkboxClientWithBalance" style="cursor: pointer;">Clientes con saldo</label>
 				</div>
 			</div>
-			<div id="containerTable">
-				<table class="table table2">
+			<div id="containerTable" style="max-height: 75vh;">
+				<table class="table table2 table-striped">
 					<thead class="background-template-color text-template-color">
 						<tr>
-							<th class="text-right toHidden1" scope="col" style="width: 10%;">Documento</th>
+							{# <th class="text-right toHidden1" scope="col" style="width: 10%;">Documento</th>
 							<th class="text-right" scope="col" style="width: 15%;">Nombre</th>
 							<th class="text-right toHidden2 notShow" style="width: 15%;" scope="col">Dirección</th>
 							<th class="text-right toHidden2" scope="col" style="width: 10%;">Celular</th>
 							<th class="text-right toHidden2 notShow" scope="col" style="width: 15%;">Correo</th>
 							<th class="text-right toHidden1" style="min-width: 7em; width: 10%;" scope="col">Saldo $</th>
 							<th class="text-right toHidden1" style="min-width: 7em; width: 10%;" scope="col">Saldo U$S</th>
-							<th class="text-center" style="min-width: 6em;width: 10%;" scope="col">Acción</th>
+							<th class="text-center" style="min-width: 6em;width: 10%;" scope="col">Acción</th> #}
+
+							<th class="text-center col-2" scope="col">Documento</th>
+							<th class="text-center col-3" scope="col" >Nombre</th>
+							{# <th class="text-right toHidden2 notShow"  scope="col">Dirección</th> #}
+							<th class="text-center col-3"  scope="col">Información</th>
+							{# <th class="text-right toHidden2" scope="col" >Celular</th>
+							<th class="text-right toHidden2 notShow" scope="col" >Correo</th> #}
+							<th class="text-center"  scope="col">Saldos</th>
+							{# <th class="text-right"  scope="col">Saldo U$S</th> #}
+							<th class="text-center"  scope="col">Acción</th>
 						</tr>
 					</thead>
 					<tbody id="tbodyClients" href>
@@ -56,56 +66,76 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="d-flex justify-content-center">
-					<div class="form-group w-75">
-						<label for="inputNewFeeClient">Cliente</label>
+				<div class="form-group mb-3">
+					<div class="form-group">
+						<label class="mb-1" for="inputNewFeeClient">Cliente</label>
 						<input type="text" class="form-control form-control-sm shadow-sm" id="inputNewFeeClient" readonly>
 					</div>
 				</div>
-				<div class="d-flex justify-content-center">
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group w-75">
 						<label for="selectNewFeeServices" class="text-mycolor">Servicios</label>
 						<select id="selectNewFeeServices" class="custom-select custom-select-sm shadow-sm" onchange="loadDescriptionServiceSelected()" onkeypress="return keyPressNewFeeServic(event, this.value, 10)">
 						</select>
 					</div>
+				</div> #}
+				<div class="form-group mb-3">
+					<div class="form-group">
+						<label for="selectNewFeeServices" class="mb-1">Servicios</label>
+						<select id="selectNewFeeServices" class="custom-select custom-select-sm shadow-sm" onchange="loadDescriptionServiceSelected()" onkeypress="return keyPressNewFeeServic(event, this.value, 10)">
+						</select>
+					</div>
 				</div>
-				<div class="d-flex justify-content-center">
+
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group  w-75">
 						<label class="text-mycolor" for="textAreaServiceSelected">Descripcíon</label>
 						<textarea class="form-control shadow-sm" id="textAreaServiceSelected" style="resize: none;" rows="3" maxlength="80" readonly></textarea>
 					</div>
+				</div> #}
+				<div class="form-group mb-3">
+					{# <div class="form-group  w-100"> #}
+					<label class="mb-1" for="textAreaServiceSelected">Descripcíon</label>
+					<textarea class="form-control shadow-sm" id="textAreaServiceSelected" style="resize: none;" rows="2" maxlength="80" readonly></textarea>
+					{# </div> #}
 				</div>
-				<div class="d-flex justify-content-center">
+
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group row">
 						<label for="selectNewFeeMonth" class="col-sm-3 col-form-label text-mycolor">Periodo</label>
 						<div class="col-sm-9">
-							<select id="selectNewFeeMonth" class="custom-select custom-select-sm shadow-sm" onkeypress="return keyPressNewFeeServic(event, this.value, 10)">
-								<option selected value="0">Mensual</option>
-								{% for period in periods %}
-								{% if period == "B" %}
-								<option value="22">Bimestral</option>
-								{% elseif period == "T" %}
-								<option value="33">Trimestral</option>
-								{% elseif period == "S" %}
-								<option value="66">Semestral</option>
-								{% endif %}
-								{% endfor %}
-								<option value="1">Enero</option>
-								<option value="2">Febrero</option>
-								<option value="3">Marzo</option>
-								<option value="4">Abril</option>
-								<option value="5">Mayo</option>
-								<option value="6">Junio</option>
-								<option value="7">Julio</option>
-								<option value="8">Agosto</option>
-								<option value="9">Septiembre</option>
-								<option value="10">Octubre</option>
-								<option value="11">Noviembre</option>
-								<option value="12">Diciembre</option>
-							</select>
-						</div>
-					</div>
+							<select id="selectNewFeeMonth" class="custom-select custom-select-sm shadow-sm" onkeypress="return keyPressNewFeeServic(event, this.value, 10)"> #}
+				<div class="form-group mb-3">
+					{# <div class="form-group row"> #}
+					<label for="selectNewFeeMonth" class="mb-1">Periodo</label>
+					{# <div class="col-sm-9"> #}
+					<select id="selectNewFeeMonth" class="custom-select custom-select-sm shadow-sm" onkeypress="return keyPressNewFeeServic(event, this.value, 10)">
+						<option selected value="0">Mensual</option>
+						{% for period in periods %}
+						{% if period == "B" %}
+						<option value="22">Bimestral</option>
+						{% elseif period == "T" %}
+						<option value="33">Trimestral</option>
+						{% elseif period == "S" %}
+						<option value="66">Semestral</option>
+						{% endif %}
+						{% endfor %}
+						<option value="1">Enero</option>
+						<option value="2">Febrero</option>
+						<option value="3">Marzo</option>
+						<option value="4">Abril</option>
+						<option value="5">Mayo</option>
+						<option value="6">Junio</option>
+						<option value="7">Julio</option>
+						<option value="8">Agosto</option>
+						<option value="9">Septiembre</option>
+						<option value="10">Octubre</option>
+						<option value="11">Noviembre</option>
+						<option value="12">Diciembre</option>
+					</select>
 				</div>
+					{# </div>
+				</div> #}
 			</div>
 			<div class="modal-footer justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
@@ -145,13 +175,13 @@
 						<input type="text" class="form-control form-control-sm shadow-sm" id="departmentUpdateClient" onkeypress="return keyPressModalClient(event, this, 50)">
 					</div>
 				</div>
-				<div class="row">
+				<div class="form-row">
 					<div class="col-md-6">
 						<div class="form-row">
 							<div class="form-group col">
 								<input type="number" class="form-control form-control-sm shadow-sm" id="numberMobileUpdateClient" pattern="/^-?\d+\.?\d*$/" placeholder="Nuevo celular..." onkeypress="return keyPressModalClient(event, this, 9)">
 							</div>
-							<div class="form-group ">
+							<div class="form-group pr-1">
 								<button class="btn btn-sm background-template-color2 tex-template-background" onclick="addNumberMobileTemp()" type="button">Añadir</button>
 							</div>
 						</div>
@@ -164,7 +194,7 @@
 							<div class="form-group col">
 								<input id="emailUpdateClient" type="text" class="form-control form-control-sm shadow-sm" placeholder="Nuevo correo..." onkeypress="return keyPressModalClient(event, this, 80)">
 							</div>
-							<div class="form-group">
+							<div class="form-group pr-1">
 								<button class="btn btn-sm background-template-color2 tex-template-background" onclick="addEmailTemp()"  type="button">Añadir</button>
 							</div>
 						</div>
@@ -190,30 +220,38 @@
 
 <!-- Modal que se muestra cuando se quieren exportar clientes deudores, se pide fecha y está el botón de exportar -->
 <div class="modal fade" id="modalExportClients" tabindex="-1" role="dialog" aria-labelledby="exportClientsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
+  <div class="modal-dialog modal-dialog-centered modal-md" role="document">
     <div class="modal-content">
       <div class="modal-header background-template-color">
-        <h5 class="modal-title text-template-color" id="exportClientsModalLabel">Exportar clientes con saldo</h5>
+        <span class="modal-title text-template-color" id="exportClientsModalLabel">Exportar clientes con saldo</span>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-      	<div class="form-group col-md">
+		<div class="col">
+			<div class="input-group">
+				<div class="input-group-prepend">
+					<span class="input-group-text custom-thing background-template-color text-template-color" style="line-height: 28px;">Hasta</span>
+				</div>
+				<input id="idInputDateExportClients" type="date" class="form-control text-center">
+			</div>
+		</div>
+      	{# <div class="form-group col-md">
 			<label class="form-label-sm" for="idInputDateExportClients">Hasta </label>
 			<input type="date" class="form-control form-control-sm shadow-sm text-center" id="idInputDateExportClients">
-		</div>
+		</div> #}
       </div>
       <div class="modal-footer justify-content-between">
 		<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
-		<button class="btn background-template-color2 btn-sm shadow-sm" onclick="exportClienteDeudores()" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
+		<button class="btn btn-success text-white shadow-sm" onclick="exportClienteDeudores()" ><i class="fas fa-cloud-download-alt"></i> Exportar</button>
 	  </div>
     </div>
   </div>
 </div>
 
 
-{% include("buttonUp.twig") %}
+{# {% include("buttonUp.twig") %} #}
 {% include("progressBar.twig") %}
 
 {%block script%}
@@ -225,7 +263,7 @@
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
 <script type="text/javascript">
 	$(document).ready( function(){
-		let heightwindow = ($(document).height() * 55) / 100;
+		let heightwindow = ($(document).height() * 65) / 100;
 		$('#containerTable').css('height', heightwindow+'px');
 
 		$('#idInputDateExportClients').val(getCurrentDate());
@@ -233,7 +271,10 @@
 	});
 	getListClientsView();
 	$('#containerTable').on('scroll', function() {
-		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight - 4)) {
+		//if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight - 4)) {
+		//	getListClientsView();
+		//}
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 4) {
 			getListClientsView();
 		}
 	});

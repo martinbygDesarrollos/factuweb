@@ -16,7 +16,7 @@
             </a>
         </li>
         {% if systemSession %}
-        {% if systemSession.permission.VENTAS == 'SI' %}
+        {% if systemSession.permission.VENTAS == 'SI' or systemSession.permission.POINTOFSALE == 'SI' %}
         <li class="nav-item">
             <a onclick="showMenuClient('SALE')" class="nav-link text-dark font-italic bg-light">
                 <div class="d-flex justify-content-between">
@@ -25,11 +25,11 @@
             </a>
         </li>
         <ul id="listSaleMenu" style="display: none;" class="nav flex-column bg-white mb-0">
-            <li class="nav-item">
+            {# <li class="nav-item">
                 <a href="{{ path_for('Sale') }}" class="nav-link text-dark font-italic bg-light">
                     <i class="fas fa-receipt text-template-background ml-3 mr-2"></i></i>Venta
                 </a>
-            </li>
+            </li> #}
             {% if systemSession.permission.POINTOFSALE == 'SI' %}
                 <li class="nav-item">
                     <a href="{{ path_for('PointSale') }}" class="nav-link text-dark font-italic bg-light">
@@ -42,6 +42,11 @@
                     <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Lista de artículos
                 </a>
             </li>
+            {# <li class="nav-item">
+                <a href="{{ path_for('Caja') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-cash-register text-template-background ml-3 mr-2"></i>Caja
+                </a>
+            </li> #}
         </ul>
         {% endif %}
         {% if systemSession.permission.CLIENT == 'SI' %}
@@ -151,49 +156,80 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group col">
-                        <input id="inputPerson" type="text" class="form-control form-control-sm shadow-sm" list="listPeople" onkeypress="return keyPressModal(event, null, null)">
+                <div class="row mb-2">
+                    <div class="col">
+                        <input id="inputPerson" type="text" class="form-control form-control shadow-sm" list="listPeople" onkeypress="return keyPressModal(event, null, null)">
                         <datalist id="listPeople"></datalist>
                     </div>
-                    <div class="form-group ">
-                        <button class="btn btn-sm background-template-color2 tex-template-background" onclick="cleanInputsAccountState()" type="button"><i class="fas fa-eraser"></i></button>
+                    <div class="">
+                        <button class="btn shadow-sm background-template-color2 tex-template-background mr-3" onclick="cleanInputsAccountState()" type="button" title="Limpiar"><i class="fas fa-eraser"></i></button>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group col">
-                        <label for="checkDateInitFromBeginning">Estado de cuenta completo</label>
-                        <input type="checkbox" class="shadow-sm" id="checkDateInitFromBeginning" onchange="changeDateInitFromBeginning()" onkeypress="return keyPressModal(event, null, null)">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col">
-                        <label for="inputDateInit">Desde</label>
-                        <input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateInit" onkeypress="return keyPressModal(event, null, null)">
-                    </div>
-                    <div class="form-group col">
-                        <label for="inputDateEnding">Hasta</label>
-                        <input type="date" class="form-control form-control-sm text-center shadow-sm" id="inputDateEnding" onkeypress="return keyPressModal(event, null, null)">
-                    </div>
-                </div>
-                <div class="d-flex justify-content-center mt-3">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" id="inputTypeCoinUYU" name="rd" class="custom-control-input" checked onkeypress="return keyPressModal(event, null, null)">
-                        <label class="custom-control-label green" for="inputTypeCoinUYU">Pesos Uruguayos</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" id="inputTypeCoinUSD" name="rd" class="custom-control-input" onkeypress="return keyPressModal(event, null, null)">
-                        <label class="custom-control-label green" for="inputTypeCoinUSD">Dolares</label>
-                    </div>
-                </div>
-                <div id="containerClashCollectionClient" style="visibility: hidden;" class="d-flex justify-content-center mt-2">
+                <div class="row mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" id="checkDateInitFromBeginning" onchange="changeDateInitFromBeginning()" >
+								<label class="form-check-label" for="checkDateInitFromBeginning">
+									Estado de cuenta completo
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+                <div class="row mb-2">
+					<div class="col pr-1">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color" style="line-height: 28px;">Desde</span>
+							</div>
+							<input id="inputDateInit" type="date" class="form-control text-center" >
+						</div>
+					</div>
+					<div class="col pl-1">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color" style="line-height: 28px;">Hasta</span>
+							</div>
+							<input id="inputDateEnding" type="date" class="form-control text-center">
+						</div>
+					</div>
+				</div>
+                <div class="row mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="type" id="inputTypeCoinUYU" checked value="option1">
+								<label class="form-check-label" for="inputTypeCoinUYU">Pesos Uruguayos</label>
+							</div>
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="type" id="inputTypeCoinUSD" value="option2">
+								<label class="form-check-label" for="inputTypeCoinUSD">Dólares</label>
+							</div>
+						</div>
+					</div>
+				</div>
+
+                <div id="containerClashCollectionClient" class="row" style="visibility: hidden;">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" id="inputIncludeCashCollection">
+								<label class="form-check-label" for="inputIncludeCashCollection">
+									Incluir contados pendientes
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+                {# <div id="containerClashCollectionClient" style="visibility: hidden;" class="d-flex justify-content-center mt-2">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="inputIncludeCashCollection">
                         <label class="form-check-label" for="flexCheckDefault">
                             Incluir contados pendientes
                         </label>
                     </div>
-                </div>
+                </div> #}
             </div>
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>

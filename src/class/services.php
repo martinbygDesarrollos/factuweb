@@ -9,35 +9,39 @@ class services{
 	//--------------------------------------------------------------------------------------------
 	//----------------------------------------SERVICES--------------------------------------------
 	//--------------------------------------------------------------------------------------------
-
+	//UPDATED
 	public function activeService($idService, $newValue, $idBusiness){
-		return DataBase::sendQuery("UPDATE servicios SET activo = ? WHERE idServicio = ? AND idEmpresa = ?", array('iii', $newValue, $idService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE servicios SET activo = ? WHERE idServicio = ? AND idEmpresa = ?", array('iii', $newValue, $idService, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function getServiceWithName($nameService, $idService, $idBusiness){
-
+		$dbClass = new DataBase();
 		$responseQuery = null;
 		if(is_null($idService))
-			$responseQuery = DataBase::sendQuery("SELECT * FROM servicios WHERE nombre = ? AND idEmpresa = ?", array('si', $nameService, $idBusiness), "OBJECT");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM servicios WHERE nombre = ? AND idEmpresa = ?", array('si', $nameService, $idBusiness), "OBJECT");
 		else
-			$responseQuery = DataBase::sendQuery("SELECT * FROM servicios WHERE nombre = ? AND idServicio != ? AND idEmpresa = ?", array('sii', $nameService, $idService, $idBusiness), "OBJECT");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM servicios WHERE nombre = ? AND idServicio != ? AND idEmpresa = ?", array('sii', $nameService, $idService, $idBusiness), "OBJECT");
 
 		if($responseQuery->result == 1)
 			$responseQuery->message = "Actualmente no hay un servicio con el nombre ingresado.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getServiceWithId($idService, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro el servicio seleccionado en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getServiceWithIdToShow($idService, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$othersClass = new others();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "OBJECT");
 		if($responseQuery->result == 2){
-			$responseGetIVA = others::getValueIVA($responseQuery->objectResult->idIVA);
+			$responseGetIVA = $othersClass->getValueIVA($responseQuery->objectResult->idIVA);
 			if($responseGetIVA->result == 2)
 				$responseQuery->objectResult->valorIVA = number_format($responseGetIVA->objectResult->valor,2,",",".");
 
@@ -55,35 +59,39 @@ class services{
 		}
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function createService($name, $description, $typeCoin, $cost, $amount, $idIva, $idBusiness){
-		return DataBase::sendQuery("INSERT INTO servicios(idEmpresa, nombre, descripcion, moneda, costo, importe, idIVA, activo) VALUES(?,?,?,?,?,?,?,?)", array('isssddii', $idBusiness, $name, $description, $typeCoin, $cost, $amount, $idIva, 1), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO servicios(idEmpresa, nombre, descripcion, moneda, costo, importe, idIVA, activo) VALUES(?,?,?,?,?,?,?,?)", array('isssddii', $idBusiness, $name, $description, $typeCoin, $cost, $amount, $idIva, 1), "BOOLE");
 	}
-
+	//UPDATED
 	public function modifyService($idService, $name, $description, $cost, $amount, $typeCoin, $idIva, $idBusiness){
-		return DataBase::sendQuery("UPDATE servicios SET nombre = ?, descripcion = ?, moneda = ?, costo = ?, importe = ?, idIVA = ? WHERE idServicio = ? AND idEmpresa = ?", array('sssddiii', $name, $description, $typeCoin, $cost, $amount, $idIva, $idService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE servicios SET nombre = ?, descripcion = ?, moneda = ?, costo = ?, importe = ?, idIVA = ? WHERE idServicio = ? AND idEmpresa = ?", array('sssddiii', $name, $description, $typeCoin, $cost, $amount, $idIva, $idService, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED // NO SE DEBERIA BORRAR DE LA BD [MALA IDEA ME PARECE]
 	public function deleteService($idService, $idBusiness){
-		$responseQuery = DataBase::sendQuery("DELETE FROM cuotas_servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("DELETE FROM cuotas_servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "BOOLE");
 		if($responseQuery->result == 2){
-			return DataBase::sendQuery("DELETE FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "BOOLE");
+			return $dbClass->sendQuery("DELETE FROM servicios WHERE idServicio = ? AND idEmpresa = ?", array('ii', $idService, $idBusiness), "BOOLE");
 		}else return $responseQuery;
 	}
 
-
+	//UPDATED
 	public function getMaxIdServices($idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT MAX(idServicio) AS lastId FROM servicios WHERE idEmpresa = ?", array('i', $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT MAX(idServicio) AS lastId FROM servicios WHERE idEmpresa = ?", array('i', $idBusiness), "OBJECT");
 		if($responseQuery->result == 2)
 			$responseQuery->objectResult->lastId = $responseQuery->objectResult->lastId + 1;
 		else if($responseQuery->result == 1)
 			$responseQuery->message = "Actualmente no hay servicios ingresados en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function listServiceToChange($idService, $idClient, $idBusiness){
-
-		$responseQuery = DataBase::sendQuery("SELECT idServicio, nombre, importe, moneda FROM servicios WHERE idEmpresa = ? AND idServicio NOT IN (SELECT idServicio FROM cuotas_servicios WHERE idServicio != ? AND idCliente = ? )", array('iii', $idBusiness, $idService, $idClient), "LIST");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT idServicio, nombre, importe, moneda FROM servicios WHERE idEmpresa = ? AND idServicio NOT IN (SELECT idServicio FROM cuotas_servicios WHERE idServicio != ? AND idCliente = ? )", array('iii', $idBusiness, $idService, $idClient), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			foreach ($responseQuery->listResult as $key => $value) {
@@ -128,10 +136,13 @@ class services{
 
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getListServices($lastId, $textToSearch, $idBusiness){
+		$dbClass = new DataBase();
+		$othersClass = new others();
+		$serviceClass = new services();
 		if($lastId == 0){
-			$responseGetLastId = services::getMaxIdServices($idBusiness);
+			$responseGetLastId = $serviceClass->getMaxIdServices($idBusiness);
 			if($responseGetLastId->result == 2)
 				$lastId = $responseGetLastId->objectResult->lastId;
 			else return $responseGetLastId;
@@ -141,7 +152,7 @@ class services{
 		if(!is_null($textToSearch))
 			$sqlTextToSearch = " AND nombre LIKE '" . $textToSearch . "%' ";
 
-		$responseQuery = DataBase::sendQuery("SELECT * FROM servicios WHERE idServicio < ? AND idEmpresa = ? ". $sqlTextToSearch ." ORDER BY idServicio DESC LIMIT 20", array('ii', $lastId, $idBusiness), "LIST");
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM servicios WHERE idServicio < ? AND idEmpresa = ? ". $sqlTextToSearch ." ORDER BY idServicio DESC LIMIT 20", array('ii', $lastId, $idBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$newLastId = $lastId;
 			$arrayResult = array();
@@ -158,7 +169,7 @@ class services{
 				$value['costoFormat'] = number_format($value['costo'], 2, ",", ".");
 				$value['importeFormat'] = number_format($value['importe'],2,",",".");
 
-				$responseIVA = others::getValueIVA($value['idIVA']);
+				$responseIVA = $othersClass->getValueIVA($value['idIVA']);
 				if($responseIVA->result == 2)
 					$value['iva'] = number_format($responseIVA->objectResult->valor,2,",",".");
 				$arrayResult[] = $value;
@@ -181,9 +192,13 @@ class services{
 	//--------------------------------------------------------------------------------------------
 	//--------------------------------------FEE SERVICES------------------------------------------
 	//--------------------------------------------------------------------------------------------
-
+	//UPDATED
 	public function getFeeServiceToExport($currentQuote, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT C.docReceptor, C.nombreReceptor, S.nombre, S.descripcion, CS.periodo, I.valor, S.moneda, S.costo, S.importe, CS.fechaUltimaFactura, CS.vigente FROM servicios AS S, cuotas_servicios AS CS, clientes AS C, indicadores_facturacion AS I WHERE CS.idCliente = C.id AND CS.idServicio = S.idServicio AND S.idIVA = I.id AND S.idEmpresa = ?", array('i', $idBusiness), "LIST");
+		$dbClass = new DataBase();
+		$serviceClass = new services();
+		$dateClass = new handleDateTime();
+		$utilsClass = new utils();
+		$responseQuery = $dbClass->sendQuery("SELECT C.docReceptor, C.nombreReceptor, S.nombre, S.descripcion, CS.periodo, I.valor, S.moneda, S.costo, S.importe, CS.fechaUltimaFactura, CS.vigente FROM servicios AS S, cuotas_servicios AS CS, clientes AS C, indicadores_facturacion AS I WHERE CS.idCliente = C.id AND CS.idServicio = S.idServicio AND S.idIVA = I.id AND S.idEmpresa = ?", array('i', $idBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			foreach ($responseQuery->listResult as $key => $row) {
@@ -191,9 +206,9 @@ class services{
 
 				$arrayRow['DOCUMENTO'] = $row['docReceptor'];
 				$arrayRow['NOMBRE'] = $row['nombreReceptor'];
-				$arrayRow['SERVICIO'] = utils::stringToLowerWithFirstCapital($row['nombre']);
+				$arrayRow['SERVICIO'] = $utilsClass->stringToLowerWithFirstCapital($row['nombre']);
 				$arrayRow['DESCRIPCION'] = $row['descripcion'];
-				$arrayRow['PERIODO'] = services::getPeriod($row['periodo']);
+				$arrayRow['PERIODO'] = $serviceClass->getPeriod($row['periodo']);
 				$arrayRow['IVA'] = number_format($row['valor'], 2, ",", ".");
 
 				if(strcmp($row['moneda'], "UYU") == 0)
@@ -219,7 +234,7 @@ class services{
 					$arrayRow['ESTADO'] = "NO";
 
 				if(!is_null($row['fechaUltimaFactura']))
-					$arrayRow['FECHA'] = handleDateTime::setFormatBarDate($row['fechaUltimaFactura']);
+					$arrayRow['FECHA'] = $dateClass->setFormatBarDate($row['fechaUltimaFactura']);
 				else
 					$arrayRow['FECHA'] = "No Facturado";
 
@@ -232,15 +247,18 @@ class services{
 
 		return $responseQuery;
 	}
-
-	public function getInvoiceFeesServiceClient($idClient, $idBusiness, $dateEmitted){
+	//UPDATED
+	public function getInvoiceFeesServiceClient($idClient, $currentSession, $dateEmitted){
 		$response = new \stdClass();
+		$dbClass = new DataBase();
+		$serviceClass = new services();
+		$idBusiness = $currentSession->idEmpresa;
 
-		$responseQuery = DataBase::sendQuery("SELECT CS.idCuota, CS.idCliente, S.idServicio, S.nombre, S.descripcion, S.moneda, S.costo, S.importe, S.idIVA, CS.periodo, CS.fechaUltimaFactura FROM cuotas_servicios AS CS, servicios AS S WHERE CS.idServicio =  S.idServicio AND S.activo = 1 AND CS.vigente = 1 AND CS.idCliente = ? AND S.idEmpresa = ? ", array('ii', $idClient, $idBusiness), "LIST");
+		$responseQuery = $dbClass->sendQuery("SELECT CS.idCuota, CS.idCliente, S.idServicio, S.nombre, S.descripcion, S.moneda, S.costo, S.importe, S.idIVA, CS.periodo, CS.fechaUltimaFactura FROM cuotas_servicios AS CS, servicios AS S WHERE CS.idServicio =  S.idServicio AND S.activo = 1 AND CS.vigente = 1 AND CS.idCliente = ? AND S.idEmpresa = ? ", array('ii', $idClient, $idBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			foreach ($responseQuery->listResult as $key => $value) {
-				$responseIsBillable = services::serviceIsBillable($value['periodo'], $value['fechaUltimaFactura'], $dateEmitted);
+				$responseIsBillable = $serviceClass->serviceIsBillable($value['periodo'], $value['fechaUltimaFactura'], $dateEmitted, $currentSession);
 				if($responseIsBillable->result == 2)
 					$arrayResult[] = $value;
 			}
@@ -261,13 +279,15 @@ class services{
 
 		return $responseQuery;
 	}
-
-	public function getBillableServiceWithId($idFeeService, $idBusiness, $dateEmitted){
-
-		$responseQuery = DataBase::sendQuery("SELECT * FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFeeService, $idBusiness), "OBJECT");
+	//UPDATED
+	public function getBillableServiceWithId($idFeeService, $currentSession, $dateEmitted){
+		$dbClass = new DataBase();
+		$serviceClass = new services();
+		$idBusiness = $currentSession->idEmpresa;
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFeeService, $idBusiness), "OBJECT");
 		if($responseQuery->result == 2){
 			if($responseQuery->objectResult->vigente == 1){
-				$responseIsBillable = services::serviceIsBillable($responseQuery->objectResult->periodo, $responseQuery->objectResult->fechaUltimaFactura, $dateEmitted);
+				$responseIsBillable = $serviceClass->serviceIsBillable($responseQuery->objectResult->periodo, $responseQuery->objectResult->fechaUltimaFactura, $dateEmitted, $currentSession);
 				if($responseIsBillable->result == 1){
 					$responseQuery->result = 1;
 					$responseQuery->message = $responseIsBillable->message;
@@ -286,9 +306,12 @@ class services{
 	}
 
 	//esta funcion verifica que segun el periodo y la fecha de la ultima factura, se pueda volver a emitir o no la ultima factura
-	public function serviceIsBillable($period, $dateLastBill, $dateEmitted){
+	//UPDATED
+	public function serviceIsBillable($period, $dateLastBill, $dateEmitted, $currentSession){
 		$response = new \stdClass();
-		$responseConfiguration = ctr_users::getVariableConfiguration("SUFIJO_NOMBRE_SERVICIO_FACTURA");
+		$userController = new ctr_users();
+		$dateClass = new handleDateTime();
+		$responseConfiguration = $userController->getVariableConfiguration("SUFIJO_NOMBRE_SERVICIO_FACTURA", $currentSession);
 		$nextMonth = 0;
 		if ($responseConfiguration && $responseConfiguration->result == 2){
 			if( strcmp($responseConfiguration->configValue, "FECHA_ANTERIOR") == 0)
@@ -302,7 +325,7 @@ class services{
 		if(is_null($period)){
 			if(is_null($dateLastBill))
 				$response->result = 2;
-			else if(handleDateTime::isBillableService($dateLastBill, $dateEmitted)){
+			else if($dateClass->isBillableService($dateLastBill, $dateEmitted)){
 				$response->result = 2;
 			}
 			else{
@@ -313,7 +336,7 @@ class services{
 			if($period == $nextMonth){
 				if(is_null($dateLastBill))
 					$response->result = 2;
-				else if(handleDateTime::isBillableService($dateLastBill, $dateEmitted))
+				else if($dateClass->isBillableService($dateLastBill, $dateEmitted))
 					$response->result = 2;
 				else{
 					$response->result = 1;
@@ -326,7 +349,7 @@ class services{
 		}else{ //si no es nulo y es mayor a 12(meses del año) entonces puede ser de valor 22, 33 o 66
 			if(is_null($dateLastBill))
 				$response->result = 2;
-			else if(handleDateTime::isBillableServicePeriod($period, $dateLastBill, $dateEmitted)){
+			else if($dateClass->isBillableServicePeriod($period, $dateLastBill, $dateEmitted, $currentSession)){
 				$response->result = 2;
 			}
 			else{
@@ -336,36 +359,43 @@ class services{
 		}
 		return $response;
 	}
-
+	//UDPATED
 	public function modifyFeeService($idFeeService, $idService, $period, $idBusiness){
-		return DataBase::sendQuery('UPDATE cuotas_servicios SET periodo = ? , idServicio = ? WHERE idCuota = ? AND idEmpresa = ?', array('iiii', $period, $idService, $idFeeService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery('UPDATE cuotas_servicios SET periodo = ? , idServicio = ? WHERE idCuota = ? AND idEmpresa = ?', array('iiii', $period, $idService, $idFeeService, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function updateLastInvoiceDate($idFeeService, $idClient, $date, $idBusiness){
-		return DataBase::sendQuery("UPDATE cuotas_servicios SET fechaUltimaFactura = ? WHERE idCuota = ? AND idCliente = ? AND idEmpresa = ?", array('iiii', $date, $idFeeService, $idClient, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE cuotas_servicios SET fechaUltimaFactura = ? WHERE idCuota = ? AND idCliente = ? AND idEmpresa = ?", array('iiii', $date, $idFeeService, $idClient, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function deleteFeeService($idFeeService, $idBusiness){
-		return DataBase::sendQuery("DELETE FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFeeService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("DELETE FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFeeService, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function disableAllServiceFees($idService, $newValue, $idBusiness){
-		return DataBase::sendQuery("UPDATE cuotas_servicios SET vigente = ? WHERE idServicio = ? AND idEmpresa = ?", array('iii', $newValue, $idService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE cuotas_servicios SET vigente = ? WHERE idServicio = ? AND idEmpresa = ?", array('iii', $newValue, $idService, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function getFeeServiceWithId($idFee, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFee, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM cuotas_servicios WHERE idCuota = ? AND idEmpresa = ?", array('ii', $idFee, $idBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro la cuota seleecionada dentro de la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function createFeeService($idBusiness, $idClient, $idService, $period, $active){
-		return DataBase::sendQuery("INSERT INTO cuotas_servicios(idEmpresa, idCliente, idServicio, periodo, vigente) VALUES (?,?,?,?,?)", array('iiiii', $idBusiness, $idClient, $idService, $period, $active), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO cuotas_servicios(idEmpresa, idCliente, idServicio, periodo, vigente) VALUES (?,?,?,?,?)", array('iiiii', $idBusiness, $idClient, $idService, $period, $active), "BOOLE");
 	}
-
+	//UPDATED
 	public function getMaxIdFeeServices($idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT MAX(idCuota) AS lastId FROM cuotas_servicios WHERE idEmpresa = ? ", array('i', $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT MAX(idCuota) AS lastId FROM cuotas_servicios WHERE idEmpresa = ? ", array('i', $idBusiness), "OBJECT");
 		if($responseQuery->result == 2)
 			$responseQuery->objectResult->lastId = $responseQuery->objectResult->lastId + 1;
 		else if($responseQuery->result == 1)
@@ -373,10 +403,14 @@ class services{
 
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getListFeeServices($lastId, $textToSearch, $idBusiness){
+		$dbClass = new DataBase();
+		$dateClass = new handleDateTime();
+		$othersClass = new others();
+		$serviceClass = new services();
 		if($lastId == 0){
-			$responseGetLastId = services::getMaxIdFeeServices($idBusiness);
+			$responseGetLastId = $serviceClass->getMaxIdFeeServices($idBusiness);
 			if($responseGetLastId->result == 2)
 				$lastId = $responseGetLastId->objectResult->lastId;
 			else return $responseGetLastId;
@@ -386,7 +420,7 @@ class services{
 		if(!is_null($textToSearch))
 			$sqlText = " AND CS.idCliente IN (SELECT id FROM clientes WHERE nombreReceptor LIKE '%" . $textToSearch . "%') ";
 
-		$responseQuery = DataBase::sendQuery("SELECT CS.idCuota, CS.idCliente, CS.idServicio, CS.periodo, CS.vigente, CS.fechaUltimaFactura, S.nombre, S.moneda, S.costo, S.importe, S.idIVA FROM cuotas_servicios AS CS, servicios AS S WHERE CS.idServicio = S.idServicio AND CS.idCuota <= ? AND CS.idEmpresa = ? " . $sqlText . " ORDER BY CS.idCuota DESC LIMIT 20", array('ii', $lastId, $idBusiness), "LIST");
+		$responseQuery = $dbClass->sendQuery("SELECT CS.idCuota, CS.idCliente, CS.idServicio, CS.periodo, CS.vigente, CS.fechaUltimaFactura, S.nombre, S.moneda, S.costo, S.importe, S.idIVA FROM cuotas_servicios AS CS, servicios AS S WHERE CS.idServicio = S.idServicio AND CS.idCuota <= ? AND CS.idEmpresa = ? " . $sqlText . " ORDER BY CS.idCuota DESC LIMIT 20", array('ii', $lastId, $idBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$arrayError = array();
 			$newLastId =  $lastId;
@@ -394,15 +428,15 @@ class services{
 			foreach ($responseQuery->listResult as $key => $row) {
 				if($newLastId > $row['idCuota']) $newLastId = $row['idCuota'];
 
-				$row['periodo'] = services::getPeriod($row['periodo']);
+				$row['periodo'] = $serviceClass->getPeriod($row['periodo']);
 
 				if(!is_null($row['fechaUltimaFactura']))
-					$row['fechaUltimaFactura'] = handleDateTime::setFormatBarDate($row['fechaUltimaFactura']);
+					$row['fechaUltimaFactura'] = $dateClass->setFormatBarDate($row['fechaUltimaFactura']);
 				else
 					$row['fechaUltimaFactura'] = "No facturado";
 
 
-				$responseGetIva = others::getValueIVA($row['idIVA']);
+				$responseGetIva = $othersClass->getValueIVA($row['idIVA']);
 				if($responseGetIva->result == 2)
 					$row['montoIVA'] = number_format($responseGetIva->objectResult->valor, 2, ",", ".");
 
@@ -442,7 +476,8 @@ class services{
 	}
 
 	public function changeCurrentValueFeeService($valueActive, $idFeeService, $idBusiness){
-		return DataBase::sendQuery("UPDATE cuotas_servicios SET vigente = ? WHERE idCuota = ? AND idEmpresa = ?", array('iii', $valueActive, $idFeeService, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE cuotas_servicios SET vigente = ? WHERE idCuota = ? AND idEmpresa = ?", array('iii', $valueActive, $idFeeService, $idBusiness), "BOOLE");
 	}
 
 	public function testData($idBusiness){

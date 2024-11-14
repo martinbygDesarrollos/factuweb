@@ -20,7 +20,7 @@
 						<tr>
 							<td scope="col">Memory - Ventas</td>
 							<!--td scope="col"><button id="buttonExportDataAccounting" type="button" onclick="howmanyRowsExportAccData(1)" class="btn btn-sm background-template-color2 tex-template-background">Exportar</button></td-->
-							<td><button id="btnOpenModalExportDataAccounting" type="button" class="btn btn-sm background-template-color2 text-template-background shadow m-1" data-toggle="modal" data-target="#modalDateToExportAccountingData" accesskey="r">Exportar</button></td>
+							<td><button id="btnOpenModalExportDataAccounting" type="button" class="btn btn-sm background-template-color2 shadow-sm m-1" data-toggle="modal" data-target="#modalDateToExportAccountingData" accesskey="r">Exportar</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -39,7 +39,7 @@
 				</button>
 			</div>
 			<div id="" class="modal-body">
-				<div class="d-flex justify-content-center">
+				{# <div class="d-flex justify-content-center">
 					<div class="form-row">
 						<div class="col">
 							<input type="date" class="form-control form-control-sm text-center shadow-sm" id="dateFromAccountingData" value="">
@@ -48,11 +48,29 @@
 							<input type="date" class="form-control form-control-sm text-center shadow-sm" id="dateToAccountingData" value="">
 						</div>
 					</div>
+				</div> #}
+				<div class="row">
+					<div class="col pr-1">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color" style="line-height: 28px;">Desde</span>
+							</div>
+							<input id="dateFromAccountingData" type="date" class="form-control text-center" >
+						</div>
+					</div>
+					<div class="col pl-1">
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<span class="input-group-text custom-thing background-template-color text-template-color" style="line-height: 28px;">Hasta</span>
+							</div>
+							<input id="dateToAccountingData" type="date" class="form-control text-center">
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="modal-footer justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
-				<button id="buttonExportDataAccounting" type="button" onclick="howmanyRowsExportAccData(1)" class="btn btn-sm background-template-color2 tex-template-background">Confirmar</button>
+				<button id="buttonExportDataAccounting" type="button" onclick="howmanyRowsExportAccData(1)" class="btn btn-success">Confirmar</button>
 			</div>
 		</div>
 	</div>

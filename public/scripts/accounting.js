@@ -18,6 +18,9 @@ async function howmanyRowsExportAccData( option ){
 
 	valueDateFrom = $("#dateFromAccountingData").val();
 	valueDateTo = $("#dateToAccountingData").val();
+	$("#modalDateToExportAccountingData").modal("hide");
+
+	mostrarLoader(true)
 
 	if ( valueDateFrom.substring(0, 4)+valueDateFrom.substring(5, 7) > valueDateTo.substring(0, 4)+valueDateTo.substring(5, 7) ){
 		date1 = valueDateFrom.substring(8, 10)+"/"+valueDateFrom.substring(5, 7)+"/"+valueDateFrom.substring(2, 4)
@@ -33,6 +36,8 @@ async function howmanyRowsExportAccData( option ){
 			console.log(response);
 			if ( response.value ){
 				if ( response.value > 999 ){
+					mostrarLoader(false)
+
 					showReplyMessage(1, "Esta consulta trae "+response.value+" comprobantes. Ingrese un período de tiempo más acotado.", "Exportar datos", "modalDateToExportAccountingData");
 					unlockButton("buttonExportDataAccounting", null);
 					$("#dateFromAccountingData").attr("disabled", false);
@@ -57,6 +62,8 @@ async function exportAccountingData(option, from, to){
 	console.log("funcion de traer los datos");
 	sendAsyncPost("exportAccountingData", {option:option, from: from, to: to})
 	.then(( response )=>{
+		mostrarLoader(false)
+
 		console.log(response);
 		unlockButton("buttonExportDataAccounting", null);
 		$("#dateFromAccountingData").attr("disabled", false);

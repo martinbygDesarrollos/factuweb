@@ -9,10 +9,10 @@
 		</div>
 		<div class="card-body">
 			<div class="input-group w-50 mb-2 shadow-sm">
-				<input type="text" class="form-control" onchange="searchManualReceipt(this)" onkeyup="this.onchange()" aria-label="Sizing example input" placeholder="Buscar nombre...">
+				<input type="text" class="form-control form-control-sm" onchange="searchManualReceipt(this)" onkeyup="this.onchange()" aria-label="Sizing example input" placeholder="Buscar nombre...">
 			</div>
-			<div id="containerTable">
-				<table class="table">
+			<div id="containerTable" style="max-height: 75vh;">
+				<table class="table table2 table-striped">
 					<thead class="background-template-color text-template-color">
 						<tr>
 							<th class="text-right" scope="col">Fecha</th>
@@ -39,7 +39,8 @@
 				</button>
 			</div>
 			<div id="modalBodyModify"  style="display: none;" class="modal-body">
-				<div class="d-flex justify-content-center">
+				{# ------------------------------------------------------------------------------------------------ #}
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group mb-3 w-50 shadow-sm">
 						<!--div class="input-group-prepend bg-mycolor text-white">
 							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Fecha</span>
@@ -47,8 +48,18 @@
 						<label>Fecha</label>
 						<input id="inputDateModifyManualReceipt" type="date" class="form-control text-center" onkeypress="return keyPressDeleteModifyManualReceipt(event)">
 					</div>
+				</div> #}
+
+				<div class="">
+					<div class="row form-group mb-2">
+						<label class="col-2 m-auto" for="inputDateModifyManualReceipt">Fecha</label>
+						<input type="date" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputDateModifyManualReceipt" onkeypress="return keyPressDeleteModifyManualReceipt(event)">
+					</div>
 				</div>
-				<div class="d-flex justify-content-center">
+				{# ------------------------------------------------------------------------------------------------ #}
+				{# ------------------------------------------------------------------------------------------------ #}
+
+				{# <div class="d-flex justify-content-center">
 					<div class="form-group mb-3 w-50 shadow-sm">
 						<!--div class="input-group-prepend bg-mycolor text-white">
 							<span class="input-group-text bg-mycolor text-white" id="inputGroup-sizing-default">Total</span>
@@ -56,8 +67,18 @@
 						<label>Total</label>
 						<input id="inputTotalModifyManualReceipt" type="number" class="form-control text-center" onkeypress="return keyPressDeleteModifyManualReceipt(event)">
 					</div>
+				</div> #}
+
+				<div class="">
+					<div class="row form-group mb-2">
+						<label class="col-2 m-auto" for="inputTotalModifyManualReceipt">Total</label>
+						<input type="number" class="form-control form-control-sm text-center col mr-3 shadow-sm" id="inputTotalModifyManualReceipt" onkeypress="return keyPressDeleteModifyManualReceipt(event)">
+					</div>
 				</div>
-				<div class=" d-flex justify-content-center">
+				{# ------------------------------------------------------------------------------------------------ #}
+				{# ------------------------------------------------------------------------------------------------ #}
+
+				{# <div class=" d-flex justify-content-center">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputCoinUYUModifyManualReceipt" value="UYU" onkeypress="return keyPressDeleteModifyManualReceipt(event)" >
 						<label class="form-check-label" for="inputCoinUYUModifyManualReceipt">Pesos</label>
@@ -66,7 +87,24 @@
 						<input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputCoinUSDModifyManualReceipt" value="USD"  onkeypress="return keyPressDeleteModifyManualReceipt(event)">
 						<label class="form-check-label" for="inputCoinUSDModifyManualReceipt">Dolares</label>
 					</div>
+				</div> #}
+
+				<div class="row mb-2">
+					<div class="col">
+						<div class="form-control">
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputCoinUYUModifyManualReceipt" value="UYU" checked onkeypress="return keyPressDeleteModifyManualReceipt(event)">
+								<label class="form-check-label" for="inputCoinUYUModifyManualReceipt">Pesos Uruguayos</label>
+							</div>
+							<div class="form-check form-check-inline">
+								<input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputCoinUSDModifyManualReceipt" value="USD" onkeypress="return keyPressDeleteModifyManualReceipt(event)">
+								<label class="form-check-label" for="inputCoinUSDModifyManualReceipt">Dólares</label>
+							</div>
+						</div>
+					</div>
 				</div>
+				{# ------------------------------------------------------------------------------------------------ #}
+
 			</div>
 			<div id="modalBodyDelete"  style="display: none;" class="modal-body">
 				<p class="text-center">¿Desea elimiar el recibo seleccionado?</p>
@@ -78,7 +116,7 @@
 		</div>
 	</div>
 </div>
-{%block script%}
+{% block script %}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/manualReceiptsEmitted.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/utils.js{{ versionerp }}"></script>
@@ -86,12 +124,12 @@
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
 <script type="text/javascript">
 	$(document).ready( function(){
-		let heightwindow = ($(document).height() * 60) / 100;
+		let heightwindow = ($(document).height() * 65) / 100;
 		$('#containerTable').css('height', heightwindow+'px');
 	});
 	getManualReceiptsEmitted();
 	$('#containerTable').on('scroll', function() {
-		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 2) {
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 2) {
 			getManualReceiptsEmitted();
 		}
 	});

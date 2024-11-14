@@ -18,25 +18,35 @@ function loadServices(){
 
 function createRow(idService, name, description, iva, coin, cost, amount, amountQuote, active){
 	var coinUi = coin == "UI" ? "$" : coin;
-	var nullCell = "<td class='text-right toHidden1'> </td>";
-	var row = "<tr id='" + idService + "'>";
-	row += "<td class='text-right'>" + name + "</td>";
-	row += "<td class='text-right toHidden2'>" + description + "</td>";
-	row += "<td class='text-right toHidden2'>" + iva + "</td>";
-	row += "<td class='text-right toHidden2'>" + coinUi + "  "+ cost + "</td>";
+	var nullCell = "<td class='text-right'> </td>";
+	
+	let rowClass = '';
+    if (name && description) {
+		rowClass = 'with-name-and-desc';
+    } else if (name || description) {
+		rowClass = 'with-name-or-desc';
+    } else {
+		rowClass = 'with-nothing';
+    }
+	var row = "<tr id='" + idService + "' class='" + rowClass + "'>";
+	
+	row += "<td class='text-left'> <span class='cell-truncate mainText' title='"+ name + "'>" + name + "</span> <span class='cell-truncate secondText' title='"+ description + "'>" + description + "</span></td>";
+	// row += "<td class='text-right'>" + description + "</td>";
+	row += "<td class='text-right'>" + iva + "</td>";
+	row += "<td class='text-right'>" + coinUi + "  "+ cost + "</td>";
 	if(amountQuote){
 		row += "<td class='text-right'>" + coinUi + "  "+ amountQuote + "</td>";
-		row += "<td class='text-right toHidden1'>" + coin + "  "+ amount + "</td>";
+		row += "<td class='text-right'>" + coin + "  "+ amount + "</td>";
 	}else{
 		row += "<td class='text-right'>" + coin + "  "+ amount + "</td>";
 		row += nullCell;
 	}
 	row += "<td class='text-center'>";
 	if(active == 1)
-		row += "<label class='switch'><input type='checkbox' checked onclick='changeCurrentValue(" + idService + ")'><span class='slider round'></span></label></td>";
+		row += "<label class='switch' style='margin:0;'><input type='checkbox' checked onclick='changeCurrentValue(" + idService + ")'><span class='slider round'></span></label></td>";
 	else
-		row += "<label class='switch'><input type='checkbox' onclick='changeCurrentValue(" + idService + ")'><span class='slider round'></span></label></td>";
-	row += "<td class='text-center toHidden1'><button onclick='showModifyService("+ idService +")' class='btn btn-sm background-template-color2 text-template-background mr-2'><i class='fas fa-edit text-mycolor'></i></button>";
+		row += "<label class='switch' style='margin:0;'><input type='checkbox' onclick='changeCurrentValue(" + idService + ")'><span class='slider round'></span></label></td>";
+	row += "<td class='text-center'><button onclick='showModifyService("+ idService +")' class='btn btn-sm background-template-color2 text-template-background mr-2'><i class='fas fa-edit text-mycolor'></i></button>";
 	row += "<button onclick='showDeleteService("+ idService +")' class='btn btn-sm btn-danger'><i class='fas fa-trash-alt text-mycolor'></i></button></td></tr>";
 
 	return row;

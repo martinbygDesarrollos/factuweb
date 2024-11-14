@@ -15,55 +15,62 @@ return function (App $app){
 	$vouchEmittedController = new ctr_vouchers_emitted();
 	$vouchReceivedController = new ctr_vouchers_received();
 	$spreadsheetClass = new managment_spreadsheet();
+	$userController = new ctr_users();
 
-	$app->get('/nueva-venta', function($request, $response, $args)use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+
+	// $app->get('/nueva-venta', function($request, $response, $args)use ($container){
+	// 	$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	// 	if($responseCurrentSession->result == 2){
+	// 		$args['systemSession'] = $responseCurrentSession->currentSession;
+	// 		$responseGetIVA = ctr_vouchers::getIVAsAllowed();
+	// 		if($responseGetIVA->result == 2)
+	// 			$args['listIVA'] = $responseGetIVA->listResult;
+
+	// 		$responseGetConfigPermitProducts = ctr_users::getVariableConfiguration("PERMITIR_PRODUCTOS_NO_INGRESADOS");
+	// 		if($responseGetConfigPermitProducts->result == 2)
+	// 			$args['productsNoEntered'] = $responseGetConfigPermitProducts->configValue;
+	// 		$responseGetConfigPermitListProducts = ctr_users::getVariableConfiguration("PERMITIR_LISTA_DE_PRECIOS");
+	// 		if($responseGetConfigPermitListProducts->result == 2)
+	// 			$args['listProducts'] = $responseGetConfigPermitListProducts->configValue;
+	// 		$args['adenda'] = "";
+	// 		$responseGetConfigAdenda = ctr_users::getVariableConfiguration("ADENDA");
+	// 		if($responseGetConfigAdenda->result == 2)
+	// 			$args['adenda'] = $responseGetConfigAdenda->configValue;
+	// 		$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+	// 		return $this->view->render($response, "sale.twig", $args);
+	// 	}else return $response->withRedirect($request->getUri()->getBaseUrl());
+	// })->setName('Sale');
+	//UPDATED
+	$app->get('/nuevo-punto-venta', function($request, $response, $args) use ($container, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$args['systemSession'] = $responseCurrentSession->currentSession;
-			$responseGetIVA = ctr_vouchers::getIVAsAllowed();
-			if($responseGetIVA->result == 2)
-				$args['listIVA'] = $responseGetIVA->listResult;
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$args['systemSession'] = $responseCurrentSession->currentSession;
+				$responseGetIVA = $voucherController->getIVAsAllowed($responseCurrentSession->currentSession);
+				if($responseGetIVA->result == 2)
+					$args['listIVA'] = $responseGetIVA->listResult;
 
-			$responseGetConfigPermitProducts = ctr_users::getVariableConfiguration("PERMITIR_PRODUCTOS_NO_INGRESADOS");
-			if($responseGetConfigPermitProducts->result == 2)
-				$args['productsNoEntered'] = $responseGetConfigPermitProducts->configValue;
-			$responseGetConfigPermitListProducts = ctr_users::getVariableConfiguration("PERMITIR_LISTA_DE_PRECIOS");
-			if($responseGetConfigPermitListProducts->result == 2)
-				$args['listProducts'] = $responseGetConfigPermitListProducts->configValue;
-			$args['adenda'] = "";
-			$responseGetConfigAdenda = ctr_users::getVariableConfiguration("ADENDA");
-			if($responseGetConfigAdenda->result == 2)
-				$args['adenda'] = $responseGetConfigAdenda->configValue;
-			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
-			return $this->view->render($response, "sale.twig", $args);
-		}else return $response->withRedirect($request->getUri()->getBaseUrl());
-	})->setName('Sale');
-
-	$app->get('/nuevo-punto-venta', function($request, $response, $args)use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS"); // MISMO PERMISO QUE NUEVA VENTA PORQUE ES LO MISMO AL FINAL
-		if($responseCurrentSession->result == 2){
-			$args['systemSession'] = $responseCurrentSession->currentSession;
-			$responseGetIVA = ctr_vouchers::getIVAsAllowed();
-			if($responseGetIVA->result == 2)
-				$args['listIVA'] = $responseGetIVA->listResult;
-
-			$responseGetConfigPermitProducts = ctr_users::getVariableConfiguration("PERMITIR_PRODUCTOS_NO_INGRESADOS");
-			if($responseGetConfigPermitProducts->result == 2)
-				$args['productsNoEntered'] = $responseGetConfigPermitProducts->configValue;
-			$responseGetConfigPermitListProducts = ctr_users::getVariableConfiguration("PERMITIR_LISTA_DE_PRECIOS");
-			if($responseGetConfigPermitListProducts->result == 2)
-				$args['listProducts'] = $responseGetConfigPermitListProducts->configValue;
-			$args['adenda'] = "";
-			$responseGetConfigAdenda = ctr_users::getVariableConfiguration("ADENDA");
-			if($responseGetConfigAdenda->result == 2)
-				$args['adenda'] = $responseGetConfigAdenda->configValue;
-			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
-			return $this->view->render($response, "pointsale.twig", $args);
+				$responseGetConfigPermitProducts = $userController->getVariableConfiguration("PERMITIR_PRODUCTOS_NO_INGRESADOS", $responseCurrentSession->currentSession);
+				if($responseGetConfigPermitProducts->result == 2)
+					$args['productsNoEntered'] = $responseGetConfigPermitProducts->configValue;
+				$responseGetConfigPermitListProducts = $userController->getVariableConfiguration("PERMITIR_LISTA_DE_PRECIOS", $responseCurrentSession->currentSession);
+				if($responseGetConfigPermitListProducts->result == 2)
+					$args['listProducts'] = $responseGetConfigPermitListProducts->configValue;
+				$args['adenda'] = "";
+				$responseGetConfigAdenda = $userController->getVariableConfiguration("ADENDA", $responseCurrentSession->currentSession);
+				error_log($responseGetConfigAdenda->configValue);
+				if($responseGetConfigAdenda->result == 2)
+					$args['adenda'] = $responseGetConfigAdenda->configValue;
+				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+				return $this->view->render($response, "pointsale.twig", $args);
+			}else return json_encode($responsePermissions);
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName('PointSale');
-
-	$app->get('/generar-estado-cuenta/{id}/{dateInit}/{dateEnding}/{typeCoin}/{prepareFor}/{config}', function($request, $response, $args) use ($container){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->get('/generar-estado-cuenta/{id}/{dateInit}/{dateEnding}/{typeCoin}/{prepareFor}/{config}', function($request, $response, $args) use ($container, $userController, $voucherController, $vouchEmittedController, $vouchReceivedController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
 
@@ -78,19 +85,19 @@ return function (App $app){
 			$args['dateFrom'] = $dateInit;
 			$args['dateTo'] = $dateEnding;
 			$args['typeCoinSelected'] = $typeCoin;
-			$args['dateFromToFromat'] = ctr_vouchers::parceDateFormat($dateInit, $dateEnding);
+			$args['dateFromToFromat'] = $voucherController->parceDateFormat($dateInit, $dateEnding);
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
 
 			//cuando se ingresa al estado de cuenta de un cliente
 			if(strcmp($prepareFor, "CLIENT") == 0){
 				if(strcmp($typeCoin, "USD") == 0){
-					$responseGetQuote = ctr_vouchers::getQuote("USD", null);//usar cotizaciòn
+					$responseGetQuote = $voucherController->getQuote("USD", null);//usar cotizaciòn
 					if($responseGetQuote->result == 2){
 						$args['currentQuote'] = $responseGetQuote->currentQuote;
 					}
 				}
 
-				$resultGetAccountStateClient = ctr_vouchers_emitted::getClientAccountSate($idSelected, $dateInit, $dateEnding, $typeCoin, $config);
+				$resultGetAccountStateClient = $vouchEmittedController->getClientAccountSate($idSelected, $dateInit, $dateEnding, $typeCoin, $config, $responseCurrentSession->currentSession);
 				if($resultGetAccountStateClient->result == 2){
 					if($resultGetAccountStateClient->resultFile == 2)
 						$args['fileAccountSate'] = $resultGetAccountStateClient->fileGenerate;
@@ -102,7 +109,7 @@ return function (App $app){
 
 				}else $args['errorMessage'] = $resultGetAccountStateClient->message;
 			}else if(strcmp($prepareFor, "PROVIDER") == 0){ 			//cuando se ingresa al estado de cuenta de un proveedor
-				$resultGetAccountSatetProvider = ctr_vouchers_received::getProviderAccountSate($idSelected, $dateInit, $dateEnding, $typeCoin);
+				$resultGetAccountSatetProvider = $vouchReceivedController->getProviderAccountSate($idSelected, $dateInit, $dateEnding, $typeCoin, $responseCurrentSession->currentSession);
 				if($resultGetAccountSatetProvider->result == 2){
 					if($resultGetAccountSatetProvider->resultFile == 2)
 						$args['fileAccountSate'] = $resultGetAccountSatetProvider->fileGenerate;
@@ -118,22 +125,30 @@ return function (App $app){
 		}
 		return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("AccountState");
-
-	$app->post('/createNewVoucher', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	//UPDATED
+	$app->post('/createNewVoucher', function(Request $request, Response $response) use ($container, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$objClient = json_decode(stripslashes($data['client']),true);
-			$typeVoucher = $data['typeVoucher'];
-			$typeCoin = $data['typeCoin'];
-			$shapePayment = $data['shapePayment'];
-			$dateVoucher = $data['dateVoucher'];
-			$dateExpiration = $data['dateExpiration'];
-			$adenda = $data['adenda'];
-			$idBuy = $data['idBuy'];
-			$listDetail = json_decode($data['detail'],true);
-			//var_dump($data['detail'], $listDetail);exit;
-			return json_encode(ctr_vouchers::createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idBuy));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$objClient = json_decode(stripslashes($data['client']), true);
+				$typeVoucher = $data['typeVoucher'];
+				$typeCoin = $data['typeCoin'];
+				$shapePayment = $data['shapePayment'];
+				$dateVoucher = $data['dateVoucher'];
+				$dateExpiration = isset($data['dateExpiration']) ? $data['dateExpiration'] : null;
+				$adenda = $data['adenda'];
+				$idBuy = $data['idBuy'];
+				$discountTipo = $data['discountTipo'];
+				$mediosPago = isset($data['mediosPago']) ? json_decode($data['mediosPago'], true) : array();
+				$listDetail = json_decode($data['detail'],true);
+				// var_dump($mediosPago);
+				// var_dump($listDetail);
+				// exit;
+				return json_encode($voucherController->createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idBuy, $discountTipo, $mediosPago, $responseCurrentSession->currentSession));
+			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -143,13 +158,13 @@ return function (App $app){
 			return json_encode(ctr_vouchers::loadProductsFromDetails());
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/consultCaes', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/consultCaes', function(Request $request, Response $response) use ($userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$typeCFE = $data['typeCFE'];
-			return json_encode(ctr_vouchers::consultCaes($typeCFE));
+			return json_encode($voucherController->consultCaes($typeCFE, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -161,25 +176,26 @@ return function (App $app){
 			return json_encode(ctr_vouchers::loadVouchers($callFrom));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/updateDataVouchersAdmin', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/updateDataVouchersAdmin', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			return json_encode(ctr_users::updateDataVouchersAdmin());
+			return json_encode($userController->updateDataVouchersAdmin($responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
 //EMITIDOS
-	$app->post('/updateDataVouchersById', function(Request $request, Response $response) use ($vouchEmittedController) {
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/updateDataVouchersById', function(Request $request, Response $response) use ($userController, $vouchEmittedController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$lastVoucher = $vouchEmittedController->getLastVoucherEmitted();
+			$lastVoucher = $vouchEmittedController->getLastVoucherEmitted($responseCurrentSession->currentSession->idEmpresa);
 			if ( $lastVoucher->result == 2 ){
 				$objectResult = $lastVoucher->objectResult;
 				$id = $objectResult->id;
 				$lastDate = $objectResult->fechaHoraEmision;
 				$rut = $responseCurrentSession->currentSession->rut;
-				return json_encode($vouchEmittedController->getVouchersEmittedFromRest($rut, 1, $id, null, $lastDate));
+				return json_encode($vouchEmittedController->getVouchersEmittedFromRest($responseCurrentSession->currentSession, 1, $id, null, $lastDate));
 			}
 			else{//error al encontrar ultimo comprobante
 				return json_encode($lastVoucher);
@@ -217,47 +233,47 @@ return function (App $app){
 			return json_encode($lastVoucher);
 		}
 	});
-
-	$app->post('/getVoucherCFE', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/getVoucherCFE', function(Request $request, Response $response) use ($container, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$idVoucher = $data['idVoucher'];
 			$prepareFor = $data['prepareFor'];
-			return json_encode(ctr_vouchers::getVoucherCFE($idVoucher, $prepareFor, "text/html;template=A5Vertical")); /*a gusto*/
+			return json_encode($voucherController->getVoucherCFE($idVoucher, $prepareFor, "text/html;template=A5Vertical", $responseCurrentSession->currentSession)); /*a gusto*/
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/getVoucherToExportCFE', function(Request $request, Response $response) use ($userClass){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/getVoucherToExportCFE', function(Request $request, Response $response) use ($userController, $userClass, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$idVoucher = $data['idVoucher'];
 			$prepareFor = $data['prepareFor'];
 			//configuración
 			$ticketFormat = "application/pdf;template=a4";
-			$idUser = $_SESSION['systemSession']->idUser; // no corroboro que la sesion se haya iniciado porque se hace en el ctr_users::validateCurrentSession(null);
-			$responseGetBranchCompany = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
-	    	if($responseGetBranchCompany->result == 2){
-				$ticketFormat = "application/pdf;template=".$responseGetBranchCompany->objectResult->valor;
+			$idUser = $responseCurrentSession->currentSession->idUser; // no corroboro que la sesion se haya iniciado porque se hace en el ctr_users::validateCurrentSession(null);
+			$responseGetFormato = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
+	    	if($responseGetFormato->result == 2){
+				$ticketFormat = "application/pdf;template=".$responseGetFormato->objectResult->valor;
 	    	}
-			return json_encode(ctr_vouchers::getVoucherCFE($idVoucher, $prepareFor, $ticketFormat));
+			return json_encode($voucherController->getVoucherCFE($idVoucher, $prepareFor, $ticketFormat, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/getQuote', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/getQuote', function(Request $request, Response $response) use ($userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$typeCoin = $data['typeCoin'];
 			$dateQuote = $data['dateQuote'];
 			//$dateQuote = null;
-			return json_encode(ctr_vouchers::getQuote($typeCoin, $dateQuote));
+			return json_encode($voucherController->getQuote($typeCoin, $dateQuote));
 		}else return json_encode($responseCurrentSession);
 	});
 
-	$app->post('/exportExcelCFE', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/exportExcelCFE', function(Request $request, Response $response) use ($userController, $userClass, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$prepareFor = $data['prepareFor'];
@@ -266,43 +282,51 @@ return function (App $app){
 			$groupByCurrency = $data['groupByCurrency'];
 			$includeReceipts = $data['includeReceipts'];
 			$typeVoucher = $data['typeVoucher'];
-			return json_encode(ctr_vouchers::exportCFEs($prepareFor, $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher));
+			return json_encode($voucherController->exportCFEs($prepareFor, $dateFrom, $dateTo, $groupByCurrency, $includeReceipts, $typeVoucher, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/createNewVoucher2', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	//UPDATED
+	$app->post('/createNewVoucher2', function(Request $request, Response $response) use ($userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$objClient = $data['documentClient'];
-			$typeCoin = $data['typeCoin'];
-			$inputAmount = $data['total'];
-			$dateVoucher = $data['dateVoucher'];
-			$details = $data['idsSelected'];
-			$discount = $data['discount'];
-			return json_encode(ctr_vouchers::createCreditNoteToDiscount($objClient, $dateVoucher, $typeCoin, $inputAmount, $details, $discount));
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$objClient = $data['documentClient'];
+				$typeCoin = $data['typeCoin'];
+				$inputAmount = $data['total'];
+				$dateVoucher = $data['dateVoucher'];
+				$details = $data['idsSelected'];
+				$discount = $data['discount'];
+				return json_encode($voucherController->createCreditNoteToDiscount($objClient, $dateVoucher, $typeCoin, $inputAmount, $details, $discount, $responseCurrentSession->currentSession));
+			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/exportAccountStateExcel', function(Request $request, Response $response) use ( $voucherController ){
-		$responseCurrentSession = ctr_users::validateCurrentSession("VENTAS");
+	//UPDATED
+	$app->post('/exportAccountStateExcel', function(Request $request, Response $response) use ($userController, $voucherController ){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$entity = $data['entity'];
-			$idEntity = $data['idEntity'];
-			$dateInit = $data['init'];
-			$dateEnding = $data['finish'];
-			$typeCoin = $data['coin'];
-			$config = $data['config'];
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$entity = $data['entity'];
+				$idEntity = $data['idEntity'];
+				$dateInit = $data['init'];
+				$dateEnding = $data['finish'];
+				$typeCoin = $data['coin'];
+				$config = $data['config'];
 
-			$resultExcel = $voucherController->getExcelAccountSate( $entity, $idEntity, $dateInit, $dateEnding, $typeCoin, $config);
-			return json_encode($resultExcel);
+				$resultExcel = $voucherController->getExcelAccountSate( $entity, $idEntity, $dateInit, $dateEnding, $typeCoin, $config, $responseCurrentSession->currentSession);
+				return json_encode($resultExcel);
+			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
+	//UPDATED
+	$app->post('/exportCfesVoucherDetails', function($request, $response, $args)use ($userController, $voucherController, $spreadsheetClass){
 
-	$app->post('/exportCfesVoucherDetails', function($request, $response, $args)use ($container, $voucherController, $spreadsheetClass){
-
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$dateInit = $data['dateInit'];
@@ -316,7 +340,7 @@ return function (App $app){
 			$client = $data['client'];
 
 			//listado de los comprobantes en un periodo con sus items
-			$list = $voucherController->getListVouchers( $dateInit, $dateFinish, $prepareFor, $typeVoucher, $lastId, $limit, $receipts, $client);
+			$list = $voucherController->getListVouchers( $dateInit, $dateFinish, $prepareFor, $typeVoucher, $lastId, $limit, $receipts, $client, $responseCurrentSession->currentSession);
 			if ( $list->result != 0 ){
 
 

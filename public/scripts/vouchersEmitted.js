@@ -19,9 +19,9 @@ function loadVouchersEmitted(){
 		branchCompany: valueBranchCompany
 	};
 	////console.log(data);
+	// mostrarLoader(true)
 	let response = sendPost("loadVouchersEmitted", data);
 	if(response.result == 2){
-
 		if(lastVoucherEmittedIdFound != response.lastVoucherEmittedIdFound)
 			lastVoucherEmittedIdFound = response.lastVoucherEmittedIdFound;
 
@@ -34,6 +34,7 @@ function loadVouchersEmitted(){
 			}
 		}
 	}
+	// mostrarLoader(false)
 	resizeScreen();
 }
 
@@ -271,17 +272,18 @@ function exportCfesVoucherDetails(){
 	//poner el progres bar
 
 
-	progressBarIdProcess = loadPrograssBar();
-	$('#progressbar h5').text("Exportando detalles de ventas...");
+	// progressBarIdProcess = loadPrograssBar();
+	// $('#progressbar h5').text("Exportando detalles de ventas...");
 	$("#modalExportVoucherDetails").modal("hide");
-	$("#progressbar").modal("show");
-
+	// $("#progressbar").modal("show");
+	mostrarLoader(true)
 	sendAsyncPost("exportCfesVoucherDetails", { dateInit:dateInit, dateFinish:dateFinish,
 		prepareFor:"CLIENT", type:typeCFE, lastid:0, limit:0, typeMoney:groupByCurrency, receipts:includeReceipts, client:client})
 	.then((response)=>{
-		stopPrograssBar(progressBarIdProcess);
-		$('#progressbar').modal("hide");
-		$('#progressbar h5').text("Descartando productos...");
+		mostrarLoader(false)
+		// stopPrograssBar(progressBarIdProcess);
+		// $('#progressbar').modal("hide");
+		// $('#progressbar h5').text("Descartando productos...");
 		if(response.result == 2){
 			window.location.href = getSiteURL() + 'downloadExcel.php?n='+response.name;
 			$("#modalExportVoucherDetails").modal("show");
@@ -291,33 +293,60 @@ function exportCfesVoucherDetails(){
 
 
 
-function enableClientSearchExportVoucherDetails(){
+// function enableClientSearchExportVoucherDetails(){
 
-	let val = document.getElementById("inputCheckClientExportVoucherDetails").checked
-	let divCheckClient = document.getElementById("inputCheckClientExportVoucherDetails").parentNode
-	let nodes = divCheckClient.childNodes
-	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].nodeName === "LABEL"){
-			if (val)
-				nodes[i].removeAttribute("style");
-			else
-				nodes[i].style = "text-decoration: line-through;";
-		}
-	}
+// 	let val = document.getElementById("inputCheckClientExportVoucherDetails").checked
+// 	let divCheckClient = document.getElementById("inputCheckClientExportVoucherDetails").parentNode
+// 	let nodes = divCheckClient.childNodes
+// 	for (let i = 0; i < nodes.length; i++) {
+// 		if (nodes[i].nodeName === "LABEL"){
+// 			if (val)
+// 				nodes[i].removeAttribute("style");
+// 			else
+// 				nodes[i].style = "text-decoration: line-through;";
+// 		}
+// 	}
 
-	if (val){
-		document.getElementById("inputDatalistExportVoucherDetails").value = ""
-		document.getElementById("inputDatalistExportVoucherDetails").disabled = true
-		document.getElementById("inputDatalistExportVoucherDetails").readOnly = true
+// 	if (val){
+// 		document.getElementById("inputDatalistExportVoucherDetails").value = ""
+// 		document.getElementById("inputDatalistExportVoucherDetails").disabled = true
+// 		document.getElementById("inputDatalistExportVoucherDetails").readOnly = true
 
-		let datalist = document.getElementById("inputListClientExportVoucherDetails");
-		datalist.replaceChildren();
-	}else{
-		document.getElementById("inputDatalistExportVoucherDetails").disabled = false
-		document.getElementById("inputDatalistExportVoucherDetails").readOnly = false
-	}
+// 		let datalist = document.getElementById("inputListClientExportVoucherDetails");
+// 		datalist.replaceChildren();
+// 	}else{
+// 		document.getElementById("inputDatalistExportVoucherDetails").disabled = false
+// 		document.getElementById("inputDatalistExportVoucherDetails").readOnly = false
+// 	}
+// }
+
+function enableClientSearchExportVoucherDetails() {
+    // Using jQuery for cleaner code
+    const $checkbox = $("#inputCheckClientExportVoucherDetails");
+    const $label = $("#labelCheckClientExportVoucherDetails");
+    const $searchContainer = $("#inputListClientExportVoucherDetails").closest('.input-group').parent().parent(); // This gets the outer div containing the search section
+    const $datalist = $("#inputListClientExportVoucherDetails");
+    const $searchInput = $("#inputDatalistExportVoucherDetails");
+    const $mainContainer = $checkbox.closest('.form-control');
+
+    if ($checkbox.is(":checked")) {
+        // If checkbox is checked
+        $label.css("text-decoration", ""); // Remove strike-through
+        $searchContainer.addClass("d-none"); // Hide the entire container
+        $searchInput.val(""); // Clear input value
+        $datalist.empty(); // Clear datalist options
+		$mainContainer.css("height", ""); // Remove the height style
+    } else {
+		// If checkbox is unchecked
+        $label.css("text-decoration", "line-through");
+        $searchContainer.removeClass("d-none"); // Show the entire container
+        $searchInput.prop({
+			"disabled": false,
+            "readonly": false
+        });
+		$mainContainer.css("height", "calc(76px + .5rem)"); // Add the height style
+    }
 }
-
 
 function getBusinessExportVoucherDetails(){
 

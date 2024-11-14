@@ -13,10 +13,11 @@ function showModalModifyAccountState(btnDate){
 }
 
 function openModalVoucher(button, prepareFor, view){
+	mostrarLoader(true)
 	let idVoucher = button.id;
-
 	let responseGetCFE = sendPost('getVoucherCFE', {idVoucher: idVoucher, prepareFor: prepareFor});
 	if(responseGetCFE.result == 2){
+		mostrarLoader(false)
 		let iFrame = document.getElementById("frameSeeVoucher");
 		let screenHeight = screen.height - 100;
 		//iFrame.style.height = screenHeight + "px";
@@ -26,7 +27,8 @@ function openModalVoucher(button, prepareFor, view){
 
 		$('#buttonExportVoucher').off('click');
 		$('#buttonExportVoucher').click(function(){
-			exportVoucher(idVoucher, prepareFor);
+			// exportVoucher(idVoucher, prepareFor);
+			exportVoucherNew(idVoucher, prepareFor);
 		});
 
 		if ( responseGetCFE.voucherCFE.isAnulado ){
@@ -98,6 +100,7 @@ function openModalVoucher(button, prepareFor, view){
 
 		$('#modalSeeVoucher').modal();
 	}else {
+		mostrarLoader(false)
 		if ( !responseGetCFE.message || responseGetCFE.message == "" ){
 			showReplyMessage(responseGetCFE.result, "No se encontró el comprobante. Intente nuevamente.", "Ver comprobante", null);
 		}
@@ -106,37 +109,62 @@ function openModalVoucher(button, prepareFor, view){
 }
 
 function cancelVoucher(idVoucher){
-
+	
 	let dateCancelVoucher = $('#inputDateCancelVoucher').val() || null;
 	let appendix = $('#inputCancelAppendix').val() || null;
 	let response = sendPost("cancelVoucherEmitted", {idVoucher: idVoucher, dateCancelVoucher: dateCancelVoucher, appendix: appendix});
 	showReplyMessage(response.result, response.message, "Cancelar comprobante",  "modalCancelVoucher");
 	if(response.result == 2){
-
-		if ( response.message.includes('se encuentra anulado por DGI') ){
-			setTimeout(function(){
-				window.location.reload();
-				$('#inputCancelAppendix').val("");
-			}, 4000);
-		}else{
-			window.location.reload();
-			$('#inputCancelAppendix').val("");
-		}
-
+		console.log(response)
+		// if ( response.message.includes('se encuentra anulado por DGI') ){
+		// 	setTimeout(function(){
+		// 		window.location.reload();
+		// 		$('#inputCancelAppendix').val("");
+		// 	}, 4000);
+		// }else{
+		// 	window.location.reload();
+		// 	$('#inputCancelAppendix').val("");
+		// }
 	}
 }
-
-function exportVoucher(idVoucher, prepareFor){
-	let response = sendPost('getVoucherToExportCFE', {idVoucher: idVoucher, prepareFor: prepareFor});
-	if(response.result == 2){
-		let linkSource = `data:application/pdf;base64,${response.voucherCFE.representacionImpresa}`;
-		let downloadLink = document.createElement("a");
-		let fileName = response.voucherCFE.tipoCFE + "-" + response.voucherCFE.serieCFE + "-" + response.voucherCFE.numeroCFE + ".pdf";
-		downloadLink.href = linkSource;
-		downloadLink.download = fileName;
-		downloadLink.click();
-	}else showReplyMessage(response.result, response.message, "Exportar comprobante", null);
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+function exportVoucherNew(idVoucher, prepareFor) {
+	let response = sendPost('getVoucherToExportCFE', { idVoucher: idVoucher, prepareFor: prepareFor });
+	if (response.result == 2) {
+	  	// The response contains a base64-encoded PDF
+	  	let pdfBase64 = response.voucherCFE.representacionImpresa;
+	  	const base64 = 'data:application/pdf;base64,' + pdfBase64;
+	
+		// Crear un objeto Blob a partir de la cadena base64
+		const byteCharacters = atob(base64.split(',')[1]);
+		const byteNumbers = new Array(byteCharacters.length);
+		for (let i = 0; i < byteCharacters.length; i++) {
+		  byteNumbers[i] = byteCharacters.charCodeAt(i);
+		}
+		const byteArray = new Uint8Array(byteNumbers);
+		const blob = new Blob([byteArray], { type: 'application/pdf' });
+	  
+		// Crear una URL temporal para el Blob
+		const blobUrl = URL.createObjectURL(blob);
+	  
+		// Crear un iframe de forma dinámica y agregarlo al documento
+		const iframe = document.createElement('iframe');
+		iframe.style.display = 'none'; // Ocultar el iframe
+		iframe.src = blobUrl;
+	  
+		// Añadir el iframe al documento
+		document.body.appendChild(iframe);
+	  
+		// Imprimir el PDF cuando el iframe esté cargado
+		iframe.onload = function () {
+		  iframe.contentWindow.print();
+		};
+  	} else {
+		showReplyMessage(response.result, response.message, "Exportar comprobante", null);
+	}
 }
+  // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 function getIdsVouchersSelected(){
 	let idsSelecteds = "";
@@ -240,7 +268,7 @@ function createManualReceiptEmitted(btnModal){
 	}
 
 	if(total == null || total.length < 2){
-		showReplyMessage(1, "EL importe del recibo no puede ser nulo.", "Campo importe requerido", "modalNewManualReceipt");
+		showReplyMessage(1, "El importe del recibo no puede ser nulo.", "Campo importe requerido", "modalNewManualReceipt");
 		return;
 	}
 
@@ -260,7 +288,7 @@ function createManualReceiptEmitted(btnModal){
 		checkedOfficial: valueChecked,
 		typeCoin: typeCoin
 	};
-
+	console.log(data)
 	//en el if se verifica si se agregó descuento al crear el recibo o no
 	// depende si hay descuento cuales comprobantes se crean
 	if( addDiscount && checkedOfficial){
@@ -388,6 +416,7 @@ function showModalReceipt(){
 	}
 
 	let cantVouchers = getCantVouchersSelected();
+	console.log("cantidad de documentos seleccionados: " + cantVouchers)
 	if(cantVouchers >= 1)
 		$("#containerInputReason").hide();
 	else
@@ -395,10 +424,10 @@ function showModalReceipt(){
 
 	if(cantVouchers >= 1){
 		let vouchersSelected = getIdsVouchersSelected();
-
+		console.log("IDs: " + vouchersSelected)
 		let responseTotal = sendPost("calculateTotalVoucherSelected", {idsSelected: vouchersSelected});
 		if(responseTotal.result == 2){
-			//console.log(responseTotal);
+			console.log(responseTotal);
 			document.getElementById("inputTotalNewManualReceiptClient").value = parseFloat(responseTotal.total.balance).toFixed(2);
 		}else showReplyMessage(responseTotal.result, responseTotal.message, "Error al calcular total", null);
 	}else document.getElementById("inputTotalNewManualReceiptClient").value = "";

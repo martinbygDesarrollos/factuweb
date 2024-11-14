@@ -113,6 +113,7 @@ function updatePeriodInvoice(){
 
 function updateBillingIndicators(){
 	let newIdsIVA = getChecksBillingIndicators();
+	console.log("OPCIONES SELECCIONADAS: " + newIdsIVA)
 	let response = sendPost("updateVariableConfiguration", {variable: "INDICADORES_FACTURACION_USABLES", value: newIdsIVA});
 	showReplyMessage(response.result, response.message, "Modificar IVAs aceptados", null);
 	$("#modalButtonResponse").click(function(){
@@ -178,14 +179,17 @@ function loadDataFirstLogin(){
 }
 
 function updateSuperVouchers(){
-	$('#iconBtnUpdateSUPER').addClass('turnI');
+	mostrarLoader(true)
+	// $('#btnUpdateVouchersSuperUser').addClass('turnI');
 	sendAsyncPost("updateDataVouchersAdmin", null)
 	.then(function(response){
 		showReplyMessage(response.result, response.message, "Actualizar lista de comprobantes emitidos", null);
-		$('#iconBtnUpdateSUPER').removeClass('turnI');
+		// $('#btnUpdateVouchersSuperUser').removeClass('turnI');
+		mostrarLoader(false)
 	})
 	.catch(function(response){
-		$('#iconBtnUpdateSUPER').removeClass('turnI');
+		// $('#btnUpdateVouchersSuperUser').removeClass('turnI');
+		mostrarLoader(false)
 		showReplyMessage(0, "Ocurrió un error por lo que algunos comprobantes no fueron actualizados", "Actualizar comprobantes", null);
 	});
 }
@@ -295,6 +299,8 @@ function updateEnabledSections(){
 		$("#modalButtonResponse").click(function(){
 			window.location.reload();
 		});
+	} else {
+		showReplyMessage(response.result, response.message, "Modificar permisos secciones", null);
 	}
 }
 

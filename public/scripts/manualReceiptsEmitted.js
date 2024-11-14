@@ -9,19 +9,34 @@ function loadCleanTable(){
 }
 
 function getManualReceiptsEmitted(){
-
+	console.log("getManualReceiptsEmitted")
 	var data = {
 		lastId: lastId,
 		filterNameReceiver: filterNameReceiver
 	};
 
 	var response = sendPost("getManualReceiptsEmitted", data);
+	console.log(response)
 	if(response.result == 2){
 		var list = response.vouchers;
 		if(lastId !=  response.lastId)
 			lastId = response.lastId;
-		for (var i = list.length - 1; i >= 0; i--) {
-			var row = getNewRow(list[i].index, list[i].dateReceipt, list[i].docClient, list[i].nameClient, list[i].typeCoin, list[i].total);
+		console.log(list)
+		console.log(lastId)
+		// for (var i = list.length - 1; i >= 0; i--) {
+		// for (var i = 0; i < list.length; i++) {
+		// 	var row = getNewRow(list[i].index, list[i].dateReceipt, list[i].docClient, list[i].nameClient, list[i].typeCoin, list[i].total);
+		// 	$('#tbodyVauchers').append(row);
+		// }
+		for (const item of list) {
+			let row = getNewRow(
+			  item.index,
+			  item.dateReceipt,
+			  item.docClient,
+			  item.nameClient,
+			  item.typeCoin,
+			  item.total
+			);
 			$('#tbodyVauchers').append(row);
 		}
 	}

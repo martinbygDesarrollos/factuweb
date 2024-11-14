@@ -39,12 +39,12 @@ function prepareModalAccountState(prepareFor){
 
 	$('#inputPerson').off('change');
 	$('#inputPerson').change(function(){
-		loadPoeple(prepareFor);
+		loadPeople(prepareFor);
 	});
 
 	$('#inputPerson').off('keyup');
 	$('#inputPerson').keyup(function(){
-		loadPoeple(prepareFor);
+		loadPeople(prepareFor);
 	})
 
 	$('#btnConfirmModalAccountState').off('click');
@@ -111,6 +111,7 @@ function getAccountState(prepareFor){
 	if(insertedDocument){
 		let resultFindDocument = sendPost("findWithDocument",{document: insertedDocument, prepareFor: prepareFor});
 		if(resultFindDocument.result == 2){
+			console.log("OK")
 			let idSelected = null;
 			if(prepareFor == "CLIENT") idSelected = resultFindDocument.client.id;
 			else idSelected = resultFindDocument.provider.idProveedor;
@@ -129,11 +130,11 @@ function getAccountState(prepareFor){
 				}else showReplyMessage(1, "La fecha 'hasta' no puede ser ingresada vacia.", "Fecha 'hasta' campo requerido", "modalAccountState");
 			}else showReplyMessage(1, "La fecha 'desde' no puede ser ingresada vacia.", "Fecha 'desde' campo requerido", "modalAccountState");
 		}else showReplyMessage(resultFindDocument.result, resultFindDocument.message, "Estado de cuenta", "modalAccountState");
-	}else showReplyMessage(0, "Debe ingresar un rut de cliente para continuar.", "Estado de cuenta", "modalAccountState");
+	}else showReplyMessage(0, "Debe ingresar el rut para continuar.", "Estado de cuenta", "modalAccountState");
 	$('#inputPerson').focus();
 }
 
-function loadPoeple(prepareFor){
+function loadPeople(prepareFor){
 	let valuePerson = document.getElementById('inputPerson').value;
 	let listPeople = null;
 	if(valuePerson.length >= 3){

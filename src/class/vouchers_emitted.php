@@ -10,25 +10,32 @@ class vouchersEmitted{
 	}
 
 	//retorna la fecha maxima y minima de un comprobante
+	//UPDATED
 	public function getMinAndMaxDateVoucher($idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT MIN(fecha) AS minDate, MAX(fecha) AS maxDate FROM comprobantes WHERE idEmisor = ?", array('i', $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
+
+		$responseQuery = $dbClass->sendQuery("SELECT MIN(fecha) AS minDate, MAX(fecha) AS maxDate FROM comprobantes WHERE idEmisor = ?", array('i', $idBusiness), "OBJECT");
 		if($responseQuery->result == 2){
-			$responseQuery->objectResult->minDate = handleDateTime::setFormatHTMLDate($responseQuery->objectResult->minDate);
-			$responseQuery->objectResult->maxDate = handleDateTime::setFormatHTMLDate($responseQuery->objectResult->maxDate);
+			$responseQuery->objectResult->minDate = $handleDateTimeClass->setFormatHTMLDate($responseQuery->objectResult->minDate);
+			$responseQuery->objectResult->maxDate = $handleDateTimeClass->setFormatHTMLDate($responseQuery->objectResult->maxDate);
 		}else if($responseQuery->result == 1){
 			$responseQuery->message = "Actualmente no hay comprobantes de los cuales obtener la fecha máxima y mínima.";
 		}
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getTypeExistingVouchers($idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT DISTINCT tipoCFE, isCobranza FROM comprobantes WHERE idEmisor = ? ORDER BY tipoCFE", array('i', $idBusiness), "LIST");
+		$dbClass = new DataBase();
+		$utilsClass = new utils();
+		
+		$responseQuery = $dbClass->sendQuery("SELECT DISTINCT tipoCFE, isCobranza FROM comprobantes WHERE idEmisor = ? ORDER BY tipoCFE", array('i', $idBusiness), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			foreach ($responseQuery->listResult as $key => $value) {
 				$newRow = array();
 				$newRow['typeCFE'] = $value['tipoCFE'];
-				$responseNameCFE = utils::getNameVoucher($value['tipoCFE'], $value['isCobranza']);
+				$responseNameCFE = $utilsClass->getNameVoucher($value['tipoCFE'], $value['isCobranza']);
 				if(!is_null($responseNameCFE)){
 					$newRow['nameCFE'] = $responseNameCFE;
 					$arrayResult[] = $newRow;
@@ -49,9 +56,15 @@ class vouchersEmitted{
 	}
 
 	//obtengo unalista de vouchers
-	public function getVouchersEmitted($lastVoucherEmittedIdFound, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentClient, $idBusiness, $branchCompany){
+	//UPDATED
+	public function getVouchersEmitted($lastVoucherEmittedIdFound, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentClient, $idEmpresa, $branchCompany){
+		$vouchersEmittedClass = new vouchersEmitted();
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
+		$utilsClass = new utils();
+
 		if($lastVoucherEmittedIdFound == 0){
-			$lastVoucherEmittedIdFound = vouchersEmitted::getMaxIdVouchers($idBusiness);
+			$lastVoucherEmittedIdFound = $vouchersEmittedClass->getMaxIdVouchers($idEmpresa);
 			$operWhereId = "<=";
 		}else{
 			$operWhereId = "<";
@@ -88,17 +101,17 @@ class vouchersEmitted{
 		$sqlQuery = "SELECT * FROM comprobantes ";
 		$sqlQueryWhere = " WHERE id ". $operWhereId ." ? AND idEmisor = ? AND id IS NOT NULL " . $withPayMethod . $withTypeVoucher . $withDateVoucher . $withNumberVoucher . $withbranchCompany . $withClient;
 		$sqlQueryOrder = "ORDER BY id DESC LIMIT 20";
-		$responseQuery = DataBase::sendQuery($sqlQuery. $sqlQueryWhere. $sqlQueryOrder, array('si', $lastVoucherEmittedIdFound, $idBusiness), "LIST");
+		$responseQuery = $dbClass->sendQuery($sqlQuery. $sqlQueryWhere. $sqlQueryOrder, array('si', $lastVoucherEmittedIdFound, $idEmpresa), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();
 			$newLastId = $lastVoucherEmittedIdFound;
 			foreach ($responseQuery->listResult as $key => $value){
 				if($newLastId > $value['id']) $newLastId = $value['id'];
 
-				$value['fechaHoraEmision'] = substr(handleDateTime::setFormatBarDateTime($value['fechaHoraEmision']), 0, 16);
+				$value['fechaHoraEmision'] = substr($handleDateTimeClass->setFormatBarDateTime($value['fechaHoraEmision']), 0, 16);
 				$value['total'] = number_format($value['total'], 2, ",", ".");
-				$value['tipoCFE'] = utils::getNameVoucher($value['tipoCFE'], $value['isCobranza']);
-				$value['fecha'] = handleDateTime::setFormatBarDate($value['fecha']);
+				$value['tipoCFE'] = $utilsClass->getNameVoucher($value['tipoCFE'], $value['isCobranza']);
+				$value['fecha'] = $handleDateTimeClass->setFormatBarDate($value['fecha']);
 
 				if($value['formaPago'] == 1) $value['formaPago'] = "Contado";
 				else $value['formaPago'] = "Crédito";
@@ -121,7 +134,7 @@ class vouchersEmitted{
 		return $responseQuery;
 	}
 
-
+	//UPDATED
 	public function getListVouchersEmitted( $dateInit, $dateFinish, $idClient, $typeVoucher, $isCobranza, $lastId, $idBusiness, $limit ){
 
 		$dataBaseClass = new DataBase();
@@ -151,18 +164,21 @@ class vouchersEmitted{
 		if ( isset($limit) && $limit != "" && $limit != "0" ){
 			$orderAndLimit .= "LIMIT ".$limit." ";
 		}
-
+		error_log($sql . $where . $orderAndLimit);
 		return $dataBaseClass->sendQuery($sql . $where . $orderAndLimit, array('sssi', $dateFinish, $dateInit, $lastId, $idBusiness), "LIST");
 	}
 
 	//agrega una nueva linea en el historioal o bitacora de acciones
 	public function insertReceiptHistory($dateInsert, $idUser, $numTable, $action, $total, $dateReceipt, $typeCoin, $document, $myBusiness){
-		return DataBase::sendQuery("INSERT INTO bitacora_comprobantes(isCliente, fechaRealizacion, idUsuario, accion, total, fecha, moneda, documento, idEmpresa) VALUES (?,?,?,?,?,?,?,?,?)", array('isisdisii', $numTable, $dateInsert, $idUser, $action, $total, $dateReceipt, $typeCoin, $document, $myBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO bitacora_comprobantes(isCliente, fechaRealizacion, idUsuario, accion, total, fecha, moneda, documento, idEmpresa) VALUES (?,?,?,?,?,?,?,?,?)", array('isisdisii', $numTable, $dateInsert, $idUser, $action, $total, $dateReceipt, $typeCoin, $document, $myBusiness), "BOOLE");
 	}
 
 	//se modifica un comprobante
+	//UPDATED
 	public function modifyManualReceipt($indexVoucher, $total, $dateReceipt, $typeCoin, $myBusiness){
-		return DataBase::sendQuery("UPDATE comprobantes SET total= ?, fecha = ?, moneda = ? WHERE indice = ? AND idEmisor = ?", array('disii', $total, $dateReceipt, $typeCoin, $indexVoucher, $myBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE comprobantes SET total= ?, fecha = ?, moneda = ? WHERE indice = ? AND idEmisor = ?", array('disii', $total, $dateReceipt, $typeCoin, $indexVoucher, $myBusiness), "BOOLE");
 	}
 
 
@@ -177,11 +193,14 @@ class vouchersEmitted{
 
 
 	//obtengo un unico comprobante, que coincide con el valor que llega por parametro y es el campo indice del comprobante.
+	//UPDATED
 	public function getVoucherWithIndex($indexVoucher){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE indice = ?", array('i', $indexVoucher), "OBJECT");
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE indice = ?", array('i', $indexVoucher), "OBJECT");
 		if($responseQuery->result == 2){
 			$responseQuery->objectResult->total = number_format($responseQuery->objectResult->total,2,",",".");
-			$responseQuery->objectResult->fecha = handleDateTime::setFormatBarDate($responseQuery->objectResult->fecha);
+			$responseQuery->objectResult->fecha = $handleDateTimeClass->setFormatBarDate($responseQuery->objectResult->fecha);
 		}else if($responseQuery->result == 1){
 			$responseQuery->message = "No se encontro un comprobante emitido con el indice ingresado en la base de datos.";
 		}
@@ -199,20 +218,25 @@ class vouchersEmitted{
 
 
 	//obtener el estado de cuenta de un cliente segun la fecha desde y fecha hasta
+	//UPDATED
 	public function getAccountState($idClient, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness, $config){
 		/* el cobranza pueden haberlo puesto contado o credito por error, incluir ambos */
+		$dbClass = new DataBase();
 		$responseQuery = null;
+		$vouchersEmittedClass = new vouchersEmitted();
+		$handleDateTimeClass = new handleDateTime();
+		$utilsClass = new utils();
 
 		if($config == "NO")
-			$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND idCliente = ? AND fecha >= ? AND fecha <= ? AND moneda = ? AND idEmisor = ? AND (formaPago = 2 OR isCobranza = 1) ORDER BY fecha, fechaHoraEmision", array('iiisi',$idClient, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness), "LIST");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND idCliente = ? AND fecha >= ? AND fecha <= ? AND moneda = ? AND idEmisor = ? AND (formaPago = 2 OR isCobranza = 1) ORDER BY fecha, fechaHoraEmision", array('iiisi',$idClient, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness), "LIST");
 		else if($config == "SI")
-			$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND idCliente = ? AND fecha >= ? AND fecha <= ? AND moneda = ? AND idEmisor = ? ORDER BY fecha, fechaHoraEmision", array('iiisi',$idClient, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness), "LIST");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND idCliente = ? AND fecha >= ? AND fecha <= ? AND moneda = ? AND idEmisor = ? ORDER BY fecha, fechaHoraEmision", array('iiisi',$idClient, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness), "LIST");
 
 		if($responseQuery->result != 0){
 			$arrayResult = array();
-			$saldoInicial = vouchersEmitted::getBalanceToDateEmitted($idClient, $typeCoin, $dateInitINT, $config, $myBusiness);
+			$saldoInicial = $vouchersEmittedClass->getBalanceToDateEmitted($idClient, $typeCoin, $dateInitINT, $config, $myBusiness);
 			$arrayResult[] = array(
-				"FECHA" => handleDateTime::setFormatBarDate($dateInitINT),
+				"FECHA" => $handleDateTimeClass->setFormatBarDate($dateInitINT),
 				"DOCUMENTO" => "Saldo inicial",
 				"MONEDA" => $typeCoin,
 				"DEBE" => number_format(0,2,",","."),
@@ -230,10 +254,10 @@ class vouchersEmitted{
 					$newRow['id'] = $row['id'];
 					$newRow['isCobranza'] = $row['isCobranza'];
 
-					$newRow['FECHA'] = handleDateTime::setFormatBarDate($row['fecha']);
+					$newRow['FECHA'] = $handleDateTimeClass->setFormatBarDate($row['fecha']);
 
 					if(!is_null($row['id']))
-						$newRow['DOCUMENTO'] = utils::getNameVoucher($row['tipoCFE'], $row['isCobranza']). " " . $row['serieCFE'] . $row['numeroCFE'];
+						$newRow['DOCUMENTO'] = $utilsClass->getNameVoucher($row['tipoCFE'], $row['isCobranza']). " " . $row['serieCFE'] . $row['numeroCFE'];
 					else $newRow['DOCUMENTO'] = "Recibo manual";
 
 					$newRow['MONEDA'] = $row['moneda'];
@@ -278,15 +302,15 @@ class vouchersEmitted{
 				$responseQuery->message = "Actualmente no hay un estado de cuenta que generar para el cliente en el rango de fechas ingresado.";
 			}
 
-			$balanceDollar = vouchersEmitted::getBalanceToDateEmitted($idClient, "USD", handleDateTime::getCurrentDateTimeInt(), $config, $myBusiness);
-			$balancePesos = vouchersEmitted::getBalanceToDateEmitted($idClient, "UYU", handleDateTime::getCurrentDateTimeInt(), $config, $myBusiness);
+			$balanceDollar = $vouchersEmittedClass->getBalanceToDateEmitted($idClient, "USD", $handleDateTimeClass->getCurrentDateTimeInt(), $config, $myBusiness);
+			$balancePesos = $vouchersEmittedClass->getBalanceToDateEmitted($idClient, "UYU", $handleDateTimeClass->getCurrentDateTimeInt(), $config, $myBusiness);
 
 			$responseQuery->listResult = array(
 				"listResult" => $arrayResult,
 				"MAINCOIN" => $typeCoin,
 				"SALDOTOTAL" => number_format($saldoInicial->balance,2, ",", "."),
 				"INTSALDOTOTAL" => $saldoInicial->balance,
-				"DATEENDING" => handleDateTime::setFormatBarDate($dateEndingINT),
+				"DATEENDING" => $handleDateTimeClass->setFormatBarDate($dateEndingINT),
 				"BALANCEUSD" => number_format($balanceDollar->balance, 2, ",", "."),
 				"INTBALANCEUSD" => $balanceDollar->balance,
 				"BALANCEUYU" => number_format($balancePesos->balance, 2, ",", "."),
@@ -297,14 +321,18 @@ class vouchersEmitted{
 	}
 
 	//obtener el importe de los vouchers
+	//UPDATED
 	public function getBlanaceFromVouchers($listVouchers, $idBusiness){
 		$response = new \stdClass();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$handleDateTimeClass = new handleDateTime();
 
 		$resultDebe = 0;
 		$resultHaber = 0;
 
 		$idClinet = null;
 		$typeCoin = null;
+		$log = "";
 		foreach ($listVouchers as $key => $value) {
 			if($value->tipoCFE < 150 && substr($value->tipoCFE,-1) == 1)
 				$resultDebe = $resultDebe + $value->total;
@@ -315,10 +343,12 @@ class vouchersEmitted{
 
 			$idClient = $value->idCliente;
 			$typeCoin = $value->moneda;
+			$log .= "[CFE: $value->tipoCFE => VALOR: $value->total] ";
 		}
+		error_log("get Balance From Vouchers: $log");
 		$response->idClient = $idClient;
 		$response->typeCoin = $typeCoin;
-		$resultbalance = vouchersEmitted::getBalanceToDateEmitted($idClient, $typeCoin, handleDateTime::getDateTimeInt(date('Y-m-d')), "NO", $idBusiness);//getDateToINT(date('Y-m-d')), "NO", $idBusiness);
+		$resultbalance = $vouchersEmittedClass->getBalanceToDateEmitted($idClient, $typeCoin, $handleDateTimeClass->getDateTimeInt(date('Y-m-d')), "NO", $idBusiness);//getDateToINT(date('Y-m-d')), "NO", $idBusiness);
 		if($resultbalance->balance >= ($resultDebe - $resultHaber))
 			$response->balance = $resultDebe - $resultHaber;
 		else $response->balance = $resultbalance->balance;
@@ -327,13 +357,15 @@ class vouchersEmitted{
 	}
 
 	//obtener importe total de los comprobantes segun la fecha de emision
+	//UPDATED
 	public function getBalanceToDateEmitted($idClient, $typeCoin, $dateLimitINT, $config, $myBusiness){
+		$dbClass = new DataBase();
 		/* aca tambien solo los 2 o cobranza*/
 		$responseQuery = null;
 		if($config == "NO")
-			$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND fecha < ? AND idCliente = ? AND moneda = ? AND idEmisor = ? AND (formaPago = 2 OR isCobranza = 1)", array('iisi', $dateLimitINT, $idClient, $typeCoin, $myBusiness), "LIST");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND fecha < ? AND idCliente = ? AND moneda = ? AND idEmisor = ? AND (formaPago = 2 OR isCobranza = 1)", array('iisi', $dateLimitINT, $idClient, $typeCoin, $myBusiness), "LIST");
 		else
-			$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND fecha < ? AND idCliente = ? AND moneda = ? AND idEmisor = ? AND ((formaPago = 2 OR formaPago = 1) OR isCobranza = 1)", array('iisi', $dateLimitINT, $idClient, $typeCoin, $myBusiness), "LIST");
+			$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE isAnulado != 1 AND fecha < ? AND idCliente = ? AND moneda = ? AND idEmisor = ? AND ((formaPago = 2 OR formaPago = 1) OR isCobranza = 1)", array('iisi', $dateLimitINT, $idClient, $typeCoin, $myBusiness), "LIST");
 
 		if($responseQuery->result == 2){
 			$resultDebe = 0;
@@ -343,7 +375,7 @@ class vouchersEmitted{
 				if($value['isCobranza'] == 1){
 					$resultHaber = $resultHaber + $value['total'];
 				}else if($value['tipoCFE'] < 150 && substr($value['tipoCFE'],-1) == 1)
-				$resultDebe = $resultDebe + $value['total'];
+					$resultDebe = $resultDebe + $value['total'];
 				else if($value['tipoCFE'] < 150 && substr($value['tipoCFE'],-1) == 2)
 					$resultHaber = $resultHaber + $value['total'];
 				else if($value['tipoCFE'] < 150 && substr($value['tipoCFE'],-1) == 3)
@@ -361,8 +393,10 @@ class vouchersEmitted{
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//Obtener el ultimo comprobante emitido
+	//UPDATED
 	public function getLastVoucherEmitted($myBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE idEmisor = ? ORDER BY fechaHoraEmision DESC LIMIT 1", array('i', $myBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE idEmisor = ? ORDER BY fechaHoraEmision DESC LIMIT 1", array('i', $myBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro un comprobante emitido para su empresa en la base de datos.";
 		return $responseQuery;
@@ -376,44 +410,57 @@ class vouchersEmitted{
 	}
 
 	//obtener un comprobante por id
+	//UPDATED
 	public function getVoucherEmitted($idVoucher, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM comprobantes WHERE id = ? AND idEmisor = ? ", array('si', $idVoucher, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE id = ? AND idEmisor = ? ", array('si', $idVoucher, $idBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro un comprobante emitido para el identificador ingresado en la base de datos.";
 		return $responseQuery;
 	}
 
 	//crea un nuevo registro de un comprobante
+	//UPDATED
 	public function createVoucher($idClient, $dateVoucher, $typeCoin, $total,$idEmisor){
+		$dbClass = new DataBase();
+
 		error_log(date("d/m/y") . " createVoucher insertando comprobantes -> total $total, fecha $dateVoucher, $typeCoin moneda, isAnulado 0, isCobranza 1, formaPago 1, idCliente $idClient, idEmisor $idEmisor ");
-		error_log(date("d/m/y")." createVoucher datos de sesion -> iduser ".$_SESSION['systemSession']->idUser .", username ".$_SESSION['systemSession']->userName .", rut". $_SESSION['systemSession']->rut .", business ".$_SESSION['systemSession']->business .", idBusiness ".$_SESSION['systemSession']->idBusiness);
+		error_log(date("d/m/y")." createVoucher datos de sesion -> iduser ".$_SESSION['systemSession']->idUser .", username ".$_SESSION['systemSession']->userName .", rut". $_SESSION['systemSession']->rut .", Empresa ".$_SESSION['systemSession']->empresa .", idEmpresa ".$_SESSION['systemSession']->idEmpresa);
 
 
-		return DataBase::sendQuery("INSERT INTO comprobantes(total, fecha, moneda, isAnulado, isCobranza, formaPago, idCliente, idEmisor) VALUES (?,?,?,?,?,?,?,?)", array('disiiiii',$total, $dateVoucher, $typeCoin,0, 1, 1, $idClient, $idEmisor), "BOOLE");
+		return $dbClass->sendQuery("INSERT INTO comprobantes(total, fecha, moneda, isAnulado, isCobranza, formaPago, idCliente, idEmisor) VALUES (?,?,?,?,?,?,?,?)", array('disiiiii',$total, $dateVoucher, $typeCoin,0, 1, 1, $idClient, $idEmisor), "BOOLE");
 	}
 
 	//crea un nuevo registro de un comprobante
+	//UPDATED	
 	public function insertVoucherEmitted($id, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $moneda, $sucursal, $isAnulado, $isCobranza, $fechaHoraEmision, $formaPago, $idClient, $idBusiness){
+		$dbClass = new DataBase();
 		error_log(date("d/m/y") . " insertVoucherEmitted insertando comprobantes -> id, tipoCFE, serieCFE, numeroCFE, total, fecha, moneda, sucursal, isAnulado, isCobranza, fechaHoraEmision, formaPago, idCliente, idEmisor $id, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $moneda, $sucursal, $isAnulado, $isCobranza, $fechaHoraEmision, $formaPago, $idClient, $idBusiness");
-		error_log(date("d/m/y")." insertVoucherEmitted datos de sesion -> iduser, username, rut, business, idBusiness ".$_SESSION['systemSession']->idUser .", ".$_SESSION['systemSession']->userName .", ". $_SESSION['systemSession']->rut .", ".$_SESSION['systemSession']->business .", ".$_SESSION['systemSession']->idBusiness);
+		error_log(date("d/m/y")." insertVoucherEmitted datos de sesion -> iduser, username, rut, business, idBusiness ".$_SESSION['systemSession']->idUser .", ".$_SESSION['systemSession']->userName .", ". $_SESSION['systemSession']->rut .", ".$_SESSION['systemSession']->empresa .", ".$_SESSION['systemSession']->idEmpresa);
 
-		return DataBase::sendQuery("INSERT INTO comprobantes(id, tipoCFE, serieCFE, numeroCFE, total, fecha, moneda, sucursal, isAnulado, isCobranza, fechaHoraEmision, formaPago, idCliente, idEmisor) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", array('sisidisiiisiii', $id, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $moneda, $sucursal, $isAnulado, $isCobranza, $fechaHoraEmision, $formaPago, $idClient, $idBusiness), "BOOLE");
+		return $dbClass->sendQuery("INSERT INTO comprobantes(id, tipoCFE, serieCFE, numeroCFE, total, fecha, moneda, sucursal, isAnulado, isCobranza, fechaHoraEmision, formaPago, idCliente, idEmisor) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", array('sisidisiiisiii', $id, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $moneda, $sucursal, $isAnulado, $isCobranza, $fechaHoraEmision, $formaPago, $idClient, $idBusiness), "BOOLE");
 	}
 
 	//obtiene un comprobante segun el mayor indice que se encuentre
+	//UPDATED
 	public function getMaxIndexManualReceipt($myBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT MAX(indice) AS maxIndex FROM comprobantes WHERE id IS NULL AND idEmisor = ?", array('i', $myBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT MAX(indice) AS maxIndex FROM comprobantes WHERE id IS NULL AND idEmisor = ?", array('i', $myBusiness), "OBJECT");
 		if($responseQuery->result == 2) return ($responseQuery->objectResult->maxIndex + 1);
 	}
 
 	//obtener comprobantes emitidos por la empresa logueada y donde el receptor del comprobante es filterNameReceiver
+	//UPDATED
 	public function getManualReceiptsEmitted($lastId, $filterNameReceiver, $myBusiness){
-		if($lastId == 0) $lastId = vouchersEmitted::getMaxIndexManualReceipt($myBusiness);
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
+		$vouchersEmittedClass = new vouchersEmitted();
+		if($lastId == 0) $lastId = $vouchersEmittedClass->getMaxIndexManualReceipt($myBusiness);
 		$moreFilter = "";
 		if($filterNameReceiver) $moreFilter = " AND cli.nombreReceptor LIKE '%" . $filterNameReceiver . "%' ";
 		$sql = "SELECT * FROM comprobantes AS comp, clientes AS cli WHERE comp.idCliente = cli.id AND comp.indice < ? AND idEmisor = ? AND comp.id IS NULL " . $moreFilter . "ORDER BY comp.indice DESC LIMIT 15";
-
-		$responseQuery = DataBase::sendQuery($sql, array('ii', $lastId, $myBusiness), "LIST");
+		error_log("SQL: $sql");
+		$responseQuery = $dbClass->sendQuery($sql, array('ii', $lastId, $myBusiness), "LIST");
 		if($responseQuery->result == 2) {
 			$minIndex = $lastId;
 			$arrayResult = array();
@@ -422,7 +469,7 @@ class vouchersEmitted{
 				$newRow = array();
 
 				$newRow['index'] = $value['indice'];
-				$newRow['dateReceipt'] = handleDateTime::setFormatBarDate($value['fecha']);
+				$newRow['dateReceipt'] = $handleDateTimeClass->setFormatBarDate($value['fecha']);
 
 				$newRow['docClient'] = $value['docReceptor'];
 				$newRow['nameClient'] = $value['nombreReceptor'];
@@ -443,8 +490,10 @@ class vouchersEmitted{
 	}
 
 	//obtengo el id del comprobante mas reciente en ser creado.
+	//UPDATED
 	public function getMaxIdVouchers($myBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT MAX(id) AS maxId FROM comprobantes WHERE idEmisor = ?", array('i', $myBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT MAX(id) AS maxId FROM comprobantes WHERE idEmisor = ?", array('i', $myBusiness), "OBJECT");
 		if($responseQuery->result == 2)
 			return ($responseQuery->objectResult->maxId);
 	}

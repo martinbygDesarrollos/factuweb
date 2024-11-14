@@ -26,3 +26,15 @@ $('#sidebarCollapse').on('click', function() {
 	}
 
 });
+
+function mostrarLoader(valor){
+	if(valor){
+		console.log('MOSTRAR LOADER')
+		$('.loaderback').css('display', 'block')
+		$('.loader').css('display', 'block')
+	} else {
+		console.log('ESCONDER LOADER')
+		$('.loaderback').css('display', 'none')
+		$('.loader').css('display', 'none')
+	}
+}

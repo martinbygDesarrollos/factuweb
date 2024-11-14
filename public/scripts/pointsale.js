@@ -117,6 +117,8 @@ function keyPressAddDetail(keyPress, value, size){
 
 $('#modalInsertNewPaymentMethod').on('shown.bs.modal', function () {
 	console.log("Modal new payment method abierto")
+	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
+	// $('#').val();
 	$('#modalInsertNewPaymentMethodOptions').focus();
 });
 
@@ -134,22 +136,27 @@ $('#modalInsertNewPaymentMethodButtonConfirm').click(function(){ // Confirmacion
 
 function newRowPaymentMethod(method, amount){		
     // Creating a new row with the selected payment method and amount
-    let newRow = $('<div class="row"></div>');
+    let newRow = $('<div class="row mt-1" style="align-items: center;"></div>');
 
-    let col8 = $('<div class="col-8"></div>');
-    let pTag = $('<p class="custom-text">' + method + '</p>');
+    let col8 = $('<div class="col-6 pr-1"></div>');
+    let pTag = $('<p class="mt-0 mb-0 form-control" style="font-size: .875rem;">' + method + '</p>');
     col8.append(pTag);
 
-    let col4 = $('<div class="col-4"></div>');
-    let input = $('<input type="text" value="' + amount + '" class="form-control form-control-sm shadow-sm text-center">');
-    col4.append(input);
+    let colAuto1 = $('<div class="col pl-1 pr-1"></div>');
+    let input = $('<input type="number" value="' + amount + '" style="font-size: .875rem;" class="form-control text-center" onchange="calculateRemainingAmount(\'inputPriceSale22\')">');
+    colAuto1.append(input);
 
-    newRow.append(col8, col4);
+    let colAuto2 = $('<div class="col-1 pl-1" style="max-width: 54px; min-width: 54px;"></div>');
+    let btnDelete = $('<button onclick="deletePaymentMethod(this)" class="btn btn-warning p-1 pl-2 pr-2"> <i class="fas fa-trash-alt"></i> </button>');
+    colAuto2.append(btnDelete);
+
+    newRow.append(col8, colAuto1, colAuto2);
 
     $('#containerPayments').append(newRow);
 }
 
 function insertNewPayment(){
+	console.log("inserNewPayment")
 	$('#modalSetPayments').modal('hide');
 	setTimeout(function() {
 		$('#modalInsertNewPaymentMethod').modal('show');
@@ -162,6 +169,36 @@ function insertNewPayment(){
 	// $('#modalInsertNewPaymentMethod').modal();
 }
 
+function deletePaymentMethod(element){
+	console.log("deletePaymentMethod")
+	console.log(element)
+	const rowDiv = element.closest('div.row');
+    if (rowDiv) {
+        rowDiv.remove();
+    }
+	calculateRemainingAmount('inputPriceSale22')
+}
+// Suma todos los payments methods y setea el faltante
+function calculateRemainingAmount(campo){
+	console.log("calculateRemainingAmount")
+	total = $('#inputPriceSale').val() || 0
+	total = parseFloat(total.replace(/[$,]/g, ''))
+	totalPayments = 0
+	// Get all input values within containerPayments and sum them
+    $('#containerPayments input[type="number"]').each(function() {
+        totalPayments += parseFloat($(this).val()) || 0;
+    });
+	console.log(total)
+	console.log(totalPayments)
+	$('#' + campo).val(parseFloat(total - parseFloat(totalPayments).toFixed(2)).toFixed(2))
+	// $('#inputPriceSale2').val(total) inputPriceSale22
+	$('#inputPriceSale22').trigger('change')
+}
+
+$('#modalSetPayments').on('shown.bs.modal', function () {
+	$('#inputPriceSale2').val($('#inputPriceSale').val())
+	calculateRemainingAmount('inputPriceSale22');
+});
 
 
 //se llama esta funciòn cuando se ingresa texto para buscar un nuevo producto.
@@ -308,6 +345,7 @@ function calcularCostoPorImporte(importe, idiva){
 
 //se confirma y se agrega un nuevo articulo a la tabla de facturacion
 function insertNewDetail(){
+	console.log("insertNewDetail")
 	btnAddDetailClickNumber++;//esto está porque cuando se daba enter varias veces seguidas en el confirmar de agregar un nuevo producto, se terminaba agregando muchas veces
 	if(btnAddDetailClickNumber == 1){
 
@@ -344,6 +382,8 @@ function updateProductsInSession(product, indexProduct, data){
 }
 
 function insertNewDetailProcess(){
+	console.log("insertNewDetailProcess")
+
 	let description = $('#inputDescriptionProduct').val() || null;
 	let detail = $('#inputDetailProduct').val() || null;
 	let count = $('#inputCountProduct').val() || null;
@@ -353,9 +393,13 @@ function insertNewDetailProcess(){
 	let total = $('#inputTotalProduct').val() || null;
 	let ivaValue = $('#inputTaxProduct option:selected').attr('name');
 
+	if(total < 0){
+		showReplyMessage(1, "El importe no puede ser negativo.", "Importe no válido", "modalAddProduct");
+		return;
+	}
 	if(description){
-		if(count || count < 1){
-			if(price || price < 1){
+		if(count && count >= 1){
+			if(price && price > 0){
 				btnAddDetailClickNumber = 0;
 				indexDetail++;
 				createDetailArray(count); // productsInCart es creado
@@ -365,16 +409,25 @@ function insertNewDetailProcess(){
 				// $('#selectTypeCoin').prop( "disabled", true );
 				// $('#checkboxConfigIvaIncluido').prop( "disabled", true );
 				$('#modalAddProduct').modal('hide');
-			}else showReplyMessage(1, "El precio no puede ser ingresado vacio o menor a 1 para el articulo que intenta agregar", "Precio no valido", "modalAddProduct");
+			}else showReplyMessage(1, "El precio no puede ser ingresado vacio o cero para el articulo que intenta agregar", "Precio no valido", "modalAddProduct");
 		}else showReplyMessage(1, "La cantidad no puede ingresarse vacia o menor a 1 para el articulo que intenta agregar", "Cantidad no valida", "modalAddProduct");
-	}else showReplyMessage(1, "Debe ingresar el nombre del para el articulo que intenta agregar.", "Nombre requerido", "modalAddProduct");
+	}else showReplyMessage(1, "Debe ingresar el nombre para el articulo que intenta agregar.", "Nombre requerido", "modalAddProduct");
 }
 
 function createDetailArray(cant){
 	let count = cant || 1;
 	let ivaValue = $('#inputTaxProduct option:selected').attr('name');
-	let total = $('#inputTotalProduct').val() || null;
-	total = total /count;
+	// let total = $('#inputTotalProduct').val() || null;
+	includeIva = null;
+	let response = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
+		if(response.result == 2)
+			includeIva = response.configValue;
+	let total = 0;
+	if (includeIva == "SI")
+		total = $('#inputPriceProduct').val() || null;
+	else if(includeIva == "NO")
+		total = $('#inputTotalProduct').val() || null;
+	// total = total / count;
 	let itemDetail = null;
 	let description = $('#inputDescriptionProduct').val() || null;
 	let detail = $('#inputDetailProduct').val() || null;
@@ -428,6 +481,7 @@ function createDetailArray(cant){
 	productsInCart.push(itemDetail);
 	// document.cookie = 'TYPECOIN='+$('#selectTypeCoin').val();
 	sendPost("saveProductsInSession", {product: itemDetail});
+	console.log(productsInCart)
 }
 
 function getObjectProductsInCart(trItem){
@@ -469,6 +523,7 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 			else if( response.listResult.length == 1 ){
 				objeto = response.listResult[0];
 				addValuesModalDetail(objeto);
+				console.log(objeto);
 				idProductSelected = objeto.idArticulo
 				$('#modalListPrice').modal('hide');
 				$('#modalDeleteDetail').modal('hide');
@@ -479,13 +534,15 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 				$('#inputDescriptionProduct').val(product.descripcion);
 				$('#inputDetailProduct').val(product.detalle);
 				$('#inputCountProduct').val(newCantidad)
-				let moneyToConvert = $('#selectTypeCoin').val();
+				// let moneyToConvert = $('#selectTypeCoin').val();
 				let precioUnitario = product.importe;
-				if(product.moneda != moneyToConvert){
-					if(quote == 1){
+				if(product.moneda != "UYU"){
+					// if(quote == 1){
+					if(!todayQuote)
 						cotizacion();
-					}
-					precioUnitario = calculeQuote(product.importe, quote, product.moneda, moneyToConvert);
+							//     USD = cotizacion();
+					// }
+					precioUnitario = calculeQuote(product.importe, USD, product.moneda, "UYU");
 				}
 				$('#inputPriceProduct').val(precioUnitario);
 				$('#inputTaxProduct').val(product.idIva);
@@ -508,7 +565,7 @@ function setClientFinal(){
 	$("#selectTypeVoucher").append('<option value="201">ETicket Contado</option>');
 	$("#selectTypeVoucher").append('<option value="211">ETicket Crédito</option>');
 	$("#selectTypeVoucher").prop("selectedIndex", 0);
-	$('#buttonModalClientWithName').html("Cliente final");
+	$('#buttonModalClientWithName').html("Consumidor final");
 	// $("#selectTypeVoucher").focus();
 }
 
@@ -539,13 +596,15 @@ function modalBorrarDetail(trItem){
 }
 
 async function discardSalesProducts (){
-	$('#progressbar').modal();
-	progressBarIdProcess = loadPrograssBar();
+	mostrarLoader(true)
+	// $('#progressbar').modal();
+	// progressBarIdProcess = loadPrograssBar();
 	await removeAllElementsArrayDetail()
 	.then((response) => {
-		$('#progressbar h5').text("Descartando productos...");
-		$('#progressbar').modal("hide");
-		stopPrograssBar(progressBarIdProcess);
+		mostrarLoader(false)
+		// $('#progressbar h5').text("Descartando productos...");
+		// $('#progressbar').modal("hide");
+		// stopPrograssBar(progressBarIdProcess);
 		// document.cookie = "TYPECOIN=UYU";
 		// $('#selectTypeCoin').val("UYU");
 		$('#inputQuote').val("");
@@ -573,25 +632,56 @@ async function removeAllElementsArrayDetail(){
 
 function nextStep(){
     if($('#idButtonShowModalPayment').hasClass('d-none')){ // Primer Ctrl + Fin en siguiente (Agregar cliente y comprobante)
-        // alert("darle a siguiente");
-        $('#idButtonShowModalPayment').removeClass('d-none');
-        $('#nextStep').addClass('d-none');
-        $('#modalSetClient').modal({
-			backdrop: 'static'
-		});
-        $('#step-2').removeClass('d-none'); // Seccion del cliente
+		if(productsInCart.filter(item => 
+			item.removed !== true && 
+			item.removed !== "true"
+			).length > 0){
+
+				// alert("darle a siguiente");
+				$('#idButtonShowModalPayment').removeClass('d-none');
+				$('#nextStep').addClass('d-none');
+				$('#modalSetClient').modal({
+					backdrop: 'static'
+				});
+				$('#step-2').removeClass('d-none'); // Seccion del cliente
+		} else {
+			showReplyMessage(1, "Ningun producto ingresado", "Productos requeridos", null);
+		}
+
     } else {
 		if($('#nextStep').hasClass('d-none')){ //Segundo Ctrl + Fin en siguiente (Continuar a medios de pagos)
 			// alert("darle a siguiente");
 			$('#idButtonShowModalPayment').removeClass('d-none'); // por las dudas
 			$('#nextStep').addClass('d-none'); // por las dudas
-			$('#modalSetPayments').modal({
-				backdrop: 'static',
-				keyboard: false
-			});
+			if(!$('#containerInfoCredito').hasClass("d-none")){ // Si se seleccionó CREDITO ya deberia generar el CFE
+				console.log("OPCION CREDITO")
+				console.log('CREAR FACTURA')
+				createNewFactura()
+			} else {
+				console.log("OPCION CONTADO")
+				$('#modalSetPayments').modal({
+					backdrop: 'static',
+					keyboard: false
+				});
+			}
 		}
         // $('#discardSales').click(); 
         // $('#idButtonShowModalPayment').addClass('d-none');
+    }
+}
+
+function switchExpirationDate(element){
+	const expirationDateInput = document.getElementById("inputDateExpirationVoucher");
+	if (element.checked) {
+        // Checkbox is checked
+        console.log("Checkbox is checked");
+		expirationDateInput.disabled = true;
+        // Add your code for when the checkbox is checked
+    } else {
+        // Checkbox is unchecked
+        console.log("Checkbox is unchecked");
+		expirationDateInput.disabled = false;
+        // Add your code for when the checkbox is unchecked
     }
 }
 // 	// $('#step-2').removeClass('d-none'); // Seccion del cliente
@@ -606,26 +696,39 @@ function showModalPayment(){
 //VL:si se ingresaron artìculos que no se encuentran guardados, se guardan
 //si se agregan artìculos y se identifican cambios en los datos del artìculo se actualiza en la base
 function createNewFactura(){ // VER VER VER
+	console.log("Create New Factura")
+	// document.getElementById("idButtonCreateNewFactura").disabled=true;
+	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmando...";
+	let dateVoucher = $('#inputDateVoucher').val() || null; // FECHA DEL COMPROBANTE
+	let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
+	let tipoCod = typeVoucher == 211 || typeVoucher == 201 ? 101 : 111
+	
+	let mediosPago = null
+	if(typeVoucher != 211 && typeVoucher != 311){ // NO es ninguno de los CREDITOS
+		mediosPago = extractPaymentMethods()
+		console.log(mediosPago)
+	}
+	
+	// let shapePayment = $('#selectShapePayment').val() || null; 
+	// let typeCoin = $('#selectTypeCoin').val() || null; //selectTypeCoin es el tipo de moneda que se utiliza para crear la nueva factura 
+	let dateExpiration = $('#inputDateExpirationVoucher').val() || null; // FECHA DE EXPIRACION DEL COMPROBANTE
+	let adenda = $('#inputAdenda').val() || null; // ADENDA
+	let amount = $('#inputPriceSale').val().replace(/[$,]/g, '') || null; // TOTAL
+	let idBuy = $('#inputIdBuy').val() || null; // NO SE, NULL
+	let newArrayToInvoice = null; 
+	let discountPercentage = null
+	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+	if(responseDesc.result == 2)
+		discountPercentage = responseDesc.configValue;
 
-	document.getElementById("idButtonCreateNewFactura").disabled=true;
-	document.getElementById("idButtonCreateNewFactura").innerText = "Confirmando...";
+	// newArrayToInvoice = prepareToCreateNewFactura(arrayDetails);
+	newArrayToInvoice = prepareToCreateNewFactura(productsInCart);
+	console.log(newArrayToInvoice)
 
-
-	let dateVoucher = $('#inputDateVoucher').val() || null;
-	let typeVoucher = $('#selectTypeVoucher').val() || null;
-	let shapePayment = $('#selectShapePayment').val() || null;
-	let typeCoin = $('#selectTypeCoin').val() || null; //selectTypeCoin es el tipo de moneda que se utiliza para crear la nueva factura
-	let dateExpiration = $('#inputDateExpirationVoucher').val() || null;
-	let adenda = $('#inputAdenda').val() || null;
-	let amount = $('#inputPriceSale').val() || null;
-	let idBuy = $('#inputIdBuy').val() || null;
-	let newArrayToInvoice = null;
-
-	newArrayToInvoice = prepareToCreateNewFactura(arrayDetails);
 	if(newArrayToInvoice.length != 0){
 		if(dateVoucher){
-			if(shapePayment == 2){
-				let isChecked = $('#inputNotUseExpirationDate').is(':checked');
+			if(typeVoucher == 211 || typeVoucher == 311){ // los 2 CREDITOS
+				let isChecked = $('#inputNotUseExpirationDate').is(':checked'); // Check de sin vencimiento
 				if(!isChecked){
 					if(!dateExpiration){
 						showReplyMessage(1, "Debe ingresar una fecha de vencimiento para comprobante a crédito, de lo contrario seleccione 'Sin vencimiento'", "Fecha vencimiento", null);
@@ -635,50 +738,76 @@ function createNewFactura(){ // VER VER VER
 			}
 			for (var i = newArrayToInvoice.length - 1; i >= 0; i--) {
 				if(newArrayToInvoice[i].idArticulo == 0){ //significa que es un articulo nuevo por crear
-					if ( headingval ){
-						createNewProduct(newArrayToInvoice[i], headingval);
-					}
+					// if ( headingval ){
+						createNewProduct(newArrayToInvoice[i], null); // Creo un producto nuevo sin rubro
+					// }
 				}else{
-					if ( typeCoin == newArrayToInvoice[i].typeCoin){
-						//console.log("se va a actualizar el producto porque las monedas son iguales, sino no se actualiza");
-						updateProduct(newArrayToInvoice[i]);
-					}
+					// if ( typeCoin == newArrayToInvoice[i].typeCoin){
+					// 	//console.log("se va a actualizar el producto porque las monedas son iguales, sino no se actualiza");
+					// 	updateProduct(newArrayToInvoice[i]);
+					// }
 				}
 			}
+			// let data = {
+			// 	client: JSON.stringify(clientSelected),
+			// 	typeVoucher: tipoCod, // 101/111
+			// 	typeCoin: "UYU",
+			// 	shapePayment: (typeVoucher == 211 || typeVoucher == 311) ? 2 : 1,
+			// 	dateVoucher: dateVoucher,
+			// 	// dateExpiration: dateExpiration,
+			// 	dateExpiration: ((typeVoucher == 211 || typeVoucher == 311) && $('#inputNotUseExpirationDate').is(':checked')) ? null : dateExpiration,
+			// 	adenda: adenda,
+			// 	idBuy: idBuy,
+			// 	detail: JSON.stringify(newArrayToInvoice),
+			// 	amount: amount
+			// }
 			let data = {
 				client: JSON.stringify(clientSelected),
-				typeVoucher: typeVoucher,
-				typeCoin: typeCoin,
-				shapePayment: shapePayment,
+				typeVoucher: tipoCod, // 101/111
+				typeCoin: "UYU",
+				shapePayment: (typeVoucher == 211 || typeVoucher == 311) ? 2 : 1,
 				dateVoucher: dateVoucher,
-				dateExpiration: dateExpiration,
 				adenda: adenda,
 				idBuy: idBuy,
 				detail: JSON.stringify(newArrayToInvoice),
-				amount: amount
+				amount: amount, // ESTO SE ENVIA AL PEDO
+				discountTipo: discountPercentage == "SI" ? 2 : 1,
+				mediosPago: JSON.stringify(mediosPago)
+			};
+			
+			// Add dateExpiration only if conditions are met
+			if ((typeVoucher == 211 || typeVoucher == 311) && !$('#inputNotUseExpirationDate').is(':checked')) {
+				data.dateExpiration = dateExpiration;
 			}
+			$('#modalSetPayments').modal('hide');
+			mostrarLoader(true)
 			sendAsyncPost("createNewVoucher", data)
 			.then(function(response){
+				mostrarLoader(false)
+				console.log(response) // ACA ACA ACA ACA ACA
 				if (response.result == 2 ){
 					let responseVoucher = sendPost("getLastVoucherEmitted");
 					if (responseVoucher.result == 2) {
+						// if(typeVoucher != 211 && typeVoucher != 311)// NO ES CREDITO (ESTA ABIERTO EL MODAL DE MEDIOS DE PAGO)
+						// 	$('#modalSetPayments').modal('hide');
 						let data = {id:responseVoucher.objectResult.id}
 						openModalVoucher(data, "CLIENT", "sale");
 					}
 					prepareToNewSale();
 					removeAllElementsArrayDetail();
-				}
-				else {
+				} else {
+					console.log(response.message)
 					if ( response.message == "El comprobante fue emitido correctamente pero un error no permitio traerlo al sistema. Actualice los comprobantes almacenados para obtenerlo." ){
 						prepareToNewSale();
 						removeAllElementsArrayDetail();
 						//ruta para cargar todos los comprobantes en la base local
-						//updateVouchersById();
-					}else{
-						document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
-						document.getElementById("idButtonCreateNewFactura").disabled=false;
+						updateVouchersById();
+					} else {
+					// 	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
+					// 	// document.getElementById("idButtonCreateNewFactura").disabled=false;
 					}
-					updateVouchersById();
+					// updateVouchersById();
+					// $('#modalSetPayments').modal('hide');
 					showReplyMessage(response.result, response.message, "Nueva factura", null);
 				}
 			})
@@ -686,7 +815,131 @@ function createNewFactura(){ // VER VER VER
 				console.log("este es el catch", response);
 			});
 		}else showReplyMessage(1, "Debe seleccionar una fecha para el comprobante que quiere emitir.", "Fecha requerida", null);
+	} else {
+		if(typeVoucher == 211 || typeVoucher == 311) // CREDITO
+			showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", null);
+		else
+			showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", "modalSetPayments");
 	}
+}
+
+function extractPaymentMethods() {
+	const container = document.getElementById('containerPayments');
+	const rows = container.querySelectorAll('.row:not(:first-child)');
+	
+	const paymentMethods = Array.from(rows).map((row, index) => {
+	  const glosa = row.querySelector('p').textContent.trim();
+	  const valor = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+	  
+	  return {
+		codigo: getCode(glosa),
+		glosa: glosa,
+		valor: valor
+	  };
+	});
+  
+	return paymentMethods;
+}
+
+function getCode(glosa){
+	respuesta = null
+	switch (glosa) {
+		case 'Efectivo':
+			respuesta = 1
+			break;
+		case 'Tarjeta':
+			respuesta = 2
+			break;
+		case 'Cheque':
+			respuesta = 3
+			break;
+		case 'Giro':
+			respuesta = 4
+			break;
+		case 'Depósito':
+			respuesta = 5
+			break;
+		case 'Vale':
+			respuesta = 6
+			break;
+		case 'Pendiente':
+			respuesta = 7
+			break;
+		case 'Resguardo de IVA':
+			respuesta = 8
+			break;
+		case 'Certificado de Crédito':
+			respuesta = 9
+			break;
+		case 'Orden de Compra':
+			respuesta = 10
+			break;
+		case 'Otros':
+			respuesta = 11
+			break;
+			
+		default:
+			respuesta = 11
+			break;
+	}
+	return respuesta;
+}
+
+function prepareToNewSale(){
+	cancelClientSelected();
+	$('#tbodyDetailProducts').empty();
+	$('#inputDateVoucher').val(getCurrentDate());
+	$('#selectTypeVoucher').val(101);
+	$('#selectShapePayment').val(1);
+	$('#selectTypeCoin').val("UYU");
+	$('#selectTypeCoin').prop( "disabled", false );
+	$('#checkboxConfigIvaIncluido').prop( "disabled", false );
+	$('#inputPriceSale').val(parseFloat(0).toFixed(2));
+
+	let adenda = sendPost("getConfiguration", {nameConfiguration: "ADENDA"});
+	let adendaValue = "";
+	if(adenda.result == 2)
+		adendaValue = adenda.configValue;
+	$('#inputAdenda').val(adendaValue);
+	$('#step-2').addClass('d-none')
+
+	// Select all rows that contain input elements within the containerPayments div
+	let $allPaymentsWay = $('#containerPayments .row:has(input)');
+  
+	// Remove the selected rows
+	$allPaymentsWay.remove();
+
+	$('#idButtonShowModalPayment').addClass('d-none')
+	$('#nextStep').removeClass('d-none');
+	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
+	// document.getElementById("idButtonCreateNewFactura").disabled=false;
+}
+
+function createNewProduct(producto, heading){ 
+	if(producto.description && producto.description.length > 4){
+		if( producto.amount > 0 ){
+			let data = {
+				idHeading: 2, // ARTICULOS POR DEFECTO
+				idIva: producto.idIva,
+				description: producto.description,
+				detail: producto.detail,
+				brand: producto.brand,
+				typeCoin: "UYU",
+				cost: producto.cost,
+				coefficient: producto.coefficient,
+				amount: producto.amount,
+				barcode: null,
+				discount: producto.discount,
+				inventory: producto.idInventary,
+				minInventory: 0, //mìnima cantidad de articulos en stock
+			}
+			let response = sendPost('insertProduct',data);
+			if(response.result != 2){
+			}
+			return response;
+		}
+	}
+
 }
 
 //esta funcion recibe el array que tiene todos los productos de la lista de compra.
@@ -705,7 +958,10 @@ function onChangeTypeVoucher(selectTypeVoucher){
 	console.log("event onchange de selectTypeVoucher");
 	if(selectTypeVoucher.value == 211 || selectTypeVoucher.value == 311){ // CREDITOS
 		$('#containerInfoCredito').removeClass("d-none");
-		document.getElementById("inputDateExpirationVoucher").valueAsDate = new Date();
+		// document.getElementById("inputDateExpirationVoucher").valueAsDate = new Date();
+		let futureDate = new Date();
+		futureDate.setDate(futureDate.getDate() + 30);
+		document.getElementById("inputDateExpirationVoucher").valueAsDate = futureDate;
 		// $('#selectShapePayment').val(2).change();
 		// $('#containerInputIdBuy').addClass("show");
 		
@@ -757,7 +1013,7 @@ function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU 
 
 	for(var i = 0; i < productsInCart.length; i++) {
         if(productsInCart[i].typeCoin == ""){
-            console.loog("ESTE ARTICULO DEBERIA TENER COIN DE UYU");
+            console.log("ESTE ARTICULO DEBERIA TENER COIN DE UYU");
         }
 		let row = createDetailRow(productsInCart[i].idDetail, productsInCart[i].description, productsInCart[i].detail, productsInCart[i].count, productsInCart[i].price, productsInCart[i].discount, productsInCart[i].idIva, productsInCart[i].ivaValue, productsInCart[i].price);
 		$('#tbodyDetailProducts').prepend(row);
@@ -791,7 +1047,7 @@ function createDetailRow(indexDetail, name, description, count, price, discount,
 	}
 	row += "<td class='col-1 text-left align-middle '><button class='btn btn-danger btn-sm shadow-sm align-middle' style='width: 3em;' onclick='modalBorrarDetail(" + indexDetail + ")'><i class='fas fa-trash-alt'></i></button></td>";
 	row += "<td class='col-2 text-right align-middle'><input id='inputCount"+ (indexDetail -1) +"' type='number' min=1 class='form-control form-control-sm text-right' value='"+ count + "' onchange='changeItemDetail("+ (indexDetail -1) +")' onkeyup='this.onchange()'></td>";
-	row += "<td class='col-2 text-right align-middle'><input id='inputDiscount"+ (indexDetail -1) +"' type='number' min=0 max=100 class='form-control form-control-sm text-right' value='"+ discount + "' onchange='changeItemDetail("+ (indexDetail -1) +")' onkeyup='this.onchange()'></td>";
+	row += "<td class='col-2 text-right align-middle'><input id='inputDiscount"+ (indexDetail -1) +"' type='number' min=0 max=100 class='form-control form-control-sm text-right' value='"+ parseFloat(discount).toFixed(2) + "' onchange='changeItemDetail("+ (indexDetail -1) +")' onkeyup='this.onchange()'></td>";
 	row += "<td class='col-1 text-right align-middle'>"+ getFormatValue(total) +"</td>";
 	row += "</tr>";
 
@@ -801,11 +1057,24 @@ function createDetailRow(indexDetail, name, description, count, price, discount,
 //cuando se modifica la cantidad del producto en el detalle de producto que estàn agregados al carro
 function changeItemDetail(itemDetail){
 	console.log(productsInCart);
-	let newCount = $('#inputCount' + itemDetail).val() || 1;
-	let newDiscount = $('#inputDiscount' + itemDetail).val() || 0;
+	
 	// let total = 0;
 	// let totalProduct = 0;
 	// let valueQuote = quote;
+	if(!discountPercentage){
+		let response = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+		if(response.result == 2)
+			discountPercentage = response.configValue;
+	}
+	if(discountPercentage == "SI"){
+		if($('#inputDiscount' + itemDetail).val() > 100)
+			$('#inputDiscount' + itemDetail).val(100)
+		else if($('#inputDiscount' + itemDetail).val() < 0)
+			$('#inputDiscount' + itemDetail).val(0)
+	}
+	
+	let newCount = $('#inputCount' + itemDetail).val() || 1;
+	let newDiscount = $('#inputDiscount' + itemDetail).val() || 0;
 	
 	productsInCart[itemDetail]['discount'] = newDiscount;
 	productsInCart[itemDetail]['count'] = newCount;
@@ -842,7 +1111,7 @@ function addTotal(){
 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
 	if(responseDesc.result == 2)
 		discountPercentage = responseDesc.configValue;
-
+	console.log('DESC EN %: ' + discountPercentage )
 	for (var i = 0; i < productsInCart.length; i++){
 		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
 			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
@@ -858,7 +1127,8 @@ function addTotal(){
 				else if(discountPercentage == "SI")
 	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
             // }
-			// console.log(totalProduct)
+			console.log(productsInCart[i].amount)
+			console.log(totalProduct)
 			// totalProduct =  parseFloat(productsInCart[i].amount) * quantity;
 			total = totalProduct + total;
 			parseFloat(total).toFixed(2)
@@ -868,12 +1138,20 @@ function addTotal(){
 	$('#inputPriceSale').val(getFormatValue(total));
 }
 
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function cotizacion(){
 	let response = sendPost("getQuote", {typeCoin: "USD", dateQuote: 1});
 	todayQuote = true;
 	return parseFloat(response.currentQuote).toFixed(2);
 	// return response;
 }
+
+// async function cotizacion() {
+//     let response = await sendAsyncPost("getQuote", {typeCoin: "USD", dateQuote: 1});
+//     todayQuote = true;
+//     return parseFloat(response.currentQuote).toFixed(2);
+// }
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function openModalAddProduct(){
 
@@ -903,8 +1181,11 @@ function openModalAddProduct(){
 		}
 	}
 }
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function openModalGetPrices(){
+	// mostrarLoader(true)
+	// $('.loaderback').css('display', 'block')
 	$('#inputTextToSearchPrice').val("");
 	// $('#inputTextToSearchPrice').focus();
 	$('#modalListPrice input').prop( "disabled", false );
@@ -912,6 +1193,24 @@ function openModalGetPrices(){
 	$('#modalListPrice').modal("show");
 }
 
+// async function openModalGetPrices() {
+//     mostrarLoader(true);
+//     $('#inputTextToSearchPrice').val("");
+//     $('#modalListPrice input').prop("disabled", false);
+    
+//     try {
+//         await getListPrice();
+//         $('#modalListPrice').modal("show");
+//     } catch (error) {
+//         console.error("Error:", error);
+//     } finally {
+//         mostrarLoader(false);
+//     }
+// }
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 //obtener la lista de articulos usando getSuggestionProductByDescription
 function getListPrice(){
 	// let coin = $('#selectTypeCoin').val();
@@ -926,6 +1225,36 @@ function getListPrice(){
 		}
 	}
 }
+
+// async function getListPrice() {
+//     try {
+//         let valueToSearch = $('#inputTextToSearchPrice').val();
+//         let response = await sendAsyncPost("getSuggestionProductByDescription", 
+//             {textToSearch: valueToSearch}
+//         );
+        
+//         $('#tbodyListPrice').empty();
+//         if(response.result == 2) {
+//             let list = response.listResult;
+//             for (var i = 0; i < list.length; i++) {
+//                 let row = createRowListPrice(
+//                     list[i].idArticulo, 
+//                     list[i].descripcion, 
+//                     list[i].rubro, 
+//                     list[i].importe, 
+//                     list[i].moneda
+//                 );
+//                 $('#tbodyListPrice').append(row);
+//             }
+//         }
+//     } catch (error) {
+//         console.error("Error in getListPrice:", error);
+//         throw error; // Re-throw the error to be caught by openModalGetPrices
+//     }
+// }
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 
 //crar una nueva linea para la tabla que muestra los articulos
 function createRowListPrice(idProduct, description, heading, price, coin){
@@ -956,13 +1285,18 @@ function createRowListPrice(idProduct, description, heading, price, coin){
 	row += "<td class='text-left'>"+ heading +"</td>";
 	row += priceUYU;
 	row += priceUSD
-	row += "<td class='text-center'><button onclick='addToCar(" + idProduct + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
+	row += "<td class='text-center'><button onclick='addToCar(this, " + idProduct + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
 
 	return row;
 }
 
 //agrega un nuevo producto al carro de compra
-function addToCar(idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
+function addToCar(element, idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
+	console.log(element)
+	$("#tbodyListPrice button").attr('disabled', "true");
+	// $(element).attr('disabled', 'true')
+	$('#modalListPrice').modal("hide")
+	// $(element).off('click');
 	let response = sendPost('getProductById', { idProduct: idProduct});
 	if(response.result == 2){
 		$('#modalListPrice').modal('hide');
@@ -979,7 +1313,18 @@ function addToCar(idProduct){ //detalle, discount, iva, ivaValue, costo, coefici
 		idProductSelected = idProduct;
 		calculateInverseByCost();
 		insertNewDetail();
-	}else showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+		$("#tbodyListPrice button").attr('disabled', "false");
+		// $(element).on('click', function() {
+		// 	addToCar(element, idProduct);
+		// });
+	} else {
+		showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+		$("#tbodyListPrice button").attr('disabled', "false");
+		// $(element).on('click', function() {
+		// 	addToCar(element, idProduct);
+		// });
+
+	}
 }
 
 function elementsNoRemoved (){ // Devuelve la cantidad de productos en el carro

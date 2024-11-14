@@ -1,7 +1,7 @@
 function getSiteURL(){
 	let url = window.location.href;
 	if(url.includes("localhost") || url.includes("intranet.gargano"))
-		return '/efactura/public/';
+		return '/factuweb/public/';
 	else
 		return '/';
 }

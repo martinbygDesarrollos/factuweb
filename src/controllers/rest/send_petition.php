@@ -48,7 +48,7 @@ class sendPetition{
 		return $arrayReceptor;
 	}
 
-	public function getDetallesArray($indFact, $nomItem, $codItem, $descItem, $cantidad, $uniMedida, $precio){
+	public function getDetallesArray($indFact, $nomItem, $codItem, $descItem, $cantidad, $uniMedida, $precio, $descuentoTipo = null, $descuento = null){
 		$arrayDetail = array(
 			"indFact" => $indFact,
 			"nomItem" => $nomItem,
@@ -62,41 +62,62 @@ class sendPetition{
 		if(!is_null($uniMedida))
 			$arrayDetail["uniMedida"] = $uniMedida;
 
+		if(!is_null($descuentoTipo) && !is_null($descuento)){
+			error_log("DESCUENTO: " . $descuento);
+			$arrayDetail["descRecItem"] = $descuento;
+			$arrayDetail["descRecItemTipo"] = $descuentoTipo;
+		}
+
+		// error_log("MEDIOS DE PAGO: $mediosPago");
+		// if(!is_null($mediosPago)){
+		// 	error_log($mediosPago[0]);
+		// 	error_log($mediosPago);
+		// 	// $arrayDetail["descRecItem"] = -$descuento;
+		// 	// $arrayDetail["descRecItemTipo"] = $descuentoTipo;
+		// }
 		return $arrayDetail;
 	}
 
 	//llega un dato que puede ser nombre, rut o ci y te devuelve lo que encuentra en ormen
 	public function buscarCliente($rut, $textToSearch, $token){
-		return sendPetition::prepareAndSendCurl("GET", "customers/search/" . $rut . "?Text=" . $textToSearch, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "customers/search/" . $rut . "?Text=" . $textToSearch, $token, null);
 	}
 
 	//llega un dato que puede ser nombre, rut o ci y te devuelve lo que encuentra en DGI
 	public function buscarClienteDGI($textToSearch, $token){
-		return sendPetition::prepareAndSendCurl("GET", "company/search?Text=" . $textToSearch, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/search?Text=" . $textToSearch, $token, null);
 	}
 
 	public function status($rut, $token){
-		return sendPetition::prepareAndSendCurl("GET", "status?rut=" . $rut, $token, null,);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "status?rut=" . $rut, $token, null,);
 	}
 
 
 	public function exportacion($rut, $typeCall, $data, $token){
-		return sendPetition::prepareAndSendCurl("GET", "company/" . $rut . "/cfe/" . $typeCall .  "/export" . $data, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/" . $rut . "/cfe/" . $typeCall .  "/export" . $data, $token, null);
 	}
 
 	public function obtenerCotizacion($dateFrom, $dateTo, $typeCoin){
-		return sendPetition::prepareAndSendCurl("GET", 'currency?Currency=' . $typeCoin . '&From=' . $dateFrom . '&To=' . $dateTo, null, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", 'currency?Currency=' . $typeCoin . '&From=' . $dateFrom . '&To=' . $dateTo, null, null);
 	}
 
 	public function consultarRut($rut, $rutBusiness, $token){
-		return sendPetition::prepareAndSendCurl("GET", 'company?SenderRUT=' . $rut . '&RUTConsulta=' . $rutBusiness, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", 'company?SenderRUT=' . $rut . '&RUTConsulta=' . $rutBusiness, $token, null);
 	}
 	
 	public function ping(){
-		return sendPetition::prepareAndSendCurl("GET", "ping", null, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "ping", null, null);
 	}
 
 	public function login($rut, $user, $password){
+		$sendPetitionInstance = new sendPetition();
 		$data = array(
 			"credenciales" => array(
 				"user" => $user,
@@ -104,49 +125,57 @@ class sendPetition{
 			)
 		);
 
-		return sendPetition::prepareAndSendCurl("POST", "login", null, $data);
+		return $sendPetitionInstance->prepareAndSendCurl("POST", "login", null, $data);
 	}
 
 	public function nuevoCFE($rut, $data, $token){
-		return sendPetition::prepareAndSendCurl("POST", "company/" . $rut . "/cfe", $token, $data);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("POST", "company/" . $rut . "/cfe", $token, $data);
 	}
-
+	//UPDATED
 	public function consultarCFE($rut, $rutEmisor, $tipoCFE, $serieCFE, $numeroCFE, $repImpresa, $formatImpresion, $token){
+		$sendPetitionInstance = new sendPetition();
 		if(is_null($rutEmisor))
 			$rutEmisor = "";
 		else
 			$rutEmisor = '&RUTEmisor=' . $rutEmisor;
 
 		$url = "company/" . $rut . "/cfe?tipocfe=". $tipoCFE . "&seriecfe=" . $serieCFE . "&numerocfe=" . $numeroCFE . "&conrepresentacionimpresa=" . $repImpresa . "&formatorepresentacionimpresa=" . $formatImpresion . $rutEmisor;
-		return sendPetition::prepareAndSendCurl("GET", $url, $token, null);
+		return $sendPetitionInstance->prepareAndSendCurl("GET", $url, $token, null);
 	}
-
+	//UPDATED
 	public function consultarCaes($rut, $token)	{
-		return sendPetition::prepareAndSendCurl("GET", "caes/" . $rut, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "caes/" . $rut, $token, null);
 	}
 
 	public function consultarCertificadoDigital($rut, $token){
-		return sendPetition::prepareAndSendCurl("GET", 'certificate/' . $rut, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", 'certificate/' . $rut, $token, null);
 	}
 
 	public function nuevoCliente($rut, $data, $token){
-
-		return sendPetition::prepareAndSendCurl("POST", 'customers/' . $rut, $token, $data);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("POST", 'customers/' . $rut, $token, $data);
 	}
 
 	public function modificarCliente($rut, $document, $data, $token){
-		return sendPetition::prepareAndSendCurl("PUT", 'customers/' . $rut . '/' . $document, $token, $data);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("PUT", 'customers/' . $rut . '/' . $document, $token, $data);
 	}
 
 	public function listarClientes($rut, $token){
-		return sendPetition::prepareAndSendCurl("GET", 'customers/'. $rut, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", 'customers/'. $rut, $token, null);
 	}
 
 	public function consultarCliente($rut, $documento, $token){
-		return sendPetition::prepareAndSendCurl("GET", "customers/" . $rut . "/" . $documento, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "customers/" . $rut . "/" . $documento, $token, null);
 	}
 
 	public function listarRecibidos($rut, $pageSize, $lastId, $dateFrom, $dateTo, $token){
+		$sendPetitionInstance = new sendPetition();
 		if(!is_null($dateFrom) && !is_null($dateTo))
 			$dateFrom = "&from=" . $dateFrom . "&to=" . $dateTo;
 		else $dateFrom = "";
@@ -154,10 +183,11 @@ class sendPetition{
 		if(!is_null($lastId))
 			$lastId = "&LastId=" . $lastId;
 		else $lastId = "";
-		return sendPetition::prepareAndSendCurl("GET", "company/" . $rut . "/cfe/recibidos?PageSize=" . $pageSize . $lastId . $dateFrom, $token, null);
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/" . $rut . "/cfe/recibidos?PageSize=" . $pageSize . $lastId . $dateFrom, $token, null);
 	}
 
 	public function listarEmitidos($rut, $pageSize, $lastId, $dateFrom, $dateTo, $branchCompany, $token){
+		$sendPetitionInstance = new sendPetition();
 		if(!is_null($dateFrom) && !is_null($dateTo))
 			$dateFrom = "&from=" . $dateFrom . "&to=" . $dateTo;
 		else $dateFrom = "";
@@ -170,14 +200,16 @@ class sendPetition{
 			$branchCompany = "&sucursal=" . $lastId;
 		else $branchCompany = "";
 
-		return sendPetition::prepareAndSendCurl("GET", "company/" . $rut . "/cfe/emitidos?PageSize=" . $pageSize . $lastId . $dateFrom . $branchCompany, $token, null);
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/" . $rut . "/cfe/emitidos?PageSize=" . $pageSize . $lastId . $dateFrom . $branchCompany, $token, null);
 	}
 
 	public function getEmpresa($rut, $token){
-		return sendPetition::prepareAndSendCurl("GET", "company/" . $rut, $token, null);
+		$sendPetitionInstance = new sendPetition();
+		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/" . $rut, $token, null);
 	}
 
 	public function prepareAndSendCurl($typeMethod, $method, $token, $data){
+		$sendPetitionInstance = new sendPetition();
 		$curlPetition = curl_init(URL_REST . $method);
 		curl_setopt($curlPetition, CURLOPT_URL, URL_REST . $method);
 
@@ -190,7 +222,7 @@ class sendPetition{
 		}
 
 		curl_setopt($curlPetition, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curlPetition, CURLOPT_HTTPHEADER, sendPetition::getHeader($typeMethod, $token));
+		curl_setopt($curlPetition, CURLOPT_HTTPHEADER, $sendPetitionInstance->getHeader($typeMethod, $token));
 		$responseCurl =  curl_exec($curlPetition);
 		curl_close($curlPetition);
 		return $responseCurl;

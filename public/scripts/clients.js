@@ -32,50 +32,121 @@ function getListClientsView(){
 	resizeScreen();
 }
 
-function createRow(idReceiver, docReceiver, nameReceiver, address, numberMobile, email, balanceUYU, balanceUSD){
-	let row = "<tr id='" + idReceiver + "' >";
+// function createRow(idReceiver, docReceiver, nameReceiver, address, numberMobile, email, balanceUYU, balanceUSD){
+// 	let row = "<tr id='" + idReceiver + "' >";
 
-	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + docReceiver + "</td>";
-	row += "<td class='text-right'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + nameReceiver + "</td>";
+// 	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + docReceiver + "</td>";
+// 	row += "<td class='text-right'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + nameReceiver + "</td>";
+// 	if(!address)
+// 		address = '';
+
+// 	row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + address + "</td>";
+
+// 	if(numberMobile){
+// 		let listNumber = numberMobile.split(';');
+// 		if(listNumber.length > 1){
+// 			let select = "<select>";
+// 			for(let i = 0;  i < listNumber.length; i++){
+// 				select += "<option value='" + listNumber[i] + "' >" + listNumber[i] + "</option>";
+// 			}
+// 			select += "</select>";
+// 			row += "<td class='text-right toHidden2'>" + select + "</td>";
+// 		}else{
+// 			row += "<td class='text-right toHidden2' onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + listNumber + "</td>";
+// 		}
+// 	}else row += "<td class='text-right toHidden2'  onclick='openModalAccounStateForClient(" + idReceiver + ")'></td>";
+
+// 	if(email){
+// 		let listEmail = email.split(';');
+// 		if(listEmail.length > 1){
+// 			let select = "<select>";
+// 			for (var i = 0; i < listEmail.length; i++) {
+// 				select += "<option value='" + listEmail[i] + "'>" +  listEmail[i] + "</option>";
+// 			}
+// 			select += "</select>";
+// 			row += "<td class='text-right toHidden2 notShow'>" + select + "</td>";
+// 		}else row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + email + "</td>";
+// 	}else row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'></td>";
+
+// 	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + balanceUYU + "</td>";
+// 	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + balanceUSD + "</td>";
+// 	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1' onclick='openModalUpdateClient(" + idReceiver + ")'><i class='fas fa-user-edit text-mycolor'></i></button>";
+// 	row += "<button class='btn btn-sm background-template-color2 text-template-background shadow-sm' onclick='openModalNewFeeClient(" + idReceiver + ")' data-toggle='tooltip' data-placement='left' title='Nueva cuota por servicio'>";
+// 	row += "<i class='fas fa-plus-circle text-mycolor'></i></button></td></tr>";
+
+// 	return row;
+// }
+function createRow(idReceiver, docReceiver, nameReceiver, address, numberMobile, email, balanceUYU, balanceUSD){
+	let row = "<tr id='" + idReceiver + "' onclick='openModalAccounStateForClient(" + idReceiver + ")'>";
+
+	row += "<td class='text-left'  >" + docReceiver + "</td>";
+	row += "<td class='text-left' >" + nameReceiver + "</td>";
 	if(!address)
 		address = '';
 
-	row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + address + "</td>";
-
+	listNumber2 = ""
 	if(numberMobile){
 		let listNumber = numberMobile.split(';');
-		if(listNumber.length > 1){
-			let select = "<select>";
-			for(let i = 0;  i < listNumber.length; i++){
-				select += "<option value='" + listNumber[i] + "' >" + listNumber[i] + "</option>";
-			}
-			select += "</select>";
-			row += "<td class='text-right toHidden2'>" + select + "</td>";
-		}else{
-			row += "<td class='text-right toHidden2' onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + listNumber + "</td>";
-		}
-	}else row += "<td class='text-right toHidden2'  onclick='openModalAccounStateForClient(" + idReceiver + ")'></td>";
-
+		listNumber2 = listNumber.join(', ');
+	}
+	listEmail2 = ""
 	if(email){
 		let listEmail = email.split(';');
-		if(listEmail.length > 1){
-			let select = "<select>";
-			for (var i = 0; i < listEmail.length; i++) {
-				select += "<option value='" + listEmail[i] + "'>" +  listEmail[i] + "</option>";
-			}
-			select += "</select>";
-			row += "<td class='text-right toHidden2 notShow'>" + select + "</td>";
-		}else row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + email + "</td>";
-	}else row += "<td class='text-right toHidden2 notShow'  onclick='openModalAccounStateForClient(" + idReceiver + ")'></td>";
+		listEmail2 = listEmail.join(', ');
+	}
+	let newPadding = ""
+	if(email && address && numberMobile && address != "" && numberMobile.trim() != "" && email.trim() != ""){
+		newPadding = " pt-0 pb-0"
+	}
+	row += "<td class='text-left" + newPadding + "' ><p title=\"" + address + " \">" + address + "</p><p title=\"" + listNumber2 + " \">" + listNumber2 + "</p><p title=\"" + listEmail2 + " \">" + listEmail2 + "</p></td>";
+	// if(numberMobile){
+	// 	let listNumber = numberMobile.split(';');
+	// 	if(listNumber.length > 1){
+	// 		let select = "<select>";
+	// 		for(let i = 0;  i < listNumber.length; i++){
+	// 			select += "<option value='" + listNumber[i] + "' >" + listNumber[i] + "</option>";
+	// 		}
+	// 		select += "</select>";
+	// 		row += "<td class='text-right toHidden2'>" + select + "</td>";
+	// 	}else{
+	// 		row += "<td class='text-right toHidden2'>" + listNumber + "</td>";
+	// 	}
+	// }else row += "<td class='text-right toHidden2' ></td>";
 
-	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + balanceUYU + "</td>";
-	row += "<td class='text-right toHidden1'  onclick='openModalAccounStateForClient(" + idReceiver + ")'>" + balanceUSD + "</td>";
-	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1' onclick='openModalUpdateClient(" + idReceiver + ")'><i class='fas fa-user-edit text-mycolor'></i></button>";
-	row += "<button class='btn btn-sm background-template-color2 text-template-background shadow-sm' onclick='openModalNewFeeClient(" + idReceiver + ")' data-toggle='tooltip' data-placement='left' title='Nueva cuota por servicio'>";
+	// if(email){
+	// 	let listEmail = email.split(';');
+	// 	if(listEmail.length > 1){
+	// 		let select = "<select>";
+	// 		for (var i = 0; i < listEmail.length; i++) {
+	// 			select += "<option value='" + listEmail[i] + "'>" +  listEmail[i] + "</option>";
+	// 		}
+	// 		select += "</select>";
+	// 		row += "<td class='text-right toHidden2 notShow'>" + select + "</td>";
+	// 	}else row += "<td class='text-right toHidden2 notShow' >" + email + "</td>";
+	// }else row += "<td class='text-right toHidden2 notShow' ></td>";
+
+	row += "<td class='text-right' > <p> $ " + balanceUYU + " </p> <p> U$S " + balanceUSD + " </p></td>";
+	// row += "<td class='text-right' >" + balanceUSD + "</td>";
+	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1 update-btn' onclick='handleButtonClick(event," + idReceiver + ")' title='Editar información'><i class='fas fa-user-edit text-mycolor'></i></button>";
+	row += "<button class='btn btn-sm background-template-color2 text-template-background shadow-sm new-fee-btn' onclick='handleButtonClick(event," + idReceiver + ")' data-toggle='tooltip' data-placement='left' title='Nueva cuota por servicio'>";
 	row += "<i class='fas fa-plus-circle text-mycolor'></i></button></td></tr>";
 
 	return row;
 }
+
+function handleButtonClick(event, clientId) {
+	console.log(event.currentTarget)
+	console.log(clientId)
+	// Prevent the event from bubbling up to the table row
+	event.stopPropagation();
+
+	// Call the appropriate function based on the button clicked
+	if (event.currentTarget.classList.contains('update-btn')) {
+	  openModalUpdateClient(clientId);
+	} else if (event.currentTarget.classList.contains('new-fee-btn')) {
+	  openModalNewFeeClient(clientId);
+	}
+  }
 
 function openModalNewFeeClient(idClient){
 	let response = sendPost("getClientSelected",{idReceiver: idClient});
@@ -437,21 +508,23 @@ function exportClienteDeudores(){
 	$("#modalExportClients").modal("hide");
 
 	//bloquear el boton de exportar
-	progressBarIdProcess = loadPrograssBar();
-	$('#progressbar h5').text("Exportar clientes con saldo...");
-	$("#progressbar").modal("show");
+	// progressBarIdProcess = loadPrograssBar();
+	// $('#progressbar h5').text("Exportar clientes con saldo...");
+	mostrarLoader(true)
+	// $("#progressbar").modal("show");
 
 	let dateTo = $("#idInputDateExportClients").val();
 	dateTo = dateTo.replaceAll("-", "");
 	//console.log("exportar a excel datos de los clientes deudores");
 	sendAsyncPost("exportExcelDeudores" , {dateTo: dateTo})
 	.then((response)=>{
+		mostrarLoader(false)
 		//console.log("respuesta del export");
 		//console.log(response);
 		//mostrar modal con progress bar
 
-		stopPrograssBar(progressBarIdProcess);
-		$('#progressbar').modal("hide");
+		// stopPrograssBar(progressBarIdProcess);
+		// $('#progressbar').modal("hide");
 		//cambiar el titulo del progressbar se hace cuando se cierra el modal por completo
 
 		//habilitar boton de exportar

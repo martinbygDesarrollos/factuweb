@@ -17,32 +17,75 @@ function getProviders(){
 	resizeScreen();
 }
 
+// function createRow(idProvider, docProvider, nameBusiness, address, phoneNumber, email, balanceUYU, balanceUSD){
+// 	var nullCell = "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'></td>";
+// 	var row = "<tr id='" + idProvider + "'>";
+
+// 	row += "<td class='text-right' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + docProvider + "</td>";
+// 	row += "<td class='text-right' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + nameBusiness + "</td>";
+// 	if(address)
+// 		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + address + "</td>";
+// 	else
+// 		row += nullCell;
+// 	if(phoneNumber)
+// 		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + phoneNumber + "</td>";
+// 	else
+// 		row += nullCell;
+
+// 	if(email)
+// 		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + email + "</td>";
+// 	else
+// 		row += nullCell;
+
+// 	row += "<td class='text-right toHidden1' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + balanceUYU + "</td>";
+// 	row += "<td class='text-right toHidden1' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + balanceUSD + "</td>";
+// 	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background' onclick='openModalUpdateProvider(" + idProvider + ")'><i class='fas fa-user-edit text-mycolor'></i></button></td></tr>";
+
+// 	return row;
+// }
 function createRow(idProvider, docProvider, nameBusiness, address, phoneNumber, email, balanceUYU, balanceUSD){
-	var nullCell = "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'></td>";
-	var row = "<tr id='" + idProvider + "'>";
+	let row = "<tr id='" + idProvider + "' onclick='openModalAccounStateForProvider(" + idProvider + ")'>";
 
-	row += "<td class='text-right' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + docProvider + "</td>";
-	row += "<td class='text-right' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + nameBusiness + "</td>";
-	if(address)
-		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + address + "</td>";
-	else
-		row += nullCell;
-	if(phoneNumber)
-		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + phoneNumber + "</td>";
-	else
-		row += nullCell;
-
-	if(email)
-		row += "<td class='text-right toHidden2' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + email + "</td>";
-	else
-		row += nullCell;
-
-	row += "<td class='text-right toHidden1' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + balanceUYU + "</td>";
-	row += "<td class='text-right toHidden1' onclick='openModalAccounStateForProvider(" + idProvider + ")'>" + balanceUSD + "</td>";
-	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background' onclick='openModalUpdateProvider(" + idProvider + ")'><i class='fas fa-user-edit text-mycolor'></i></button></td></tr>";
+	row += "<td class='text-left'  >" + docProvider + "</td>";
+	row += "<td class='text-left' >" + nameBusiness + "</td>";
+	if(!address)
+		address = '';
+	listNumber2 = ""
+	if(phoneNumber){
+		let listNumber = phoneNumber.split(';');
+		listNumber2 = listNumber.join(', ');
+	}
+	listEmail2 = ""
+	if(email){
+		let listEmail = email.split(';');
+		listEmail2 = listEmail.join(', ');
+	}
+	let newPadding = ""
+	if(email && address && phoneNumber && address != "" && phoneNumber.trim() != "" && email.trim() != ""){
+		newPadding = " pt-0 pb-0"
+	}
+	row += "<td class='text-left" + newPadding + "' ><p title=\"" + address + " \">" + address + "</p><p title=\"" + listNumber2 + " \">" + listNumber2 + "</p><p title=\"" + listEmail2 + " \">" + listEmail2 + "</p></td>";
+	
+	row += "<td class='text-right' > <p> $ " + balanceUYU + " </p> <p> U$S " + balanceUSD + " </p></td>";
+	// row += "<td class='text-right' >" + balanceUSD + "</td>";
+	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1 update-btn' onclick='handleButtonClick(event," + idProvider + ")'><i class='fas fa-user-edit text-mycolor'></i></button></td></tr>";
+	// row += "<button class='btn btn-sm background-template-color2 text-template-background shadow-sm new-fee-btn' onclick='handleButtonClick(event," + idReceiver + ")' data-toggle='tooltip' data-placement='left' title='Nueva cuota por servicio'>";
+	// row += "";
 
 	return row;
 }
+
+function handleButtonClick(event, providerId) {
+	console.log(event.currentTarget)
+	console.log(providerId)
+	// Prevent the event from bubbling up to the table row
+	event.stopPropagation();
+
+	// Call the appropriate function based on the button clicked
+	if (event.currentTarget.classList.contains('update-btn')) {
+		openModalUpdateProvider(providerId);
+	}
+  }
 
 function providersWithBalance(inputCheck){
 	if(inputCheck.checked) withBalance = "YES";
@@ -168,21 +211,23 @@ function exportProvidersDeudores(){
 	$("#modalExportProviders").modal("hide");
 
 	//bloquear el boton de exportar
-	progressBarIdProcess = loadPrograssBar();
-	$('#progressbar h5').text("Exportando proveedores con saldo...");
-	$("#progressbar").modal("show");
+	// progressBarIdProcess = loadPrograssBar();
+	// $('#progressbar h5').text("Exportando proveedores con saldo...");
+	mostrarLoader(true)
+	// $("#progressbar").modal("show");
 
 	let dateTo = $("#idInputDateExportProviders").val();
 	dateTo = dateTo.replaceAll("-", "");
 	//console.log("exportar a excel datos de los clientes deudores");
 	sendAsyncPost("exportExcelDeudoresProveedores" , {dateTo: dateTo})
 	.then((response)=>{
+		mostrarLoader(false)
 		console.log("respuesta del export");
 		console.log(response);
 		//mostrar modal con progress bar
 
-		stopPrograssBar(progressBarIdProcess);
-		$('#progressbar').modal("hide");
+		// stopPrograssBar(progressBarIdProcess);
+		// $('#progressbar').modal("hide");
 		//cambiar el titulo del progressbar se hace cuando se cierra el modal por completo
 
 		//habilitar boton de exportar

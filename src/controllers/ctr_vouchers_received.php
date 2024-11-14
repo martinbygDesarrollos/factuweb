@@ -13,75 +13,84 @@ require_once '../src/utils/handle_date_time.php';
 set_time_limit ( 60 );
 
 class ctr_vouchers_received{
-
-	public function getMinAndMaxDateVoucher(){
-
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			return vouchersReceived::getMinAndMaxDateVoucher($responseMyBusiness->idBusiness);
-		}else return $responseMyBusiness;
+	//UPDATED
+	public function getMinAndMaxDateVoucher($idEmpresa){
+		$vouchersReceivedClass = new vouchersReceived();
+		return $vouchersReceivedClass->getMinAndMaxDateVoucher($idEmpresa);
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		// }else return $responseMyBusiness;
 	}
-
-	public function getTypeExistingVouchers(){
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			return vouchersReceived::getTypeExistingVouchers($responseMyBusiness->idBusiness);
-		}else return $responseMyBusiness;
+	//UPDATED
+	public function getTypeExistingVouchers($idEmpresa){
+		$vouchersReceivedClass = new vouchersReceived();
+		return $vouchersReceivedClass->getTypeExistingVouchers($idEmpresa);
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		// }else return $responseMyBusiness;
 	}
+	//UPDATED
+	public function getVouchersReceived($dateReceived, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentProvider, $currentSession){
+		$vouchersReceivedClass = new vouchersReceived();
+		$handleDateTimeClass = new handleDateTime();
+		$utilsClass = new utils();
+		$provController = new ctr_providers();
 
-	public function getVouchersReceived($dateReceived, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentProvider){
-
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			if($dateVoucher != 0)
-				$dateVoucher = handleDateTime::getDateInt($dateVoucher);
-			$responseGetVouchers = vouchersReceived::getVouchersReceived($dateReceived, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentProvider, $responseMyBusiness->idBusiness);
-			if($responseGetVouchers->result == 2){
-				$newList = array();
-				foreach ($responseGetVouchers->listResult as $key => $value) {
-					if(is_null($value['idProveedor'])){
-						$value['rut'] = "No encontrado";
-					}
-					else{
-						$responseGetProvider = ctr_providers::getProvider($value['idProveedor']);
-						if($responseGetProvider->result == 2){
-							if(!empty($responseGetProvider->provider->rut)){
-								$value['razonSocial'] = $responseGetProvider->provider->razonSocial;
-								$value['rut'] = utils::formatDocuments($responseGetProvider->provider->rut);
-							}
-							else
-								$value['rut'] = "No encontrado";
-						}
-						$newList[] = $value;
-					}
-					$responseGetVouchers->listResult = $newList;
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		if($dateVoucher != 0)
+			$dateVoucher = $handleDateTimeClass->getDateInt($dateVoucher);
+		$responseGetVouchers = $vouchersReceivedClass->getVouchersReceived($dateReceived, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentProvider, $currentSession->idEmpresa);
+		if($responseGetVouchers->result == 2){
+			$newList = array();
+			foreach ($responseGetVouchers->listResult as $key => $value) {
+				if(is_null($value['idProveedor'])){
+					$value['rut'] = "No encontrado";
 				}
+				else{
+					$responseGetProvider = $provController->getProvider($value['idProveedor'], $currentSession->idEmpresa);
+					if($responseGetProvider->result == 2){
+						if(!empty($responseGetProvider->provider->rut)){
+							$value['razonSocial'] = $responseGetProvider->provider->razonSocial;
+							$value['rut'] = $utilsClass->formatDocuments($responseGetProvider->provider->rut, $currentSession);
+						}
+						else
+							$value['rut'] = "No encontrado";
+					}
+					$newList[] = $value;
+				}
+				$responseGetVouchers->listResult = $newList;
 			}
-			return $responseGetVouchers;
-		}else return $responseMyBusiness;
+		}
+		return $responseGetVouchers;
+		// }else return $responseMyBusiness;
 	}
-
-	public function createManualReceiptReceived($dateMaked, $total){
+	//WORKING
+	public function createManualReceiptReceived($dateMaked, $total, $currentSession){
 		$response = new \stdClass();
+		$userController = new ctr_users();
+		$provController = new ctr_providers();
+		$handleDateTimeClass = new handleDateTime();
+		$vouchersReceivedClass = new vouchersReceived();
 
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			$responseGetAccountState = ctr_users::getLastAccountStateInfo("PROVIDER");
-			if($responseGetAccountState->result == 2){
-				$resultGetProvider = ctr_providers::findProviderWithDoc($responseGetAccountState->information->document);
-				if($resultGetProvider->result == 2){
-					$dateMakedINT = handleDateTime::getDateInt($dateMaked);
-					$responseSendQuery = vouchersReceived::createManualReceiptReceived($resultGetProvider->provider->idProveedor, $dateMakedINT, $total, $responseGetAccountState->information->selectedCoin, $responseMyBusiness->idBusiness);
-					if($responseSendQuery->result == 2){
-						$response->result = 2;
-						$response->message = "Se creó un nuevo recibo manual.";
-					}else return $responseSendQuery;
-				}else return $resultGetProvider;
-			}else{
-				$response->result = 2;
-				$response->message = "El estado de cuenta generado no fue almacenado correctamente por lo que no podrá hacer este recibo manual.";
-			}
-		}else return $responseMyBusiness;
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		$responseGetAccountState = $userController->getLastAccountStateInfo("PROVIDER");
+		if($responseGetAccountState->result == 2){
+			$resultGetProvider = $provController->findProviderWithDoc($responseGetAccountState->information->document, $currentSession->idEmpresa);
+			if($resultGetProvider->result == 2){
+				$dateMakedINT = $handleDateTimeClass->getDateInt($dateMaked);
+				$responseSendQuery = $vouchersReceivedClass->createManualReceiptReceived($resultGetProvider->provider->idProveedor, $dateMakedINT, $total, $responseGetAccountState->information->selectedCoin, $currentSession->idEmpresa);
+				if($responseSendQuery->result == 2){
+					$response->result = 2;
+					$response->message = "Se creó un nuevo recibo manual.";
+				}else return $responseSendQuery;
+			}else return $resultGetProvider;
+		}else{
+			$response->result = 2;
+			$response->message = "El estado de cuenta generado no fue almacenado correctamente por lo que no podrá hacer este recibo manual.";
+		}
+		// }else return $responseMyBusiness;
 
 		return $response;
 	}
@@ -133,29 +142,32 @@ class ctr_vouchers_received{
 		}else return $responseMyBusiness;
 		return $response;
 	}
-
-	public function getManualReceiptsReceived($lastId, $filterNameReceiver){
+	//UPDATED
+	public function getManualReceiptsReceived($lastId, $filterNameReceiver, $idEmpresa){
 		$response = new \stdClass();
+		$vouchersReceivedClass = new vouchersReceived();
 
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			$resultSendQuery = vouchersReceived::getManualReceiptsReceived($lastId, $filterNameReceiver, $responseMyBusiness->idBusiness);
-			if($resultSendQuery->result == 2){
-				$response->result = 2;
-				$response->listResult = $resultSendQuery->listResult;
-				$response->lastId = $resultSendQuery->lastId;
-			}else return $resultSendQuery;
-		}else $response = $responseMyBusiness;
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		$resultSendQuery = $vouchersReceivedClass->getManualReceiptsReceived($lastId, $filterNameReceiver, $idEmpresa);
+		if($resultSendQuery->result == 2){
+			$response->result = 2;
+			$response->listResult = $resultSendQuery->listResult;
+			$response->lastId = $resultSendQuery->lastId;
+		}else return $resultSendQuery;
+		// }else $response = $responseMyBusiness;
 
 		return $response;
 	}
 
 	public function getBalanceToDateReceived($idProvider, $myBusiness){
 		$response = new \stdClass();
+		$handleDateTimeClass = new handleDateTime();
+		$vouchersReceivedClass = new vouchersReceived();
 
-		$resultGetBalanceUYU = vouchersReceived::getBalanceToDateReceived($idProvider, "UYU", handleDateTime::getCurrentDateTimeInt(), $myBusiness);
+		$resultGetBalanceUYU = $vouchersReceivedClass->getBalanceToDateReceived($idProvider, "UYU", $handleDateTimeClass->getCurrentDateTimeInt(), $myBusiness);
 		$response->balanceUYU = $resultGetBalanceUYU->balance;
-		$resultGetBalanceUSD = vouchersReceived::getBalanceToDateReceived($idProvider, "USD", handleDateTime::getCurrentDateTimeInt(), $myBusiness);
+		$resultGetBalanceUSD = $vouchersReceivedClass->getBalanceToDateReceived($idProvider, "USD", $handleDateTimeClass->getCurrentDateTimeInt(), $myBusiness);
 		$response->balanceUSD = $resultGetBalanceUSD->balance;
 
 		return $response;
@@ -349,45 +361,51 @@ class ctr_vouchers_received{
 			return vouchersReceived::insertVoucherReceived($id, $idProvider, $responseMyBusiness->idBusiness, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $tipoMoneda, $sucursal, $isAnulado, $isCobranza, $emision,$formaPago, $vencimiento);
 		}else return $responseMyBusiness;
 	}
-
-	public function getProviderAccountSate($idProvider, $dateInit, $dateEnding, $typeCoin){
+	//UPDATED
+	public function getProviderAccountSate($idProvider, $dateInit, $dateEnding, $typeCoin, $currentSession){
 		$response = new \stdClass();
+		$userController = new ctr_users();
+		$handleDateTimeClass = new handleDateTime();
+		$voucherController = new ctr_vouchers();
+		$vouchersReceivedClass = new vouchersReceived();
+		$provController = new ctr_providers();
 
-		$dateInitINT = handleDateTime::getDateInt($dateInit);
-		$dateEndingINT = handleDateTime::getDateInt($dateEnding);
 
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			$resultGetProvider = ctr_providers::getProvider($idProvider);
-			if($resultGetProvider->result == 2){
-				$variableShowBalance = ctr_users::getVariableConfiguration("VER_SALDOS_ESTADO_CUENTA");
-				if($variableShowBalance->result == 2){
-					$responseAccountState = vouchersReceived::getAccountState($idProvider, $dateInitINT, $dateEndingINT, $typeCoin, $responseMyBusiness->idBusiness);
-					if($responseAccountState->result != 0){
-						$resultGetBusiness = ctr_users::getBusinessInformation($responseMyBusiness->idBusiness);
-						if($resultGetBusiness->result == 2){
-							$resultGenerateFile = ctr_vouchers::exportAccountState($resultGetProvider->provider, $dateInitINT, $dateEndingINT, $responseAccountState->listResult, "PROVIDER", $resultGetBusiness->objectResult);
-							if($variableShowBalance->configValue == "NO"){
-								unset($responseAccountState->listResult["BALANCEUSD"]);
-								unset($responseAccountState->listResult["BALANCEUYU"]);
-							}
-							$response->result = 2;
-							$response->accountState = $responseAccountState->listResult;
-							$response->name = $resultGetProvider->provider->razonSocial;
-							$response->documentSelected = $resultGetProvider->provider->rut;
-							if($resultGenerateFile->result == 2){
-								$response->resultFile = 2;
-								$response->fileGenerate = $resultGenerateFile->fileGenerate;
-							}else{
-								$response->resultFile = 0;
-								$response->messageFile = "Ocurrió un error y el archivo pdf no pudo generarse correctamente.";
-							}
-							ctr_vouchers::saveInfoAccountStateTemp($resultGetProvider->provider->idProveedor, $resultGetProvider->provider->rut, handleDateTime::setFormatHTMLDate($dateInitINT), handleDateTime::setFormatHTMLDate($dateEndingINT), $typeCoin, null, "PROVIDER");
-						}else return $resultGetBusiness;
-					}else return $responseAccountState;
-				}else return $variableShowBalance;
-			}else return $resultGetProvider;
-		}else return $responseMyBusiness;
+		$dateInitINT = $handleDateTimeClass->getDateInt($dateInit);
+		$dateEndingINT = $handleDateTimeClass->getDateInt($dateEnding);
+
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		$resultGetProvider = $provController->getProvider($idProvider, $currentSession->idEmpresa);
+		if($resultGetProvider->result == 2){
+			$variableShowBalance = $userController->getVariableConfiguration("VER_SALDOS_ESTADO_CUENTA", $currentSession);
+			if($variableShowBalance->result == 2){
+				$responseAccountState = $vouchersReceivedClass->getAccountState($idProvider, $dateInitINT, $dateEndingINT, $typeCoin, $currentSession->idEmpresa);
+				if($responseAccountState->result != 0){
+					// $resultGetBusiness = ctr_users::getBusinessInformation($responseMyBusiness->idBusiness);
+					// if($resultGetBusiness->result == 2){
+					$resultGenerateFile = $voucherController->exportAccountState($resultGetProvider->provider, $dateInitINT, $dateEndingINT, $responseAccountState->listResult, "PROVIDER", $currentSession);
+					if($variableShowBalance->configValue == "NO"){
+						unset($responseAccountState->listResult["BALANCEUSD"]);
+						unset($responseAccountState->listResult["BALANCEUYU"]);
+					}
+					$response->result = 2;
+					$response->accountState = $responseAccountState->listResult;
+					$response->name = $resultGetProvider->provider->razonSocial;
+					$response->documentSelected = $resultGetProvider->provider->rut;
+					if($resultGenerateFile->result == 2){
+						$response->resultFile = 2;
+						$response->fileGenerate = $resultGenerateFile->fileGenerate;
+					}else{
+						$response->resultFile = 0;
+						$response->messageFile = "Ocurrió un error y el archivo pdf no pudo generarse correctamente.";
+					}
+					$voucherController->saveInfoAccountStateTemp($resultGetProvider->provider->idProveedor, $resultGetProvider->provider->rut, $handleDateTimeClass->setFormatHTMLDate($dateInitINT), $handleDateTimeClass->setFormatHTMLDate($dateEndingINT), $typeCoin, null, "PROVIDER");
+					// }else return $resultGetBusiness;
+				}else return $responseAccountState;
+			}else return $variableShowBalance;
+		}else return $resultGetProvider;
+		// }else return $responseMyBusiness;
 
 		return $response;
 	}
