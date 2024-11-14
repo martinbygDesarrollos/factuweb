@@ -317,7 +317,7 @@ class ctr_accounting{
 		return $responseArray;
 	}
 
-	public function addLineToAccountingFile( $pathFile="", $line ){
+	public function addLineToAccountingFile($line, $pathFile = "" ){
 		$restController = new ctr_rest();
 		$response = new \stdClass();
 		$response->result = 0;
