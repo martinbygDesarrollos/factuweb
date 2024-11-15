@@ -78,7 +78,7 @@ class ctr_vouchers{
 
 	//crea un comprobante para enviarlo a ormen luego de que se envia y es aceptado el comproabnte se registra en el sistema. ctr_rest es la comunicacion con ormen
 	//UPDATED
-	public function createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration = null, $adenda, $listDetail, $idBuy, $discountTipo, $mediosPago, $currentSession){
+	public function createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idBuy, $discountTipo, $mediosPago, $currentSession){
 		$response = new \stdClass();
 		$clientController = new ctr_clients();
 		$restController = new ctr_rest();
