@@ -92,7 +92,7 @@ class utils{
 
 	public function stringToLower($string){
 		try{
-			$result = mb_strtolower($string);
+			$result = mb_strtolower($string ?? "");
 			return $result;
 		}catch(Exception $e){
 			return $string;
@@ -101,7 +101,7 @@ class utils{
 
 	public function stringToLowerWithFirstCapital($string){
 		try{
-			$result = ucwords(mb_strtolower($string));
+			$result = ucwords(mb_strtolower($string ?? ""));
 			return $result;
 		}catch(Exception $e){
 			return $string;
