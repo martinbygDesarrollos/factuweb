@@ -143,15 +143,32 @@ function exportCFEs(){
 				typeVoucher: typeCFE,
 				includeReceipts: includeReceipts
 			}
-			let response = sendPost("exportExcelCFE", data);
-			if(response.result == 2){
-				const linkSource = `data:` + response.format + `;base64,${ response.file }`;
-				const downloadLink = document.createElement("a");
-				const fileName = "Recibidos.xlsx";
-				downloadLink.href = linkSource;
-				downloadLink.download = fileName;
-				downloadLink.click();
-			}else showReplyMessage(response.result, response.message, "Exportar comprobantes emitidos", "modalExport");
+
+			$("#modalExport").modal("hide");
+			mostrarLoader(true)
+			sendAsyncPost("exportExcelCFE", data)
+			.then((response)=>{
+				mostrarLoader(false)
+				if(response.result == 2){
+					$("#modalExport").modal("show");
+					const linkSource = `data:` + response.format + `;base64,${ response.file }`;
+					const downloadLink = document.createElement("a");
+					const fileName = "Emitidos" + dateInit + "--" + dateFinish + ".xlsx";
+					downloadLink.href = linkSource;
+					downloadLink.download = fileName;
+					downloadLink.click();
+				}else showReplyMessage(response.result, response.message, "Detalle de ventas", "modalExport");
+			})
+
+			// let response = sendPost("exportExcelCFE", data);
+			// if(response.result == 2){
+			// 	const linkSource = `data:` + response.format + `;base64,${ response.file }`;
+			// 	const downloadLink = document.createElement("a");
+			// 	const fileName = "Recibidos.xlsx";
+			// 	downloadLink.href = linkSource;
+			// 	downloadLink.download = fileName;
+			// 	downloadLink.click();
+			// }else showReplyMessage(response.result, response.message, "Exportar comprobantes emitidos", "modalExport");
 		}else showReplyMessage(1, "Debe ingresar la fecha de inicio del período a exportar", "Campo fecha inicio requerido", "modalExport");
 	}else showReplyMessage(1, "Debe ingresar la fecha final del período a exportar", "Campo fecha final requerido", "modalExport");
 }
