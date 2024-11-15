@@ -47,8 +47,8 @@ class utils{
 	}
 
 	public function getNameVoucher($typevoucher, $isCobranza){
-		$firstPart = substr($typevoucher, 0, 1);
-		$secondPart = substr($typevoucher, 1, 2);
+		$firstPart = substr($typevoucher ?? "", 0, 1);
+		$secondPart = substr($typevoucher ?? "", 1, 2);
 
 		$nameVoucher = "";
 
