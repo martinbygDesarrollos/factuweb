@@ -7,12 +7,13 @@ require_once 'ctr_vouchers_emitted.php';
 require_once '../src/class/providers.php';
 
 class ctr_providers{
-
-	public function insertProviderFirstLogin($document, $nameBusiness, $address, $phoneNumber, $email){
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			return providers::insertProvider($document, $nameBusiness, $address, $phoneNumber, $email, $responseMyBusiness->idBusiness);
-		}else return $responseMyBusiness;
+	//UPDATED
+	public function insertProviderFirstLogin($document, $nameBusiness, $address, $phoneNumber, $email, $idEmpresa){
+		$providerClass = new providers();
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		return $providerClass->insertProvider($document, $nameBusiness, $address, $phoneNumber, $email, $idEmpresa);
+		// }else return $responseMyBusiness;
 	}
 
 	//calcula el saldo de un provedor analizando todos los cfe que tiene en el sistema.
@@ -71,13 +72,14 @@ class ctr_providers{
 
 		return $response;
 	}
-
+	//UPDATED
 	public function modifyProvider($idProvider, $nameBusiness, $address, $phoneNumber, $email){
 		$response = new \stdClass();
+		$providerClass = new providers();
 
-		$resultGetProvider = providers::getProviderWithId($idProvider);
+		$resultGetProvider = $providerClass->getProviderWithId($idProvider);
 		if($resultGetProvider->result == 2){
-			$responseSendQuery = providers::modifyProvider($idProvider, $nameBusiness, $address, $phoneNumber, $email);
+			$responseSendQuery = $providerClass->modifyProvider($idProvider, $nameBusiness, $address, $phoneNumber, $email);
 			if($responseSendQuery->result == 2){
 				$response->result = 2;
 				$response->message = "El proveedor fue modificado correctamente.";
@@ -103,7 +105,7 @@ class ctr_providers{
 		return $response;
 	}
 
-	//WORKING
+	//UPDATED
 	public function getProviders($lastId, $textToSearch, $withBalance, $currentSession){
 		$response = new \stdClass();
 		$providerClass = new providers();
@@ -131,7 +133,7 @@ class ctr_providers{
 	}
 
 
-	//WORKING
+	//UPDATED
 	public function exportExcelDeudores( $date, $currentSession ){
 		//misma consulta que la que trae todos los proveedores con saldo pero ésta no tiene limite por paginación y no manda lastid ni texto
 		$providersClass = new providers();

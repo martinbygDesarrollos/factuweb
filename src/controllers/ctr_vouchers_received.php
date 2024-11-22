@@ -65,7 +65,7 @@ class ctr_vouchers_received{
 		return $responseGetVouchers;
 		// }else return $responseMyBusiness;
 	}
-	//WORKING
+	//UPDATED
 	public function createManualReceiptReceived($dateMaked, $total, $currentSession){
 		$response = new \stdClass();
 		$userController = new ctr_users();
@@ -181,30 +181,34 @@ class ctr_vouchers_received{
 	}
 
 	//se cargan los comprobantes recibidos en el primer inicio de sesion
-	public function getVouchersReceivedFirstLogin($rut, $pageSize, $lastId){
+	//UPDATED
+	public function getVouchersReceivedFirstLogin($rut, $pageSize, $lastId, $currentSession){
 		$response = new \stdClass();
+		$restController = new ctr_rest();
+		$vouchReceivedController = new ctr_vouchers_received();
+		$provController = new ctr_providers();
 		$counterRecords = 0;
 		$counterInserted = 0;
 
 		$response->arrayErrors = array();
-		$responseSendRest = ctr_rest::listarRecibidos($rut, $pageSize, $lastId, null, null);
+		$responseSendRest = $restController->listarRecibidos($rut, $pageSize, $lastId, null, null, $currentSession->tokenRest);
 		if($responseSendRest->result == 2){
 			$arrayErrors = array();
 			foreach ($responseSendRest->listRecibidos as $key => $voucher) {
 				$counterRecords++;
 				if(isset($voucher->emisor->rut)){
 					$idProvider = null;
-					$responseGetProvider = ctr_providers::findProviderWithDoc($voucher->emisor->rut);
+					$responseGetProvider = $provController->findProviderWithDoc($voucher->emisor->rut, $currentSession->idEmpresa);
 					if($responseGetProvider->result == 2)
 						$idProvider = $responseGetProvider->provider->idProveedor;
 					else{
-						$responseInsertProvider = ctr_providers::insertProviderFirstLogin($voucher->emisor->rut, $voucher->emisor->razonSocial, $voucher->emisor->direccion, $voucher->emisor->telefono, $voucher->emisor->email);
+						$responseInsertProvider = $provController->insertProviderFirstLogin($voucher->emisor->rut, $voucher->emisor->razonSocial, $voucher->emisor->direccion, $voucher->emisor->telefono, $voucher->emisor->email, $currentSession->idEmpresa);
 						if($responseInsertProvider->result == 2)
 							$idProvider = $responseInsertProvider->id;
 					}
 					if(!is_null($idProvider)){
 						if(is_null($voucher->formaPago)) $voucher->formaPago = 1;
-						$responseInsertVoucherReceived = ctr_vouchers_received::insertVoucherReceived($voucher->id, $idProvider, $voucher->tipoCFE, $voucher->serieCFE, $voucher->numeroCFE, $voucher->total, $voucher->fecha, $voucher->tipoMoneda, $voucher->sucursal, $voucher->isAnulado, $voucher->isCobranza, $voucher->emision,$voucher->formaPago, $voucher->vencimiento);
+						$responseInsertVoucherReceived = $vouchReceivedController->insertVoucherReceived($voucher->id, $idProvider, $voucher->tipoCFE, $voucher->serieCFE, $voucher->numeroCFE, $voucher->total, $voucher->fecha, $voucher->tipoMoneda, $voucher->sucursal, $voucher->isAnulado, $voucher->isCobranza, $voucher->emision,$voucher->formaPago, $voucher->vencimiento, $currentSession->idEmpresa);
 						if($responseInsertVoucherReceived->result == 2){
 							$lastId = $voucher->id;
 							$counterInserted++;
@@ -213,7 +217,7 @@ class ctr_vouchers_received{
 				}
 			}
 			if(sizeof($responseSendRest->listRecibidos) == 200){
-				$responseRecursive = ctr_vouchers_received::getVouchersReceivedFirstLogin($rut, $pageSize, $lastId);
+				$responseRecursive = $vouchReceivedController->getVouchersReceivedFirstLogin($rut, $pageSize, $lastId);
 				$counterRecords = $counterRecords + $responseRecursive->counterRecords;
 				$counterInserted = $counterInserted +  $responseRecursive->counterInserted;
 				$arrayErrors = array_merge($arrayErrors, $responseRecursive->arrayErrors);
@@ -354,12 +358,13 @@ class ctr_vouchers_received{
 		$response->arrayErrors = $arrayErrors;
 		return $response;
 	}
-
-	public function insertVoucherReceived($id, $idProvider, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $tipoMoneda, $sucursal, $isAnulado, $isCobranza, $emision, $formaPago, $vencimiento){
-		$responseMyBusiness = ctr_users::getBusinesSession();
-		if($responseMyBusiness->result == 2){
-			return vouchersReceived::insertVoucherReceived($id, $idProvider, $responseMyBusiness->idBusiness, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $tipoMoneda, $sucursal, $isAnulado, $isCobranza, $emision,$formaPago, $vencimiento);
-		}else return $responseMyBusiness;
+	//UPDATED
+	public function insertVoucherReceived($id, $idProvider, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $tipoMoneda, $sucursal, $isAnulado, $isCobranza, $emision, $formaPago, $vencimiento, $idEmpresa){
+		$vouchersReceivedClass = new vouchersReceived();
+		// $responseMyBusiness = ctr_users::getBusinesSession();
+		// if($responseMyBusiness->result == 2){
+		return $vouchersReceivedClass->insertVoucherReceived($id, $idProvider, $idEmpresa, $tipoCFE, $serieCFE, $numeroCFE, $total, $fecha, $tipoMoneda, $sucursal, $isAnulado, $isCobranza, $emision,$formaPago, $vencimiento);
+		// }else return $responseMyBusiness;
 	}
 	//UPDATED
 	public function getProviderAccountSate($idProvider, $dateInit, $dateEnding, $typeCoin, $currentSession){

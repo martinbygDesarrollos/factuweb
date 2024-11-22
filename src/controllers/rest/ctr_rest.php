@@ -163,7 +163,7 @@ class ctr_rest{
 
 		return $response;
 	}
-
+	//UPDATED
 	public function obtenerCotizacion($dateFrom, $dateTo, $typeCoin){
 		$response = new \stdClass();
 		$sendPetitionClass = new sendPetition();
@@ -223,27 +223,27 @@ class ctr_rest{
 
 		return $response;
 	}
-
-	public function listarRecibidos($rut, $pageSize, $lastId, $dateFrom, $dateTo){
+	//UPDATED
+	public function listarRecibidos($rut, $pageSize, $lastId, $dateFrom, $dateTo, $token){
 		$response = new \stdClass();
 		$sendPetitionClass = new sendPetition();
 		$restControllerInstance = new ctr_rest();
-		$responseToken = $restControllerInstance->getToken();
-		if($responseToken->result == 2){
-			$responseRest = json_decode($sendPetitionClass->listarRecibidos($rut, $pageSize, $lastId, $dateFrom, $dateTo, $responseToken->token));
-			if(!isset($responseRest->resultado)){
-				if(sizeof($responseRest) > 0){
-					$response->result = 2;
-					$response->listRecibidos = $responseRest;
-				}else{
-					$response->result = 1;
-					$response->message = "No hay comprobantes recibidos que retornar.";
-				}
+		// $responseToken = $restControllerInstance->getToken();
+		// if($responseToken->result == 2){
+		$responseRest = json_decode($sendPetitionClass->listarRecibidos($rut, $pageSize, $lastId, $dateFrom, $dateTo, $token));
+		if(!isset($responseRest->resultado)){
+			if(sizeof($responseRest) > 0){
+				$response->result = 2;
+				$response->listRecibidos = $responseRest;
 			}else{
-				$response->result  = 0;
-				$response->message = "Ocurrió un error y REST no retorno las comprobantes recibidos.";
+				$response->result = 1;
+				$response->message = "No hay comprobantes recibidos que retornar.";
 			}
-		}else return $responseToken;
+		}else{
+			$response->result  = 0;
+			$response->message = "Ocurrió un error y REST no retorno las comprobantes recibidos.";
+		}
+		// }else return $responseToken;
 
 		return $response;
 	}

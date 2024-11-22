@@ -12,12 +12,12 @@ return function (App $app){
 	$vouchReceivedController = new ctr_vouchers_received();
 	$userController = new ctr_users();
 
-	//WORKING
+	//UPDATED
 	$app->get('/ver-recibos_manuales-proveedores', function($request, $response, $args) use ($container, $userController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			//error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$args['systemSession'] = $responseCurrentSession->currentSession;
 				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
@@ -32,7 +32,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			//error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$args['systemSession'] = $responseCurrentSession->currentSession;
 				$args['resultDatesVoucher'] = $vouchReceivedController->getMinAndMaxDateVoucher($responseCurrentSession->currentSession->idEmpresa);
@@ -43,12 +43,12 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 		// }else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("VouchersReceived");
-	//WORKING
+	//UPDATED
 	$app->post('/createManualReceiptReceived', function(Request $request, Response $response) use ($userController, $vouchReceivedController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			//error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$dateMaked = $data['dateMaked'];
@@ -62,7 +62,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			//error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$lastId = $data['lastId'];
@@ -91,14 +91,14 @@ return function (App $app){
 			return json_encode(ctr_vouchers_received::modifyManualReceiptReceived($indexVoucher, $dateMaked, $total));
 		}else return json_encode($responseCurrentSession);
 	});
-	//WORKING
+	//UPDATED
 	$app->post('/loadVouchersReceived', function(Request $request, Response $response) use ($userController, $vouchReceivedController){
 		// $responseCurrentSession = ctr_users::validateCurrentSession("PROVIDER");
 		// if($responseCurrentSession->result == 2){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('PROVIDER', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			//error_log( "PERMISO 'PROVIDER' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$dateReceived = $data['dateReceived'];

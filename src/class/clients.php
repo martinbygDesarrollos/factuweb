@@ -34,9 +34,10 @@ class clients{
 			$responseQuery->message = "El id del cliente seleccionado no fue encontrado en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function updateClient($nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $identifier){
-		return DataBase::sendQuery("UPDATE clientes SET nombreReceptor = ?, localidad = ?, departamento = ?, correo = ?, celular = ?, direccion = ? WHERE id = ?", array('ssssssi', $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $identifier), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE clientes SET nombreReceptor = ?, localidad = ?, departamento = ?, correo = ?, celular = ?, direccion = ? WHERE id = ?", array('ssssssi', $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $identifier), "BOOLE");
 	}
 	//UPDATED
 	public function updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idBusiness){
@@ -276,8 +277,10 @@ class clients{
 	}
 
 	//devuelve todos los clientes que se registraron en la base local para la empresa que se pasa por parametro
+	//UPDATED
 	public function getAllCustomersByBusiness( $business ){
-		return DataBase::sendQuery(" SELECT * FROM clientes WHERE idEmpresa = ?", array('i', $business), "LIST");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery(" SELECT * FROM clientes WHERE idEmpresa = ?", array('i', $business), "LIST");
 	}
 
 	public function getClientsAccountingNumber(){

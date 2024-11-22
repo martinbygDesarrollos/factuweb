@@ -45,7 +45,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			// error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$args['systemSession'] = $responseCurrentSession->currentSession;
 				$responseGetIVA = $voucherController->getIVAsAllowed($responseCurrentSession->currentSession);
@@ -130,7 +130,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			// error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$objClient = json_decode(stripslashes($data['client']), true);
@@ -151,11 +151,11 @@ return function (App $app){
 			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
-
-	$app->post('/loadProductsFromDetails', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	//UPDATED
+	$app->post('/loadProductsFromDetails', function(Request $request, Response $response) use ($userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			return json_encode(ctr_vouchers::loadProductsFromDetails());
+			return json_encode($voucherController->loadProductsFromDetails($responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 	//UPDATED
@@ -290,7 +290,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			// error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$objClient = $data['documentClient'];
@@ -308,7 +308,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
-			error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			// error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
 				$entity = $data['entity'];

@@ -2,10 +2,64 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-    {% if sistemSession %}
-        <div class="d-flex justify-content-center">
-            
-        </div>
+    {% if systemSession %}
+        {# <div class="d-flex justify-content-center"> #}
+        {% if showQuoteValue == "SI" %}
+            <div class="d-flex flex-row-reverse">
+                <div class="card shadow" style="min-width: 230px;">
+                    <div class="card-body background-template-color2 text-template-background">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="card-title text-center">Cotización</h5>
+                                <div class="row">
+                                    <div class="col ml-2">
+                                        <div class="row">
+                                            <p class="font-weight-bold text-center ml-2">Moneda</p>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-1 mr-2">
+                                                <img width="20px" height="12px" src="{{ path_for('Start') }}img/quote/usa.png">
+                                            </div>
+                                            <p>Dólar</p>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-1 mr-2">
+                                                <img width="20px" height="14px" src="{{ path_for('Start') }}img/quote/euro.png">
+                                            </div>
+                                            <p>Euro</p>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-1 mr-2">
+                                                <img width="20px" height="12px" src="{{ path_for('Start') }}img/quote/ui.png">
+                                            </div>
+                                            <p>UI</p>
+                                        </div>
+                                    </div>
+                                    <div class="col ml-2">
+                                        <div class="flex-row-reverse">
+                                            <p class="font-weight-bold text-right">Venta</p>
+                                        </div>
+                                        <div class="flex-row-reverse">
+                                            <p class="text-right">{{ quote.USD}}</p>
+                                        </div>
+                                        <div class="flex-row-reverse">
+                                            <p class="text-right">{{ quote.EUR }}</p>
+                                        </div>
+                                        <div class="flex-row-reverse">
+                                            <p class="text-right">{{ quote.UI }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-center">
+                                    <a class="btn btn-link btn-sm" href="https://www.bacacaysf.com/cotizaciones.php" target="_blank">Ver otras cotizaciones</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        {# </div> #}
     {% endif %}
 {% block script %}
     <script type="text/javascript">

@@ -56,27 +56,29 @@ class ctr_products{
 
 		// return $response;
 	}
-
-	public function insertHeading($nameHeading){
+	//UPDATED
+	public function insertHeading($nameHeading, $idEmpresa){
 		$response = new \stdClass();
+		$productsClass = new products();
+		$userController = new ctr_users();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			$responseGetHeadingByName = products::getHeadingByName($nameHeading, $responseGetBusiness->idBusiness);
-			if($responseGetHeadingByName->result != 2){
-				$responseInsertHeading = products::insertHeading($nameHeading, $responseGetBusiness->idBusiness);
-				if($responseInsertHeading->result == 2){
-					$response->result = 2;
-					$response->message = "El rubro '". $nameHeading ."' fue ingresado correctamente.";
-				}else{
-					$response->result = 0;
-					$response->message = "Ocurrió un error y el rubro '". $nameHeading ."' no pudo ser ingresado en el sistema.";
-				}
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		$responseGetHeadingByName = $productsClass->getHeadingByName($nameHeading, $idEmpresa);
+		if($responseGetHeadingByName->result != 2){
+			$responseInsertHeading = $productsClass->insertHeading($nameHeading, $idEmpresa);
+			if($responseInsertHeading->result == 2){
+				$response->result = 2;
+				$response->message = "El rubro '". $nameHeading ."' fue ingresado correctamente.";
 			}else{
 				$response->result = 0;
-				$response->message = "El rubro '". $nameHeading ."' ya existe en el sistema.";
+				$response->message = "Ocurrió un error y el rubro '". $nameHeading ."' no pudo ser ingresado en el sistema.";
 			}
-		}else return $responseGetBusiness;
+		}else{
+			$response->result = 0;
+			$response->message = "El rubro '". $nameHeading ."' ya existe en el sistema.";
+		}
+		// }else return $responseGetBusiness;
 
 		return $response;
 	}
@@ -87,7 +89,7 @@ class ctr_products{
 		$productsClass = new products();
 		$othersClass = new others();
 		$handleDateTimeClass = new handleDateTime();
-
+		error_log("INSERTAR PRODUCTO: RUBRO: $idHeading, IVA: $idIva, DESCRIPCION: $description, DETALLES: $detail, MARCA: $brand, MONEDA: $typeCoin, COSTO: $cost, COEFICIENTE: $coefficient, DESCUENTO: $discount, CODIGO DE BARRAS: $barcode, INVENTARIO: $inventory, INVENTARIO MINIMO: $minInventory, IMPORTE: $amount, EMPRESA: $idEmpresa.");
 		$responseGetHeading = $productsClass->getHeadingById($idHeading, $idEmpresa);
 		if($responseGetHeading->result == 2){
 			$responseGetProductByDescription = $productsClass->getProductByDescription($description, $idEmpresa);
@@ -254,10 +256,14 @@ class ctr_products{
 	// }
 
 	//obtiene el cfe del comprobante seleccionado para ingresar todos los detalles a la lista de precio
-	public function getVoucherDetailJSON($idBusiness, $rut, $tipoCFE, $serieCFE, $numeroCFE){
+	//UPDATED
+	public function getVoucherDetailJSON($idBusiness, $rut, $tipoCFE, $serieCFE, $numeroCFE, $token){
 		$response = new \stdClass();
+		$restController = new ctr_rest();
+		$productsClass = new products();
+		$othersClass = new others();
 
-		$responseRest = ctr_rest::consultarCFE($rut, null, $tipoCFE, $serieCFE, $numeroCFE, "application/json");
+		$responseRest = $restController->consultarCFE($rut, null, $tipoCFE, $serieCFE, $numeroCFE, "application/json", $token);
 		if($responseRest->result == 2){
 			$jsonPrintFormat = json_decode($responseRest->cfe->representacionImpresa);
 
@@ -265,7 +271,7 @@ class ctr_products{
 			$toInsert = 0;
 
 			$includeIVA = $jsonPrintFormat->montosBrutos; // 1 IVA INCLUIDO
-			$heading = products::getHeadingByName("Articulos", $idBusiness);
+			$heading = $productsClass->getHeadingByName("Articulos", $idBusiness);
 			$idHeading = $heading->objectResult->idRubro;
 			foreach ($jsonPrintFormat->detalles as $key => $itemDetail) {
 				if(!is_null($itemDetail->nomItem) && strlen($itemDetail->nomItem) > 2){
@@ -279,11 +285,11 @@ class ctr_products{
 					if(is_null($itemDetail->descripcion) ||  strlen($itemDetail->descripcion) == 0)
 						$itemDetail->descripcion = null;
 
-					$cost = others::getCostFromAmountAndIVA($itemDetail->precio, $itemDetail->indFact);
+					$cost = $othersClass->getCostFromAmountAndIVA($itemDetail->precio, $itemDetail->indFact);
 					$itemDetail->nomItem = strtolower($itemDetail->nomItem);
-					$responseGetProductByDescription = products::getProductByDescription($itemDetail->nomItem, $idBusiness);
+					$responseGetProductByDescription = $productsClass->getProductByDescription($itemDetail->nomItem, $idBusiness);
 					if($responseGetProductByDescription->result != 2){
-						$responseInsertDetail = products::insertProduct($idHeading, $itemDetail->indFact, null, $idBusiness, $itemDetail->nomItem, $itemDetail->descripcion, null, $jsonPrintFormat->tipoMoneda, $cost, 0, $itemDetail->precio, $discount, null);
+						$responseInsertDetail = $productsClass->insertProduct($idHeading, $itemDetail->indFact, null, $idBusiness, $itemDetail->nomItem, $itemDetail->descripcion, null, $jsonPrintFormat->tipoMoneda, $cost, 0, $itemDetail->precio, $discount, null);
 						if($responseInsertDetail->result == 2)
 							$inserted++;
 					}

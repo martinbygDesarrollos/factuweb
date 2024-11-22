@@ -1,13 +1,15 @@
 <?php
 
 class providers{
-	
+	//UPDATED
 	public function insertProvider($rut, $businessName, $address, $phoneNumber, $email, $idBusiness){
-		return DataBase::sendQuery("INSERT INTO proveedores(rut, razonSocial, direccion, telefono, email, idEmpresa) VALUES (?,?,?,?,?,?)", array('sssssi', $rut, $businessName, $address, $phoneNumber, $email, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO proveedores(rut, razonSocial, direccion, telefono, email, idEmpresa) VALUES (?,?,?,?,?,?)", array('sssssi', $rut, $businessName, $address, $phoneNumber, $email, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function modifyProvider($idProvider, $nameBusiness, $address, $phoneNumber, $email){
-		return DataBase::sendQuery("UPDATE proveedores SET razonSocial = ?, direccion = ?, telefono = ?, email = ? WHERE idProveedor = ?", array('ssssi', $nameBusiness, $address, $phoneNumber, $email, $idProvider), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE proveedores SET razonSocial = ?, direccion = ?, telefono = ?, email = ? WHERE idProveedor = ?", array('ssssi', $nameBusiness, $address, $phoneNumber, $email, $idProvider), "BOOLE");
 	}
 
 	public function getProvider($rut, $idBusiness){
@@ -31,7 +33,7 @@ class providers{
 		$responseQuery = $dbClass->sendQuery("SELECT MAX(idProveedor) AS lastId FROM proveedores", null, "OBJECT");
 		if($responseQuery->result == 2) return ($responseQuery->objectResult->lastId + 1);
 	}
-	//WORKING
+	//UPDATED
 	public function getProviders($lastId, $textToSearch, $withBalance, $myBusiness){
 		$dbClass = new DataBase();
 		$providerClass = new providers();

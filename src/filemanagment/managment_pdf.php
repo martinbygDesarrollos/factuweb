@@ -56,13 +56,12 @@ class managment_pdf{
 
 	public function insertTable($listResult, $pdfFile){
 		$header = array_keys($listResult[0]);
-
 		$pdfFile->SetLineWidth(.3);
 
 		$pdfFile->SetFont("Courier", "I", "12");
 		$pdfFile->Ln();
 
-		$rowWidth = array(25,65,0,35,35,35);
+		$rowWidth = array(25,65,0,35,0,35,0,35,0);
 
 		for($i = 0; $i < sizeof($header); $i ++) {
 			if($header[$i] != "MONEDA" && $header[$i] != "INTDEBE" && $header[$i] != "INTHABER" && $header[$i] != "INTSALDO")

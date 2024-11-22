@@ -102,7 +102,7 @@ class products{
 
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getHeadingById($idHeading, $idBusiness){
 		$dbClass = new DataBase();
 
@@ -112,17 +112,19 @@ class products{
 
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function getHeadingByName($nameHeading, $idBusiness){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM rubro WHERE rubro = ? AND idEmpresa = ?", array('si', $nameHeading, $idBusiness), "OBJECT");
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM rubro WHERE rubro = ? AND idEmpresa = ?", array('si', $nameHeading, $idBusiness), "OBJECT");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontro un rubro con el nombre '". $nameHeading ."' en la base de datos.";
 
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function insertHeading($nameHeading, $idBusiness){
-		return DataBase::sendQuery("INSERT INTO rubro(rubro, idEmpresa) VALUES (?,?)", array('si', $nameHeading, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO rubro(rubro, idEmpresa) VALUES (?,?)", array('si', $nameHeading, $idBusiness), "BOOLE");
 	}
 
 	public function updateHeading($nameBrand, $idHeading, $idBusiness){
@@ -189,17 +191,21 @@ class products{
 		return $dbClass->sendQuery("DELETE FROM articulos WHERE idArticulo = ? AND idEmpresa = ?", array('ii', $idProduct, $idBusiness), "BOOLE");
 	}
 	//UPDATED
-	public function insertInventory($inventory = 1, $minInventory = 0, $dateInventory, $idEmpresa){
+	public function insertInventory($inventory, $minInventory, $dateInventory, $idEmpresa){
+		$inventory = $inventory ?? 0;
+		$minInventory = $minInventory ?? 0;
 		$dbClass = new DataBase();
 		return $dbClass->sendQuery("INSERT INTO inventario(inventario, inventarioMinimo, fechaInventario, idEmpresa) VALUES (?,?,?,?)", array('iiii', $inventory, $minInventory, $dateInventory, $idEmpresa), "BOOLE");
 	}
-
+	//UPDATED
 	public function updateInventory($inventory, $minInventory, $dateInventory, $idInventory, $idBusiness){
-		return DataBase::sendQuery("UPDATE inventario SET inventario = ?, inventarioMinimo = ?, fechaInventario = ? WHERE idInventario = ? AND idEmpresa = ?", array('iiiii', $inventory, $minInventory, $dateInventory, $idInventory, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE inventario SET inventario = ?, inventarioMinimo = ?, fechaInventario = ? WHERE idInventario = ? AND idEmpresa = ?", array('iiiii', $inventory, $minInventory, $dateInventory, $idInventory, $idBusiness), "BOOLE");
 	}
-
+	//UPDATED
 	public function deleteInventory($idInventory, $idBusiness){
-		return DataBase::sendQuery("DELETE FROM inventario WHERE idInventario = ? AND idEmpresa = ?", array('ii', $idInventory, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("DELETE FROM inventario WHERE idInventario = ? AND idEmpresa = ?", array('ii', $idInventory, $idBusiness), "BOOLE");
 	}
 
 	

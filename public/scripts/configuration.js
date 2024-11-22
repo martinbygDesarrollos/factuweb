@@ -134,46 +134,62 @@ function showConfig(btnArrow){
 }
 
 function loadProductsFromDetails(){
-	$('#iconButtonGetDetailSUPER').addClass('turnI');
+	// $('#iconButtonGetDetailSUPER').addClass('turnI');
+	mostrarLoader(true)
+
 	sendAsyncPost("loadProductsFromDetails", null)
 	.then(function(response){
 		showReplyMessage(response.result, response.message, "Obtener artículos", null);
-		$('#iconButtonGetDetailSUPER').removeClass('turnI');
+		// $('#iconButtonGetDetailSUPER').removeClass('turnI');
+		mostrarLoader(false)
+
 	})
 	.catch(function(response){
-		$('#iconButtonGetDetailSUPER').removeClass('turnI');
+		// $('#iconButtonGetDetailSUPER').removeClass('turnI');
+		mostrarLoader(false)
+
 		showReplyMessage(0, "Ocurrió un error por lo que algunos artículos no fueron obtenidos desde los detalles de los comprobantes emitidos.", "Obtener artículos", null);
 	});
 }
 
 function loadCustomers(){
-	$('#iconBtnLoadCustomersEfactura').addClass('turnI');
+	// $('#iconBtnLoadCustomersEfactura').addClass('turnI');
+	mostrarLoader(true)
+
 	sendAsyncPost("loadCustomersEfactura", null)
 	.then(function(response){
 		for (var i = 0; i < response.message.length; i++) {
 			console.log(response.message[i]);
 		}
 		showReplyMessage(response.result, "Todos los resultados se imprimieron en la consola.", "Cargar clientes", null);
-		$('#iconBtnLoadCustomersEfactura').removeClass('turnI');
+		// $('#iconBtnLoadCustomersEfactura').removeClass('turnI');
+		mostrarLoader(false)
+
 	})
 	.catch(function(response){
 		for (var i = 0; i < response.message.length; i++) {
 			console.log(response.message[i]);
 		}
-		$('#iconBtnLoadCustomersEfactura').addClass('turnI');
+		// $('#iconBtnLoadCustomersEfactura').addClass('turnI');
+		mostrarLoader(false)
+
 		showReplyMessage(0, "Todos los resultados se imprimieron en la consola.", "Cargar clientes", null);
 	})
 }
 
 function loadDataFirstLogin(){
-	$('#iconButtonUpdateSUPER').addClass('turnI');
+	// $('#iconButtonUpdateSUPER').addClass('turnI');
+	mostrarLoader(true)
+
 	sendAsyncPost("loadDataFirstLogin", null)
 	.then(function(response){
 		showReplyMessage(response.result, response.message, "Actualizar lista de comprobantes emitidos", null);
-		$('#iconButtonUpdateSUPER').removeClass('turnI');
+		// $('#iconButtonUpdateSUPER').removeClass('turnI');
+		mostrarLoader(false)
 	})
 	.catch(function(response){
-		$('#iconButtonUpdateSUPER').removeClass('turnI');
+		// $('#iconButtonUpdateSUPER').removeClass('turnI');
+		mostrarLoader(false)
 		showReplyMessage(0, "Ocurrió un error por lo que algunos comprobantes no fueron actualizados", "Actualizar comprobantes", null);
 	});
 }

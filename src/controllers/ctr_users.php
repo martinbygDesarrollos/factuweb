@@ -33,9 +33,10 @@ class ctr_users{
 
 		return $response;
 	}
-
+	//UPDATED
 	public function setUpdatedDetails($idBusiness){
-		return users::setUpdatedDetails($idBusiness);
+		$usersClass = new users();
+		return $usersClass->setUpdatedDetails($idBusiness);
 	}
 
 	//obtiene el ultimo estado de cuenta que se genero para sugerirlo en el modal, se guarda al generar un estado de cuenta esta info
@@ -102,6 +103,7 @@ class ctr_users{
 		$response = new \stdClass();
 		$usersClass = new users();
 		$responseGetConfig = $usersClass->getConfigurationUser($currentSession->idUser, $variable);
+		error_log("OBTENER VARIABLE CONFIGURACION ($variable, " . $currentSession->idUser . ") => " . $responseGetConfig->result);
 		if($responseGetConfig->result == 2){
 			$response->result = 2;
 			$response->configValue = $responseGetConfig->objectResult->valor;
@@ -125,7 +127,7 @@ class ctr_users{
 		return $othersClass->getListIva();
 	}
 
-	//WORKING
+	//UPDATED
 	public function updateVariableUser($variable, $value, $currentSession){
 		$response = new \stdClass();
 		$usersClass = new users();
@@ -269,115 +271,119 @@ class ctr_users{
 	}
 
 	//carga todos los comprobantes emitidos y recibidos por primera vez.
-	public function loadDataFirstLogin(){
+	//UPDATED
+	public function loadDataFirstLogin($currentSession){
 		set_time_limit(180);
 		//error_log( "FATAL ERROR : respuesta time limit ".$time_limit );
 		$response = new \stdClass();
+		$usersClass = new users();
+		$voucherEmittedController = new ctr_vouchers_emitted();
+		$vouchReceivedController = new ctr_vouchers_received();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){ //info de la empresa
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){ //info de la empresa
 
-			$responseGetUserInSession = ctr_users::getUserInSesion();
-			if($responseGetUserInSession->result == 2){ //si hay un usuario en session
+			// $responseGetUserInSession = ctr_users::getUserInSesion();
+			// if($responseGetUserInSession->result == 2){ //si hay un usuario en session
 
-				$responseIsSuperUser = users::itsSuperUser($responseGetUserInSession->objectResult->correo);
-				if($responseIsSuperUser->result == 2){ //si el usuario logueado es superuser
+		$responseIsSuperUser = $usersClass->itsSuperUser($currentSession->userName);
+		if($responseIsSuperUser->result == 2){ //si el usuario logueado es superuser
 
-					$vouchersReceived = 0;
-					$vouchersReceivedInserted = 0;
-					$resultReceived = null;
-					$responseGetReceived = ctr_vouchers_received::getVouchersReceivedFirstLogin($responseGetBusiness->infoBusiness->rut, 200, null);
+			$vouchersReceived = 0;
+			$vouchersReceivedInserted = 0;
+			$resultReceived = null;
+			$responseGetReceived = $vouchReceivedController->getVouchersReceivedFirstLogin($currentSession->rut, 200, null, $currentSession);
 
-					if(isset($responseGetReceived)){
-						if(isset($responseGetReceived->counterRecords) && isset($responseGetReceived->counterInserted)){
-							if($responseGetReceived->counterRecords == $responseGetReceived->counterInserted)
-								$resultReceived = 2;
-							else if($responseGetReceived->counterRecords < $responseGetReceived->counterInserted && $responseGetReceived->counterInserted > 0)
-								$resultReceived = 1;
-							else if($responseGetReceived->counterInserted == 0)
-								$resultReceived = 0;
+			if(isset($responseGetReceived)){
+				if(isset($responseGetReceived->counterRecords) && isset($responseGetReceived->counterInserted)){
+					if($responseGetReceived->counterRecords == $responseGetReceived->counterInserted)
+						$resultReceived = 2;
+					else if($responseGetReceived->counterRecords < $responseGetReceived->counterInserted && $responseGetReceived->counterInserted > 0)
+						$resultReceived = 1;
+					else if($responseGetReceived->counterInserted == 0)
+						$resultReceived = 0;
 
-							if ( $responseGetReceived->counterRecords > 0 ){
-								$vouchersReceived = $responseGetReceived->counterRecords;
-							}
-
-							if ( $responseGetReceived->counterInserted > 0 ){
-								$vouchersReceivedInserted = $responseGetReceived->counterInserted;
-							}
-						}
-						else if(isset($responseGetReceived->result)) {
-							if ($responseGetReceived->result == 1) {
-								$resultReceived = 2;
-							}
-							if($responseGetReceived->result == 0){
-								$resultReceived = 0;
-							}
-						}
+					if ( $responseGetReceived->counterRecords > 0 ){
+						$vouchersReceived = $responseGetReceived->counterRecords;
 					}
 
-					$vouchersEmitted = 0;
-					$vouchersEmittedInserted = 0;
-					$resultEmitted = null;
-					$responseGetEmitted = ctr_vouchers_emitted::getVouchersEmittedFirstLogin($responseGetBusiness->infoBusiness->rut, 200, null);
-					if(isset($responseGetEmitted)){
-						if(isset($responseGetEmitted->counterRecords) && isset($responseGetEmitted->counterInserted)){
-							if($responseGetEmitted->counterRecords == $responseGetEmitted->counterInserted)
-								$resultEmitted = 2;
-							else if($responseGetEmitted->counterRecords < $responseGetEmitted->counterInserted && $responseGetEmitted->counterInserted > 0)
-								$resultEmitted = 1;
-							else if($responseGetEmitted->counterInserted == 0)
-								$resultEmitted = 0;
+					if ( $responseGetReceived->counterInserted > 0 ){
+						$vouchersReceivedInserted = $responseGetReceived->counterInserted;
+					}
+				}
+				else if(isset($responseGetReceived->result)) {
+					if ($responseGetReceived->result == 1) {
+						$resultReceived = 2;
+					}
+					if($responseGetReceived->result == 0){
+						$resultReceived = 0;
+					}
+				}
+			}
 
-							if ( $responseGetEmitted->counterRecords > 0 ){
-								$vouchersEmitted = $responseGetEmitted->counterRecords;
-							}
+			$vouchersEmitted = 0;
+			$vouchersEmittedInserted = 0;
+			$resultEmitted = null;
+			$responseGetEmitted = $voucherEmittedController->getVouchersEmittedFirstLogin($currentSession, 200, null);
+			if(isset($responseGetEmitted)){
+				if(isset($responseGetEmitted->counterRecords) && isset($responseGetEmitted->counterInserted)){
+					if($responseGetEmitted->counterRecords == $responseGetEmitted->counterInserted)
+						$resultEmitted = 2;
+					else if($responseGetEmitted->counterRecords < $responseGetEmitted->counterInserted && $responseGetEmitted->counterInserted > 0)
+						$resultEmitted = 1;
+					else if($responseGetEmitted->counterInserted == 0)
+						$resultEmitted = 0;
 
-							if ( $responseGetEmitted->counterInserted > 0 ){
-								$vouchersEmittedInserted = $responseGetEmitted->counterInserted;
-							}
-						}
-						else if(isset($responseGetEmitted->result)) {
-							if ($responseGetEmitted->result == 1) {
-								$resultEmitted = 2;
-							}
-							if($responseGetEmitted->result == 0){
-								$resultEmitted = 0;
-							}
-						}
+					if ( $responseGetEmitted->counterRecords > 0 ){
+						$vouchersEmitted = $responseGetEmitted->counterRecords;
 					}
 
-					$responseInsertHistoric = users::insertHistoric($responseGetUserInSession->objectResult->idUsuario, $vouchersEmitted, $vouchersEmittedInserted, $vouchersReceived, $vouchersReceivedInserted, $responseGetBusiness->idBusiness);
-
-					if($responseInsertHistoric->result == 2){
-						if($resultEmitted == 2 && $resultReceived == 2){
-							$response->result = 2;
-							$response->message = "Todos los comprobantes fueron obtenidos e insertados correctamente.";
-						}else if($resultEmitted == 2 && $resultReceived != 2){
-							$response->result = 1;
-							$response->message = "Algunos comprobantes recibidos no fueron insertados correctamente.";
-						}else if($resultEmitted != 2 && $resultReceived == 2){
-							$response->result = 1;
-							$response->message = "Algunos comprobantes emitidos no fueron insertados correctamente.";
-						}else{
-							$response->result = 0;
-							$response->message = "Ocurrió un error y los comprobantes y emitidos y recibidos no fueron ingresados en su totalidad.";
-						}
-					}else {
-						//error_log("FATAL ERROR : loadDataFirstLogin return responseInsertHistoric ".$responseInsertHistoric." ".time());
-						return $responseInsertHistoric;
+					if ( $responseGetEmitted->counterInserted > 0 ){
+						$vouchersEmittedInserted = $responseGetEmitted->counterInserted;
 					}
-				}else {
-					//error_log("FATAL ERROR : loadDataFirstLogin return responseIsSuperUser ".$responseIsSuperUser." ".time());
-					return $responseIsSuperUser;
+				}
+				else if(isset($responseGetEmitted->result)) {
+					if ($responseGetEmitted->result == 1) {
+						$resultEmitted = 2;
+					}
+					if($responseGetEmitted->result == 0){
+						$resultEmitted = 0;
+					}
+				}
+			}
+
+			$responseInsertHistoric = $usersClass->insertHistoric($currentSession->idUser, $vouchersEmitted, $vouchersEmittedInserted, $vouchersReceived, $vouchersReceivedInserted, $currentSession->idEmpresa);
+
+			if($responseInsertHistoric->result == 2){
+				if($resultEmitted == 2 && $resultReceived == 2){
+					$response->result = 2;
+					$response->message = "Todos los comprobantes fueron obtenidos e insertados correctamente.";
+				}else if($resultEmitted == 2 && $resultReceived != 2){
+					$response->result = 1;
+					$response->message = "Algunos comprobantes recibidos no fueron insertados correctamente.";
+				}else if($resultEmitted != 2 && $resultReceived == 2){
+					$response->result = 1;
+					$response->message = "Algunos comprobantes emitidos no fueron insertados correctamente.";
+				}else{
+					$response->result = 0;
+					$response->message = "Ocurrió un error y los comprobantes y emitidos y recibidos no fueron ingresados en su totalidad.";
 				}
 			}else {
-				//error_log("FATAL ERROR : loadDataFirstLogin return responseGetUserInSession ".$responseGetUserInSession." ".time());
-				return $responseGetUserInSession;
+				//error_log("FATAL ERROR : loadDataFirstLogin return responseInsertHistoric ".$responseInsertHistoric." ".time());
+				return $responseInsertHistoric;
 			}
 		}else {
-			//error_log("FATAL ERROR : loadDataFirstLogin return responseGetBusiness ".$responseGetBusiness." ".time());
-			return $responseGetBusiness;
+			//error_log("FATAL ERROR : loadDataFirstLogin return responseIsSuperUser ".$responseIsSuperUser." ".time());
+			return $responseIsSuperUser;
 		}
+			// }else {
+			// 	//error_log("FATAL ERROR : loadDataFirstLogin return responseGetUserInSession ".$responseGetUserInSession." ".time());
+			// 	return $responseGetUserInSession;
+			// }
+		// }else {
+		// 	//error_log("FATAL ERROR : loadDataFirstLogin return responseGetBusiness ".$responseGetBusiness." ".time());
+		// 	return $responseGetBusiness;
+		// }
 
 		//error_log("FATAL ERROR : loadDataFirstLogin Fin por defecto ".time());
 		return $response;
@@ -391,7 +397,7 @@ class ctr_users{
 		$userController = new ctr_users();
 		$restController = new ctr_rest();
 	
-		error_log("Attempting signin for user: $userEmail with RUT: $rut");
+		error_log("INTENTADO INGRESAR CON: $userEmail RUT: $rut");
 	
 		$othersClass->loadIndicadoresFacturacion();
 	
@@ -459,7 +465,7 @@ class ctr_users{
 			return $responseGetUserInserted;
 		}
 	
-		error_log("Sign-in successful for user: $userEmail with RUT: $rut");
+		error_log("Sign-in EXITOSO PARA EL USUARIO: $userEmail RUT: $rut");
 		$response->result = 2;
 		return $response;
 	}
@@ -681,6 +687,8 @@ class ctr_users{
 		// }
 		// $currentSession = $_SESSION['systemSession'];
 		$responseGetAccess = $userClass->getPermission($permiso, $idEmpresa);
+		error_log("VALIDAR PERMISO DE EMPRESA($permiso, $idEmpresa) => " . $responseGetAccess->result);
+
 		if($responseGetAccess->result == 2){
 			if(strcmp($responseGetAccess->objectResult->permiso, "NO") == 0){
 				$response->result = 1;

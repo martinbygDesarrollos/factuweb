@@ -154,16 +154,21 @@ class ctr_vouchers{
 	}
 
 	//carga todos los articulos facturados en comprobantes emitidos como articulos para la lista de precios y para sugerencia en venta.
-	public function loadProductsFromDetails(){
+	//UPDATED
+	public function loadProductsFromDetails($currentSession){
 		$response = new \stdClass();
+		$usersClass = new users();
+		$userController = new ctr_users();
+		$productsController = new ctr_products();
+		$voucherController = new ctr_vouchers();
 
-		$responseGetBusiness = ctr_users::getBusinesSession();
-		if($responseGetBusiness->result == 2){
-			if($responseGetBusiness->infoBusiness->detallesObtenidos == 0){
-				ctr_products::insertHeading("Artículos");
-				$responseInsertDetail = ctr_vouchers::getVouchersEmittedForLoadDetails($responseGetBusiness->idBusiness, $responseGetBusiness->infoBusiness->rut, 200, null);
+		$responseGetInfoEmpresa = $usersClass->getEmpresaById($currentSession->idEmpresa);
+		if($responseGetInfoEmpresa->result == 2){
+			if($responseGetInfoEmpresa->objectResult->detallesObtenidos == 0){
+				$productsController->insertHeading("Artículos", $currentSession->idEmpresa); // NO IMPORTA SI FUNCIONA
+				$responseInsertDetail = $voucherController->getVouchersEmittedForLoadDetails($currentSession->idEmpresa, $currentSession->rut, 200, null, $currentSession->tokenRest);
 				if(isset($responseInsertDetail->inserted) && isset($responseInsertDetail->toInsert)){
-					$responseSetUpdatedDetails = ctr_users::setUpdatedDetails($responseGetBusiness->idBusiness);
+					$responseSetUpdatedDetails = $userController->setUpdatedDetails($currentSession->idEmpresa);
 					if($responseSetUpdatedDetails->result == 2){
 						$response->result = 2;
 						$response->message = "Se procesesaron " . $responseInsertDetail->toInsert . " detalles de comprobantes emitidos y se ingresaron " . $responseInsertDetail->inserted . " artículos.";
@@ -179,21 +184,24 @@ class ctr_vouchers{
 				$response->result = 0;
 				$response->message = "Los artículos por detalles de comprobantes emitidos ya fueron cargados para esta empresa.";
 			}
-		}else return $responseGetBusiness;
+		}else return $responseGetInfoEmpresa;
 
 		return $response;
 	}
-
-	public function getVouchersEmittedForLoadDetails($idBusiness, $rut, $pageSize, $lastId){
+	//UPDATED
+	public function getVouchersEmittedForLoadDetails($idBusiness, $rut, $pageSize, $lastId, $tokenRest){
 		$response = new \stdClass();
+		$productsController = new ctr_products();
+		$restController = new ctr_rest();
+		$voucherController = new ctr_vouchers();
 		$toInsert = 0;
 		$inserted =  0;
-
-		$responseSendRest = ctr_rest::listarEmitidos($rut, $pageSize, $lastId, null,null, null);
+		set_time_limit(180);
+		$responseSendRest = $restController->listarEmitidos($rut, $pageSize, $lastId, null, null, null, $tokenRest);
 		if($responseSendRest->result == 2){
 			foreach ($responseSendRest->listEmitidos as $key => $voucher) {
 				if($voucher->tipoCFE == 101 || $voucher->tipoCFE == 111 && ($voucher->isCobranza == 0 && $voucher->isAnulado == 0)){
-					$responseInsertDetail = ctr_products::getVoucherDetailJSON($idBusiness, $rut, $voucher->tipoCFE, $voucher->serieCFE, $voucher->numeroCFE);
+					$responseInsertDetail = $productsController->getVoucherDetailJSON($idBusiness, $rut, $voucher->tipoCFE, $voucher->serieCFE, $voucher->numeroCFE, $tokenRest);
 					if(isset($responseInsertDetail->toInsert)){
 						$toInsert += $responseInsertDetail->toInsert;
 						$inserted += $responseInsertDetail->inserted;
@@ -202,7 +210,7 @@ class ctr_vouchers{
 				$lastId = $voucher->id;
 			}
 			if(sizeof($responseSendRest->listEmitidos) == 200){
-				$responseRecursive = ctr_vouchers::getVouchersEmittedForLoadDetails($idBusiness, $rut, $pageSize, $lastId);
+				$responseRecursive = $voucherController->getVouchersEmittedForLoadDetails($idBusiness, $rut, $pageSize, $lastId, $tokenRest);
 				$toInsert += $responseRecursive->toInsert;
 				$inserted += $responseRecursive->inserted;
 			}
@@ -264,20 +272,22 @@ class ctr_vouchers{
 
 
 	//obtiene la cotizacion de varias monedas
+	//UPDATED
 	public function getQuotes(){
+		$restController = new ctr_rest();
 		$response = new \stdClass();
 
 		$currentDate = date('Y-m-d');
 
-		$responseRestUSD = ctr_rest::obtenerCotizacion($currentDate, $currentDate, "USD");
+		$responseRestUSD = $restController->obtenerCotizacion($currentDate, $currentDate, "USD");
 		if($responseRestUSD->result == 2)
 			$response->USD =  bcdiv($responseRestUSD->currentQuote, '1', 4);
 
-		$responseRestUI = ctr_rest::obtenerCotizacion($currentDate, $currentDate, "UI");
+		$responseRestUI = $restController->obtenerCotizacion($currentDate, $currentDate, "UI");
 		if($responseRestUI->result == 2)
 			$response->UI =  bcdiv($responseRestUI->currentQuote, '1', 4);
 
-		$responseRestEUR = ctr_rest::obtenerCotizacion($currentDate, $currentDate, "EUR");
+		$responseRestEUR = $restController->obtenerCotizacion($currentDate, $currentDate, "EUR");
 		if($responseRestEUR->result == 2)
 			$response->EUR = bcdiv($responseRestEUR->currentQuote, '1', 4);
 

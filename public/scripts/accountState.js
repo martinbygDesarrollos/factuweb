@@ -30,6 +30,11 @@ function openModalVoucher(button, prepareFor, view){
 			// exportVoucher(idVoucher, prepareFor);
 			exportVoucherNew(idVoucher, prepareFor);
 		});
+		
+		$('#buttonDownloadVoucher').off('click');
+		$('#buttonDownloadVoucher').click(function(){
+			downloadVoucher(idVoucher, prepareFor);
+		});
 
 		if ( responseGetCFE.voucherCFE.isAnulado ){
 			$("#seeVoucherIsAnuladoMotivo").empty();
@@ -128,6 +133,17 @@ function cancelVoucher(idVoucher){
 	}
 }
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+function downloadVoucher(idVoucher, prepareFor) {
+	let response = sendPost('getVoucherToExportCFE', {idVoucher: idVoucher, prepareFor: prepareFor});
+	if(response.result == 2){
+		let linkSource = `data:application/pdf;base64,${response.voucherCFE.representacionImpresa}`;
+		let downloadLink = document.createElement("a");
+		let fileName = response.voucherCFE.tipoCFE + "-" + response.voucherCFE.serieCFE + "-" + response.voucherCFE.numeroCFE + ".pdf";
+		downloadLink.href = linkSource;
+		downloadLink.download = fileName;
+		downloadLink.click();
+	}else showReplyMessage(response.result, response.message, "Descargar comprobante", null);
+}
 function exportVoucherNew(idVoucher, prepareFor) {
 	let response = sendPost('getVoucherToExportCFE', { idVoucher: idVoucher, prepareFor: prepareFor });
 	if (response.result == 2) {

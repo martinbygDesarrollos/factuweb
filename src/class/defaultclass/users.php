@@ -4,9 +4,10 @@ require_once '../src/utils/handle_date_time.php';
 require_once '../src/connection/open_connection.php';
 
 class users{
-
+	//UPDATED
 	public function setUpdatedDetails($idBusiness){
-		return DataBase::sendQuery("UPDATE empresas SET detallesObtenidos = ? WHERE idEmpresa = ?", array('ii', 1, $idBusiness), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE empresas SET detallesObtenidos = ? WHERE idEmpresa = ?", array('ii', 1, $idBusiness), "BOOLE");
 	}
 	//UPDATED
 	public function itsSuperUser($userEmail){
@@ -88,13 +89,16 @@ class users{
 	public function insertBusiness($rut, $nameBusiness, $typeEmtity, $dateInit, $idStreet, $address, $town, $location, $postalCode){
 		return DataBase::sendQuery("INSERT INTO empresas(rut, nombre, tipoEntidad, fechaInicio, idCalle, direccion, departamento, localidad, codigoPostal) VALUES(?,?,?,?,?,?,?,?,?)", array('sssiisssi', $rut, $nameBusiness, $typeEmtity, $dateInit, $idStreet, $address, $town, $location, $postalCode), "BOOLE");
 	}
-
+	//UPDATED
 	public function insertHistoric($idUser, $vouchersEmitted, $vouchersEmittedInserted, $voucherReceived, $voucherReceivedInserted, $idBusiness){
-		$dateTime = handleDateTime::getCurrentDateTimeInt();
-		$browser = users::getBrowser();
-		$ip = users::getIpClient();
+		$usersInstance = new users();
+		$handleDateTimeClass = new handleDateTime();
+		$dbClass = new DataBase();
+		$dateTime = $handleDateTimeClass->getCurrentDateTimeInt();
+		$browser = $usersInstance->getBrowser();
+		$ip = $usersInstance->getIpClient();
 
-		$responseQuery = DataBase::sendQuery("INSERT INTO historial_usuario(idUsuario, fechaHora, navegador, ip, emitidosObtenidos, emitidosIngresados, recibidosObtenidos, recibidosIngresados, idEmpresa) VALUES (?,?,?,?,?,?,?,?,?)", array('isssiiiii', $idUser, $dateTime, $browser, $ip, $vouchersEmitted, $vouchersEmittedInserted, $voucherReceived, $voucherReceivedInserted, $idBusiness), "BOOLE");
+		$responseQuery = $dbClass->sendQuery("INSERT INTO historial_usuario(idUsuario, fechaHora, navegador, ip, emitidosObtenidos, emitidosIngresados, recibidosObtenidos, recibidosIngresados, idEmpresa) VALUES (?,?,?,?,?,?,?,?,?)", array('isssiiiii', $idUser, $dateTime, $browser, $ip, $vouchersEmitted, $vouchersEmittedInserted, $voucherReceived, $voucherReceivedInserted, $idBusiness), "BOOLE");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "Ocurrió un error y no se ingresó un registro en el historial al iniciar de sesión.";
 
@@ -381,8 +385,8 @@ class users{
     			}
 
     			$_SESSION['systemSession'] = $objectSession;
-    			error_log("session modificada (iniciada)");
-    			error_log("id en session ".$_SESSION['systemSession']->idUser);
+    			// error_log("session modificada (iniciada)");
+    			// error_log("id en session ".$_SESSION['systemSession']->idUser);
 				unset($responseQuery->objectResult);
     		}
     	}else $responseQuery->message = "Un error interno no permitio iniciar sesión con este usuario.";

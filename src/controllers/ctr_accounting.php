@@ -22,7 +22,7 @@ class ctr_accounting{
 	}
 
 	//NECESITA EL LAST ID PORQUE EN EL CONTROLADOR DE LOS COMPROBANTES EMITIDOS SE LLAMA RECURSIVAMENTE
-	//WORKING
+	//UPDATED
 	public function countAllVouchersEmittedRest( $rut, $pageSize, $lastid, $dateFrom, $dateTo, $currentSession ){
 		$emittedVoucherController = new ctr_vouchers_emitted();
 		$userController = new ctr_users();
@@ -37,7 +37,7 @@ class ctr_accounting{
 
 
 	//FUNCION QUE BUSCA TODOS LOS DATOS DE LOS COMPROBANTES Y LOS ENVÍA AL TXT PARA EXPORTAR
-	//WORKING
+	//UPDATED
 	public function exportSaleData( $rut, $pageSize, $dateFrom, $dateTo, $currentSession ){
 		$userController = new ctr_users();
 		$arrayLines = array();
@@ -240,7 +240,7 @@ class ctr_accounting{
 
 		return $response;
 	}
-	//WORKING
+	//UPDATED
 	public function getDetailsFromVoucher( $rut, $tipoCFE, $serieCFE, $numeroCFE, $currentSession ){
 		$response = new \stdClass();
 		$restController = new ctr_rest();

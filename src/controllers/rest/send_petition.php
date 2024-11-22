@@ -156,11 +156,13 @@ class sendPetition{
 
 	public function nuevoCliente($rut, $data, $token){
 		$sendPetitionInstance = new sendPetition();
+		error_log("PETICION: POST - " . "customers/$rut - DOCUMENTO: " . $data['document'] );
 		return $sendPetitionInstance->prepareAndSendCurl("POST", 'customers/' . $rut, $token, $data);
 	}
 
 	public function modificarCliente($rut, $document, $data, $token){
 		$sendPetitionInstance = new sendPetition();
+		error_log("PETICION: PUT - " . "customers/$rut/$document" );
 		return $sendPetitionInstance->prepareAndSendCurl("PUT", 'customers/' . $rut . '/' . $document, $token, $data);
 	}
 
@@ -199,7 +201,7 @@ class sendPetition{
 		if(!is_null($branchCompany))
 			$branchCompany = "&sucursal=" . $lastId;
 		else $branchCompany = "";
-
+		error_log("PETICION: GET - " . "company/$rut/cfe/emitidos?PageSize=" . $pageSize . $lastId . $dateFrom . $branchCompany);
 		return $sendPetitionInstance->prepareAndSendCurl("GET", "company/" . $rut . "/cfe/emitidos?PageSize=" . $pageSize . $lastId . $dateFrom . $branchCompany, $token, null);
 	}
 

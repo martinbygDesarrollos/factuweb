@@ -129,7 +129,8 @@ function updateProvider(idProvider){
 
 function modifyRow(idProvider, nameBusiness, address, phoneNumber, email){
 	var td = $('#'+ idProvider).children();
-	$('#'+ idProvider).replaceWith(createRow(idProvider, getCellValue(td, 0), nameBusiness, address, phoneNumber, email, getCellValue(td, 5), getCellValue(td, 6)));
+	var tr = $('#'+ idProvider)
+	$('#'+ idProvider).replaceWith(createRow(idProvider, getCellValue(td, 0), nameBusiness, address, phoneNumber, email, getAmountValue(tr[0], 1), getAmountValue(tr[0], 2)));
 }
 
 function openModalAccounStateForProvider(idProvider){
@@ -180,6 +181,11 @@ function searchProviders(inputToSearch){
 
 function getCellValue(item, position){
 	return item[position].innerHTML || " ";
+}
+
+function getAmountValue(tr, index) {
+    const text = tr.querySelector(`td:nth-child(4) p:nth-child(${index})`).textContent.trim();
+    return text.split(' ')[1];
 }
 
 function keyPressModalProvider(eventEnter,value, size){

@@ -374,8 +374,10 @@ function updateClient(idReceiver, docReceiver){
 
 		let response = sendPost("updateClient", data);
 		if(response.result == 2){
-			let td= $('#' + idReceiver).children();
-			$('#'+ idReceiver).replaceWith(createRow(idReceiver, docReceiver, newNameClient, addressClient, numberMobileString, emailsString, getCellValue(td,5), getCellValue(td,6)));
+			// let td= $('#' + idReceiver).children();
+			let tr= $('#' + idReceiver);
+			// $('#'+ idReceiver).replaceWith(createRow(idReceiver, docReceiver, newNameClient, addressClient, numberMobileString, emailsString, getCellValue(td,5), getCellValue(td,6)));
+			$('#'+ idReceiver).replaceWith(createRow(idReceiver, docReceiver, newNameClient, addressClient, numberMobileString, emailsString, getAmountValue(tr[0],1), getAmountValue(tr[0],2)));
 		}
 		showReplyMessage(response.result, response.message,"Modificar cliente", "modalUpdateClient");
 	}else showReplyMessage(1,"Debe ingresar el nombre un nombre para la empresa o mantener el actual.", "Modificar cliente", "modalUpdateClient");
@@ -383,6 +385,11 @@ function updateClient(idReceiver, docReceiver){
 
 function getCellValue(td, position){
 	return td[position].innerHTML || " ";
+}
+
+function getAmountValue(tr, index) {
+    const text = tr.querySelector(`td:nth-child(4) p:nth-child(${index})`).textContent.trim();
+    return text.split(' ')[1];
 }
 
 function addNumberMobileTemp(){

@@ -226,9 +226,10 @@ class vouchersReceived{
 			$responseQuery->message = "No se encontro un comprobante recibido con el identificador seleccionado en la base de datos.";
 		return $responseQuery;
 	}
-
+	//UPDATED
 	public function insertVoucherReceived($id, $idProvider, $idReceiver, $tipoCFE, $serieCFE, $numeroCFE, $total, $dateVoucher, $typeCoin, $sucursal, $isAnulado, $isCobranza, $dateEmited, $payMethod, $dateExpiration){
-		return DataBase::sendQuery("INSERT INTO comprobantes_recibidos(id, idProveedor, idReceptor, tipoCFE, serieCFE, numeroCFE, total, fecha, moneda, sucursal, isAnulado, isCobranza, fechaEmision, formaPago, vencimiento) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", array('siiisidisiiisii', $id, $idProvider, $idReceiver, $tipoCFE, $serieCFE, $numeroCFE, $total, $dateVoucher, $typeCoin, $sucursal, $isAnulado, $isCobranza, $dateEmited, $payMethod, $dateExpiration), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO comprobantes_recibidos(id, idProveedor, idReceptor, tipoCFE, serieCFE, numeroCFE, total, fecha, moneda, sucursal, isAnulado, isCobranza, fechaEmision, formaPago, vencimiento) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", array('siiisidisiiisii', $id, $idProvider, $idReceiver, $tipoCFE, $serieCFE, $numeroCFE, $total, $dateVoucher, $typeCoin, $sucursal, $isAnulado, $isCobranza, $dateEmited, $payMethod, $dateExpiration), "BOOLE");
 	}
 	//UPDATED
 	public function getAccountState($idProvider, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness){
@@ -329,7 +330,7 @@ class vouchersReceived{
 
 
 
-	//WORKING
+	//UPDATED
 	public function saldoPendienteProveedor($idProvider, $dateInitINT, $dateEndingINT, $typeCoin, $myBusiness){
 		$vouchersReceivedClass = new vouchersReceived();
 		$dataBase = new DataBase();

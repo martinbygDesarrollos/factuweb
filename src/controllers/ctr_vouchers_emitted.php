@@ -698,7 +698,7 @@ class ctr_vouchers_emitted{
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //OBTENER CUANTOS COMPROBANTES EMITIDOS HAY EN TOTAL EN UN PERIODO DETERMINADO
-	//WORKING
+	//UPDATED
 	public function countAllVouchersEmittedRest($rut, $pageSize, $lastId, $dateFrom, $dateTo, $tokenRest){
 
 		//error_log("en la funcion contando todos los emitidos");
