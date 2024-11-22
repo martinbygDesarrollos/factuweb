@@ -158,76 +158,182 @@ class clients{
 
 	//misma funcion que getListClientsView pero no se filtra por nombre, no hay lim por paginacion
 	//UPDATED
+	// public function getListDeudoresToExport($myBusiness, $dateTo){
+	// 	$dbClass = new DataBase();
+	// 	$whereDate = "";
+	// 	if ( !isset($dateTo) ){
+	// 		$whereDate = "";
+	// 	}else{
+	// 		$whereDate = " fecha <= '".$dateTo."' AND ";
+	// 	}
+
+	// 	$sqlToSend = "SELECT docReceptor, nombreReceptor, id  FROM clientes AS Cli ";
+
+	// 	$sqlToSend .= "
+	// 		WHERE (
+	// 			(
+	// 				SELECT COALESCE(SUM(total),0)
+	// 				FROM comprobantes
+	// 				WHERE Cli.id = comprobantes.idCliente AND
+	// 					comprobantes.idEmisor = ".$myBusiness." AND
+	// 					moneda = 'UYU' AND
+	// 					formaPago = 2 AND
+	// 					isAnulado = 0 AND
+	// 					isCobranza = 0 AND
+	// 					".$whereDate."
+	// 					(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
+	// 			)
+	// 			<>
+	// 			(
+	// 				SELECT COALESCE(SUM(total),0)
+	// 				FROM comprobantes
+	// 				WHERE Cli.id = comprobantes.idCliente AND
+	// 					comprobantes.idEmisor = ".$myBusiness." AND
+	// 					isAnulado = 0 AND
+	// 					moneda = 'UYU' AND
+	// 					".$whereDate."
+	// 					(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2')
+	// 			)
+
+	// 		)";
+
+	// 	$sqlToSend .= "
+	// 		OR
+	// 		(
+	// 			(
+	// 				SELECT COALESCE(SUM(total),0)
+	// 				FROM comprobantes
+	// 				WHERE Cli.id = comprobantes.idCliente AND
+	// 					comprobantes.idEmisor = ".$myBusiness." AND
+	// 					moneda = 'USD' AND
+	// 					formaPago = 2 AND
+	// 					isAnulado = 0 AND
+	// 					isCobranza = 0 AND
+	// 					".$whereDate."
+	// 					(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
+	// 			)
+	// 			<>
+	// 			(
+	// 				SELECT COALESCE(SUM(total),0)
+	// 				FROM comprobantes
+	// 				WHERE Cli.id = comprobantes.idCliente AND
+	// 					comprobantes.idEmisor = ".$myBusiness." AND
+	// 					isAnulado = 0 AND
+	// 					moneda = 'USD' AND
+	// 					".$whereDate."
+	// 					(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2'))
+	// 			)
+	// 		)
+	// 	) ";
+
+	// 	$sqlToSend .= "  ORDER BY Cli.nombreReceptor ASC ";
+	// 	error_log("CONSULTA SQL: $sqlToSend");
+	// 	$responseQuery = $dbClass->sendQuery($sqlToSend, array('i', $myBusiness), "LIST");
+	// 	if($responseQuery->result == 1){
+	// 		$responseQuery->listResult = array();
+	// 		$responseQuery->message = "Actualmente no hay clientes que listar.";
+	// 	}
+	// 	return $responseQuery;
+	// }
 	public function getListDeudoresToExport($myBusiness, $dateTo){
 		$dbClass = new DataBase();
-		$whereDate = "";
-		if ( !isset($dateTo) ){
-			$whereDate = "";
-		}else{
-			$whereDate = " fecha <= '".$dateTo."' AND ";
-		}
-
-		$sqlToSend = "SELECT docReceptor, nombreReceptor, id  FROM clientes AS Cli ";
-
-		$sqlToSend .= "
-			WHERE (
-				(
-					SELECT COALESCE(SUM(total),0)
-					FROM comprobantes
-					WHERE Cli.id = comprobantes.idCliente AND
-						comprobantes.idEmisor = ".$myBusiness." AND
-						moneda = 'UYU' AND
-						formaPago = 2 AND
-						isAnulado = 0 AND
-						isCobranza = 0 AND
-						".$whereDate."
-						(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
-				)
-				<>
-				(
-					SELECT COALESCE(SUM(total),0)
-					FROM comprobantes
-					WHERE Cli.id = comprobantes.idCliente AND
-						comprobantes.idEmisor = ".$myBusiness." AND
-						isAnulado = 0 AND
-						moneda = 'UYU' AND
-						".$whereDate."
-						(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2')
-				)
-
-			)";
-
-		$sqlToSend .= "
-			OR
+		
+		$sqlToSend = "SELECT docReceptor, nombreReceptor, id FROM clientes AS Cli 
+		WHERE (
 			(
-				(
-					SELECT COALESCE(SUM(total),0)
-					FROM comprobantes
-					WHERE Cli.id = comprobantes.idCliente AND
-						comprobantes.idEmisor = ".$myBusiness." AND
-						moneda = 'USD' AND
-						formaPago = 2 AND
-						isAnulado = 0 AND
-						isCobranza = 0 AND
-						".$whereDate."
-						(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
-				)
-				<>
-				(
-					SELECT COALESCE(SUM(total),0)
-					FROM comprobantes
-					WHERE Cli.id = comprobantes.idCliente AND
-						comprobantes.idEmisor = ".$myBusiness." AND
-						isAnulado = 0 AND
-						moneda = 'USD' AND
-						".$whereDate."
-						(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2'))
-				)
+				SELECT COALESCE(SUM(total),0)
+				FROM comprobantes
+				WHERE Cli.id = comprobantes.idCliente AND
+					comprobantes.idEmisor = ? AND
+					moneda = 'UYU' AND
+					formaPago = 2 AND
+					isAnulado = 0 AND
+					isCobranza = 0 AND
+					".(!empty($dateTo) ? "fecha <= ? AND " : "")."
+					(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
 			)
-		) ";
-
-		$sqlToSend .= "  ORDER BY Cli.nombreReceptor ASC ";
-		$responseQuery = $dbClass->sendQuery($sqlToSend, array('i', $myBusiness), "LIST");
+			<>
+			(
+				SELECT COALESCE(SUM(total),0)
+				FROM comprobantes
+				WHERE Cli.id = comprobantes.idCliente AND
+					comprobantes.idEmisor = ? AND
+					isAnulado = 0 AND
+					moneda = 'UYU' AND
+					".(!empty($dateTo) ? "fecha <= ? AND " : "")."
+					(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2'))
+			)
+		)
+		OR
+		(
+			(
+				SELECT COALESCE(SUM(total),0)
+				FROM comprobantes
+				WHERE Cli.id = comprobantes.idCliente AND
+					comprobantes.idEmisor = ? AND
+					moneda = 'USD' AND
+					formaPago = 2 AND
+					isAnulado = 0 AND
+					isCobranza = 0 AND
+					".(!empty($dateTo) ? "fecha <= ? AND " : "")."
+					(tipoCFE LIKE '__1' OR tipoCFE LIKE '__3')
+			)
+			<>
+			(
+				SELECT COALESCE(SUM(total),0)
+				FROM comprobantes
+				WHERE Cli.id = comprobantes.idCliente AND
+					comprobantes.idEmisor = ? AND
+					isAnulado = 0 AND
+					moneda = 'USD' AND
+					".(!empty($dateTo) ? "fecha <= ? AND " : "")."
+					(isCobranza = 1 OR (formaPago = 2 AND tipoCFE LIKE '__2'))
+			)
+		)
+		ORDER BY Cli.nombreReceptor ASC";
+	
+		// Prepare parameters dynamically
+		$paramTypes = '';
+		$paramValues = [];
+		
+		// Always add business ID placeholders
+		$paramTypes .= 'i'; 
+		$paramValues[] = $myBusiness;
+		
+		// Add date placeholders if date is provided
+		if (!empty($dateTo)) {
+			$paramTypes .= 's';
+			$paramValues[] = $dateTo;
+		}
+		
+		// Repeat for each occurrence of business ID and optional date
+		$paramTypes .= 'i';
+		$paramValues[] = $myBusiness;
+		
+		if (!empty($dateTo)) {
+			$paramTypes .= 's';
+			$paramValues[] = $dateTo;
+		}
+		
+		// Repeat for USD section
+		$paramTypes .= 'i';
+		$paramValues[] = $myBusiness;
+		
+		if (!empty($dateTo)) {
+			$paramTypes .= 's';
+			$paramValues[] = $dateTo;
+		}
+		
+		$paramTypes .= 'i';
+		$paramValues[] = $myBusiness;
+		
+		if (!empty($dateTo)) {
+			$paramTypes .= 's';
+			$paramValues[] = $dateTo;
+		}
+	
+		$responseQuery = $dbClass->sendQuery($sqlToSend, array_merge([$paramTypes], $paramValues), "LIST");
+		
 		if($responseQuery->result == 1){
 			$responseQuery->listResult = array();
 			$responseQuery->message = "Actualmente no hay clientes que listar.";
