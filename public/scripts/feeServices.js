@@ -454,7 +454,11 @@ function openModalVoucherFee(button, prepareFor){
 
 		$('#buttonExportVoucherFee').off('click');
 		$('#buttonExportVoucherFee').click(function(){
-			exportVoucher(idVoucher, prepareFor);
+			exportVoucherNew(idVoucher, prepareFor);
+		});
+		$('#buttonDownloadVoucher').off('click');
+		$('#buttonDownloadVoucher').click(function(){
+			downloadVoucher(idVoucher, prepareFor);
 		});
 
 		console.log("Si el comprobante esta anulado ver el motivo y mostrar cartel",responseGetCFE);
@@ -508,6 +512,53 @@ function openModalVoucherFee(button, prepareFor){
 			showReplyMessage(responseGetCFE.result, "No se encontró el comprobante. Intente nuevamente.", "Ver comprobante", null);
 		}
 		else showReplyMessage(responseGetCFE.result, responseGetCFE.message, "Ver comprobante", null);
+	}
+}
+
+function downloadVoucher(idVoucher, prepareFor) {
+	let response = sendPost('getVoucherToExportCFE', {idVoucher: idVoucher, prepareFor: prepareFor});
+	if(response.result == 2){
+		let linkSource = `data:application/pdf;base64,${response.voucherCFE.representacionImpresa}`;
+		let downloadLink = document.createElement("a");
+		let fileName = response.voucherCFE.tipoCFE + "-" + response.voucherCFE.serieCFE + "-" + response.voucherCFE.numeroCFE + ".pdf";
+		downloadLink.href = linkSource;
+		downloadLink.download = fileName;
+		downloadLink.click();
+	}else showReplyMessage(response.result, response.message, "Descargar comprobante", null);
+}
+function exportVoucherNew(idVoucher, prepareFor) {
+	let response = sendPost('getVoucherToExportCFE', { idVoucher: idVoucher, prepareFor: prepareFor });
+	if (response.result == 2) {
+	  	// The response contains a base64-encoded PDF
+	  	let pdfBase64 = response.voucherCFE.representacionImpresa;
+	  	const base64 = 'data:application/pdf;base64,' + pdfBase64;
+	
+		// Crear un objeto Blob a partir de la cadena base64
+		const byteCharacters = atob(base64.split(',')[1]);
+		const byteNumbers = new Array(byteCharacters.length);
+		for (let i = 0; i < byteCharacters.length; i++) {
+		  byteNumbers[i] = byteCharacters.charCodeAt(i);
+		}
+		const byteArray = new Uint8Array(byteNumbers);
+		const blob = new Blob([byteArray], { type: 'application/pdf' });
+	  
+		// Crear una URL temporal para el Blob
+		const blobUrl = URL.createObjectURL(blob);
+	  
+		// Crear un iframe de forma dinámica y agregarlo al documento
+		const iframe = document.createElement('iframe');
+		iframe.style.display = 'none'; // Ocultar el iframe
+		iframe.src = blobUrl;
+	  
+		// Añadir el iframe al documento
+		document.body.appendChild(iframe);
+	  
+		// Imprimir el PDF cuando el iframe esté cargado
+		iframe.onload = function () {
+		  iframe.contentWindow.print();
+		};
+  	} else {
+		showReplyMessage(response.result, response.message, "Exportar comprobante", null);
 	}
 }
 
