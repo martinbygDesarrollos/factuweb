@@ -147,6 +147,10 @@ class ctr_providers{
 			foreach ($resultGetProviders->listResult as $key => $value) {
 				$saldoPesos = $vouchersReceivedClass->saldoPendienteProveedor($value['idProveedor'], "20000101", $date, "UYU", $currentSession->idEmpresa);
 				$saldoDolares = $vouchersReceivedClass->saldoPendienteProveedor($value['idProveedor'], "20000101", $date, "USD", $currentSession->idEmpresa);
+				if (!isset($value['balance'])) {
+					$value['balance'] = new \stdClass();
+				}
+				
 				if( gettype($saldoPesos) === "double" )
 					$value['balance']->balanceUYU = $saldoPesos;
 				else
