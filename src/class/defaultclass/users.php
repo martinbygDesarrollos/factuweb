@@ -160,7 +160,8 @@ class users{
     }
 
     public function insertConfigurationUser($idUser, $typeVariable, $variable, $value){
-    	return DataBase::sendQuery("INSERT INTO configuraciones(idUsuario, tipo, variable, valor) VALUES (?,?,?,?)", array('isss', $idUser, $typeVariable, $variable, $value), "BOOLE");
+		$dbClass = new DataBase();
+    	return $dbClass->sendQuery("INSERT INTO configuraciones(idUsuario, tipo, variable, valor) VALUES (?,?,?,?)", array('isss', $idUser, $typeVariable, $variable, $value), "BOOLE");
     }
 
     public function verifyUserConfigurations($idUser){
@@ -283,7 +284,8 @@ class users{
     }
 
     public function insertPermission($idBusiness, $section, $permission){
-    	return DataBase::sendQuery("INSERT INTO permisos_empresa(idEmpresa, seccion, permiso) VALUES (?,?,?)", array('iss', $idBusiness, $section, $permission), "BOOLE");
+		$dbClass = new DataBase();
+    	return $dbClass->sendQuery("INSERT INTO permisos_empresa(idEmpresa, seccion, permiso) VALUES (?,?,?)", array('iss', $idBusiness, $section, $permission), "BOOLE");
     }
 
     public function getPermission($section, $idBusiness){

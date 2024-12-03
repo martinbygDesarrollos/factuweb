@@ -130,6 +130,12 @@ class products{
 	public function updateHeading($nameBrand, $idHeading, $idBusiness){
 		return DataBase::sendQuery("UPDATE rubro SET rubro= ? WHERE idRubro = ? AND idEmpresa = ?", array('sii', $nameHeading, $idHeading, $idBusiness), "BOOLE");
 	}
+	//UPDATED [NEW]
+	public function substractStock($id, $cantidad){
+		$cantidad = intval($cantidad);
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE inventario SET inventario = inventario - $cantidad WHERE idInventario = ?", array('i', $id), "BOOLE");
+	}
 
 	public function deleteHeading($idHeading, $idBusiness){
 		return DataBase::sendQuery("DELETE FROM rubro WHERE idRubro = ? AND idBusiness = ?", array('ii', $idHeading, $idBusiness), "BOOLE");
@@ -185,6 +191,11 @@ class products{
 		$dbClass = new DataBase();
 		return $dbClass->sendQuery("UPDATE articulos SET idRubro= ?, idIva= ?, idInventario= ?, descripcion= ?, detalle= ?, marca= ?, moneda= ?, costo= ?, coeficiente= ?, descuento = ?, importe = ?, codigoBarra= ? WHERE idArticulo = ? AND idEmpresa = ?", array('iiissssddddsii', $idHeading, $idIva, $idInventory, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $idBusiness), "BOOLE");
 	}
+	//UPDATED [NEW]
+	public function setInventoryToProduct($idProduct, $idInventory, $idBusiness){
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE articulos SET idInventario = ? WHERE idArticulo = ? AND idEmpresa = ?", array('iii', $idInventory, $idProduct, $idBusiness), "BOOLE");
+	}
 	//UPDATED
 	public function deleteProduct($idProduct, $idBusiness){
 		$dbClass = new DataBase();
@@ -192,8 +203,8 @@ class products{
 	}
 	//UPDATED
 	public function insertInventory($inventory, $minInventory, $dateInventory, $idEmpresa){
-		$inventory = $inventory ?? 0;
-		$minInventory = $minInventory ?? 0;
+		$inventory = ($inventory === "" || $inventory === null) ? 1 : $inventory;
+		$minInventory = ($minInventory === "" || $minInventory === null) ? 0 : $minInventory;
 		$dbClass = new DataBase();
 		return $dbClass->sendQuery("INSERT INTO inventario(inventario, inventarioMinimo, fechaInventario, idEmpresa) VALUES (?,?,?,?)", array('iiii', $inventory, $minInventory, $dateInventory, $idEmpresa), "BOOLE");
 	}

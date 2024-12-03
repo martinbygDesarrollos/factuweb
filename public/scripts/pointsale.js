@@ -54,7 +54,7 @@ $('#modalAddProduct').on('shown.bs.modal', function () {
 });
 
 $('#modalListPrice').on('shown.bs.modal', function () {
-	console.log("Modal abierto")
+	console.log("Modal abierto LIST PRICES")
 	$('#inputTextToSearchPrice').focus();
 });
 
@@ -1190,6 +1190,10 @@ function openModalGetPrices(){
 	// $('#inputTextToSearchPrice').focus();
 	$('#modalListPrice input').prop( "disabled", false );
 	getListPrice();
+
+	$('#modalListPrice').on('shown.bs.modal', function () {
+		$('#inputTextToSearchPrice').focus();
+	});
 	$('#modalListPrice').modal("show");
 }
 

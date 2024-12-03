@@ -63,7 +63,7 @@ class sendPetition{
 			$arrayDetail["uniMedida"] = $uniMedida;
 
 		if(!is_null($descuentoTipo) && !is_null($descuento)){
-			error_log("DESCUENTO: " . $descuento);
+			error_log("ARTICULO CON DESCUENTO: " . $descuento);
 			$arrayDetail["descRecItem"] = $descuento;
 			$arrayDetail["descRecItemTipo"] = $descuentoTipo;
 		}

@@ -234,6 +234,14 @@
 				if (code == 45) {
 					$('#modalInsertNewPaymentMethodButtonConfirm').click();
 				}
+			} else if(elementFocusedID == "inputTextToSearchPrice"){
+				let code = (e.keyCode ? e.keyCode : e.which);
+				if(code == 13){
+					// Get the number of rows in the tbody element
+					if($('#tbodyListPrice tr').length == 1){
+						$('#tbodyListPrice tr button').click();
+					}
+				}
 			}
 		});
 

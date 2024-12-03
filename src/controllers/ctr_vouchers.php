@@ -241,10 +241,12 @@ class ctr_vouchers{
 	}
 	//UPDATED
 	public function createNewCFE($typeCFE, $dateVoucher, $grossAmount, $typePay, $dateExpiration, $typeCoin, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $currentSession, $mediosPago = null){
-		$response = new \stdClass();
+		// $response = new \stdClass();
 		$restController = new ctr_rest();
 		$voucherController = new ctr_vouchers();
 		$handleDateTimeClass = new handleDateTime();
+		$productsController = new ctr_products();
+
 		$exchangeRate = null;
 		if(strcmp($typeCoin, "UYU") != 0){
 			$responseExchange = $voucherController->getQuote($typeCoin, $dateVoucher);
@@ -256,9 +258,25 @@ class ctr_vouchers{
 		if(!is_null($dateExpiration))
 			$dateExpiration = $handleDateTimeClass->getDateInt($dateExpiration);
 
-		return $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->tokenRest);
+		$resultNuevoCFE = $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->tokenRest);
+		
+		if($resultNuevoCFE->result == 2){ // Si funciona la creacion del CFE entonces descuento las cantidades (actualizo stocks)
+			// $detail
+			// var_dump($detail);
+			
+			$articulos = array_map(function ($item) {
+				return (object) $item;
+			}, $detail);
+			
+			// var_dump($articulos); exit;
 
-		return $response;
+			foreach ($articulos as $articulo) {
+				$productsController->updateStockProduct($articulo, $currentSession);
+			}
+			// $productsController->updateStockProduct($detail, $currentSession);
+		}
+		// return $response;
+		return $resultNuevoCFE;
 	}
 
 	//UPDATED

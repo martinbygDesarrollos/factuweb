@@ -43,12 +43,12 @@ function createNewRow(index, dateMaked, docClient, nameClient, typeCoin, total){
 	let row = "<tr id='" + index + "'>";
 	row += "<td class='text-right'>" + dateMaked + "</td>";
 	row += "<td class='text-right toHidden1'>" + docClient + "</td>";
-	row += "<td class='text-right'>" + nameClient + "</td>";
+	row += "<td class='text-left'>" + nameClient + "</td>";
 	row += "<td class='text-right toHidden1'>" + typeCoin + "</td>";
 	row += "<td class='text-right'>" + total + "</td>";
 	row += "<td class='text-center'>";
 	row += "<button onclick='showModifyManualReceiptReceived("+ index +")' class='btn btn-sm background-template-color2 text-template-background mr-1'><i class='fas fa-edit text-mycolor'></i></button>";
-	row += "<button onclick='showDeleteManualReceiptReceived("+ index +")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-trash-alt text-mycolor'></i></button></td></tr>";
+	row += "<button onclick='showDeleteManualReceiptReceived("+ index +")' class='btn btn-sm btn-danger'><i class='fas fa-trash-alt text-mycolor'></i></button></td></tr>";
 
 	return row;
 }

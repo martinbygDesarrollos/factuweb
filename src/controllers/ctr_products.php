@@ -9,7 +9,7 @@ require_once 'rest/ctr_rest.php';
 
 class ctr_products{
 
-	//Controla si la empresa esta autorizada para utilizar el rut seleccionado.
+	//Controla si la empresa esta autorizada para utilizar el iva seleccionado.
 	public function authorizedToUse($idIva, $currentSession){
 		$response = new \stdClass();
 		$voucherController = new ctr_vouchers();
@@ -99,6 +99,7 @@ class ctr_products{
 					$idNewInventory = null;
 					// if(!is_null($inventory) && !is_null($minInventory)){ // SI NO son NULL ni inventario ni minimo de inventario creo la fila inventario para el producto nuevo
 					$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
+					error_log("INVENTARIO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
 					$responseInsertInventory = $productsClass->insertInventory($inventory, $minInventory, $dateInventory, $idEmpresa);
 					if($responseInsertInventory->result == 2)
 						$idNewInventory = $responseInsertInventory->id;
@@ -149,6 +150,48 @@ class ctr_products{
 				}else return $responseIsAuthorized;
 			}else return $responseGetHeading;
 		}else return $responseGetProduct;
+		// }else return $responseGetBusiness;
+
+		return $response;
+	}
+
+	public function updateStockProduct($detalle, $currentSession){
+		$response = new \stdClass();
+		// $productsController = new ctr_products();
+		$productsClass = new products();
+		$handleDateTimeClass = new handleDateTime();
+
+		// $responseGetBusiness = ctr_users::getBusinesSession();
+		// if($responseGetBusiness->result == 2){
+		// $responseGetProduct = $productsClass->getProductById($idProduct, $currentSession->idEmpresa);
+		// if($responseGetProduct->result == 2){
+		// 	$responseGetHeading = $productsClass->getHeadingById($idHeading, $currentSession->idEmpresa);
+		// 	if($responseGetHeading->result == 2){
+		// 		$responseIsAuthorized = $productsController->authorizedToUse($idIva, $currentSession);
+		// 		if($responseIsAuthorized->result == 2){
+					$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->nomItem, $currentSession->idEmpresa);
+					if($responseGetProductByDescription->result == 2){
+						if(!$responseGetProductByDescription->objectResult->idInventario){// Si no tiene inventario creo uno
+							$idNewInventory = null;
+							$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
+							$responseInsertInventory = $productsClass->insertInventory($detalle->cantidad, 0, $dateInventory, $currentSession->idEmpresa);
+							if($responseInsertInventory->result == 2){
+								$idNewInventory = $responseInsertInventory->id;
+								$productsClass->setInventoryToProduct($responseGetProductByDescription->objectResult->idArticulo, $idNewInventory, $currentSession->idEmpresa);
+							}
+						}
+						$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+						if($responseUpdateStock->result == 2){
+							$response->result = 2;
+							$response->message = "El stock fue actualizado correctamente.";
+						}else return $responseUpdateStock;
+					}else{
+						$response->result = 0;
+						$response->message = "Producto no encontrado.";
+					}
+		// 		}else return $responseIsAuthorized;
+		// 	}else return $responseGetHeading;
+		// }else return $responseGetProduct;
 		// }else return $responseGetBusiness;
 
 		return $response;
