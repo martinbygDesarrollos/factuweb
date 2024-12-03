@@ -83,7 +83,7 @@ class handleDateTime{
 	}
 
 	//la fecha que llega por parametro la formatea de manera que si ingreso 20210625 te la devuelve con guiones 2021-06-25
-	public function setFormatHTMLDate($intDate){
+	public function setFormatHTMLDate($intDate = ""){
 		return  substr($intDate, 0, 4) . "-" .  substr($intDate, 4, 2) . "-" . substr($intDate, 6, 2);
 	}
 

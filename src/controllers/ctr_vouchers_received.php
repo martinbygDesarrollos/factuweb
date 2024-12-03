@@ -217,7 +217,7 @@ class ctr_vouchers_received{
 				}
 			}
 			if(sizeof($responseSendRest->listRecibidos) == 200){
-				$responseRecursive = $vouchReceivedController->getVouchersReceivedFirstLogin($rut, $pageSize, $lastId);
+				$responseRecursive = $vouchReceivedController->getVouchersReceivedFirstLogin($rut, $pageSize, $lastId, $currentSession);
 				$counterRecords = $counterRecords + $responseRecursive->counterRecords;
 				$counterInserted = $counterInserted +  $responseRecursive->counterInserted;
 				$arrayErrors = array_merge($arrayErrors, $responseRecursive->arrayErrors);
