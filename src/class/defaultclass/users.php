@@ -336,25 +336,30 @@ class users{
     }
 
     public function setDefaultPermission($idBusiness){
-    	$responsePermissionClient = users::getPermission("CLIENT", $idBusiness);
+		$usersInstance = new users();
+    	$responsePermissionClient = $usersInstance->getPermission("CLIENT", $idBusiness);
     	if($responsePermissionClient->result == 1)
-    		users::insertPermission($idBusiness, "CLIENT", "SI");
+    		$usersInstance->insertPermission($idBusiness, "CLIENT", "SI");
 
-    	$responsePermissionProvider = users::getPermission("PROVIDER", $idBusiness);
+    	$responsePermissionProvider = $usersInstance->getPermission("PROVIDER", $idBusiness);
     	if($responsePermissionProvider->result == 1)
-    		users::insertPermission($idBusiness, "PROVIDER", "SI");
+    		$usersInstance->insertPermission($idBusiness, "PROVIDER", "SI");
 
-    	$responsePermissionService = users::getPermission("SERVICE", $idBusiness);
+    	$responsePermissionService = $usersInstance->getPermission("SERVICE", $idBusiness);
     	if($responsePermissionService->result == 1)
-    		users::insertPermission($idBusiness, "SERVICE", "NO");
+    		$usersInstance->insertPermission($idBusiness, "SERVICE", "NO");
 
-    	$responsePermissionSales = users::getPermission("VENTAS", $idBusiness);
+    	$responsePermissionSales = $usersInstance->getPermission("VENTAS", $idBusiness);
     	if($responsePermissionSales->result == 1)
-    		users::insertPermission($idBusiness, "VENTAS", "NO");
+    		$usersInstance->insertPermission($idBusiness, "VENTAS", "NO");
 
-    	$responsePermissionAccounting = users::getPermission("ACCOUNTING", $idBusiness);
+    	$responsePermissionAccounting = $usersInstance->getPermission("ACCOUNTING", $idBusiness);
     	if($responsePermissionAccounting->result == 1)
-    		users::insertPermission($idBusiness, "ACCOUNTING", "NO");
+    		$usersInstance->insertPermission($idBusiness, "ACCOUNTING", "NO");
+    	
+		$responsePermissionPointOfSale = $usersInstance->getPermission("POINTOFSALE", $idBusiness);
+    	if($responsePermissionPointOfSale->result == 1)
+    		$usersInstance->insertPermission($idBusiness, "POINTOFSALE", "NO");
     }
 
     public function setNewTokenAndSession($idUser){
