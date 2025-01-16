@@ -101,6 +101,7 @@ class vouchersEmitted{
 		$sqlQuery = "SELECT * FROM comprobantes ";
 		$sqlQueryWhere = " WHERE id ". $operWhereId ." ? AND idEmisor = ? AND id IS NOT NULL " . $withPayMethod . $withTypeVoucher . $withDateVoucher . $withNumberVoucher . $withbranchCompany . $withClient;
 		$sqlQueryOrder = "ORDER BY id DESC LIMIT 20";
+		error_log( "CONSULTA: $sqlQuery $sqlQueryWhere $sqlQueryOrder : $lastVoucherEmittedIdFound, $idEmpresa");
 		$responseQuery = $dbClass->sendQuery($sqlQuery. $sqlQueryWhere. $sqlQueryOrder, array('si', $lastVoucherEmittedIdFound, $idEmpresa), "LIST");
 		if($responseQuery->result == 2){
 			$arrayResult = array();

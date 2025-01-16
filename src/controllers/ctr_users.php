@@ -525,7 +525,17 @@ class ctr_users{
 				$responseSendRestGetBusiness = $restControllerInstance->consultarRut($rut, $rut, $userToken);
 				if($responseSendRestGetBusiness->result == 2){
 					$business = $responseSendRestGetBusiness->empresa;
-					$responseSendQuery = $usersClass->insertBusiness($rut, $business->razonSocial, $business->tipoEntidad, $business->fechaInicio, $business->idCalle, $business->direccion, $business->departamento, $business->localidad, $business->codigoPostal);
+					// $responseSendQuery = $usersClass->insertBusiness($rut, $business->razonSocial, $business->tipoEntidad, $business->fechaInicio, $business->idCalle, $business->direccion, $business->departamento, $business->localidad, $business->codigoPostal);
+						$responseSendQuery = $usersClass->insertBusiness($rut, 
+						$business->razonSocial, 
+						$business->tipoEntidad ?? '', 
+						$business->fechaInicio ?? '', 
+						$business->idCalle ?? '', 
+						$business->direccion, 
+						$business->departamento ?? '', 
+						$business->localidad ?? '', 
+						$business->codigoPostal ?? ''
+					);
 					if($responseSendQuery->result == 2){
 						$responseGetNewBusiness = $usersClass->getBusiness($rut);
 						if($responseGetNewBusiness->result == 2){

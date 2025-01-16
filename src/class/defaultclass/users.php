@@ -60,9 +60,11 @@ class users{
 	}
 
 	public function insertUser($idBusiness, $email, $tokenRest){
-		$responseQuery = DataBase::sendQuery("INSERT INTO usuarios(correo, tokenRest, idEmpresa, datosActualizados) VALUES (?,?,?,?)",array('ssii', $email, $tokenRest, $idBusiness, 1), "BOOLE");
+		$usersInstance = new users();
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("INSERT INTO usuarios(correo, tokenRest, idEmpresa, datosActualizados) VALUES (?,?,?,?)",array('ssii', $email, $tokenRest, $idBusiness, 1), "BOOLE");
 		if($responseQuery->result == 2)
-			users::setNewTokenAndSession($responseQuery->id);
+		$usersInstance->setNewTokenAndSession($responseQuery->id);
 		return $responseQuery;
 	}
 
@@ -87,7 +89,8 @@ class users{
 	}
 
 	public function insertBusiness($rut, $nameBusiness, $typeEmtity, $dateInit, $idStreet, $address, $town, $location, $postalCode){
-		return DataBase::sendQuery("INSERT INTO empresas(rut, nombre, tipoEntidad, fechaInicio, idCalle, direccion, departamento, localidad, codigoPostal) VALUES(?,?,?,?,?,?,?,?,?)", array('sssiisssi', $rut, $nameBusiness, $typeEmtity, $dateInit, $idStreet, $address, $town, $location, $postalCode), "BOOLE");
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("INSERT INTO empresas(rut, nombre, tipoEntidad, fechaInicio, idCalle, direccion, departamento, localidad, codigoPostal) VALUES(?,?,?,?,?,?,?,?,?)", array('sssiisssi', $rut, $nameBusiness, $typeEmtity, $dateInit, $idStreet, $address, $town, $location, $postalCode), "BOOLE");
 	}
 	//UPDATED
 	public function insertHistoric($idUser, $vouchersEmitted, $vouchersEmittedInserted, $voucherReceived, $voucherReceivedInserted, $idBusiness){
