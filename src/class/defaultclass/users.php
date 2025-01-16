@@ -310,7 +310,7 @@ class users{
 
 		foreach ($idPermission as $key => $value) {
 			if(isset($value) && $value != ""){
-				$value = $value.trim();
+				$value = trim($value);
 				$caseStatement .= "WHEN id = $value THEN 'SI' ";
 			}
 		}
