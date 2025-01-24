@@ -92,7 +92,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
-			$args['resultPermissions'] = $userController->getListPermissions($responseCurrentSession->currentSession->idEmpresa);
+			// $args['resultPermissions'] = $userController->getListPermissions($responseCurrentSession->currentSession->idEmpresa);
 			//$args['arrayBranchCompany'] = ctr_users::getBranchCompanyByRut($responseCurrentSession->currentSession->rut);
 			//var_dump($args['arrayBranchCompany']);
 			$responseGetIvas = $userController->getListIvas();

@@ -198,6 +198,39 @@ tr.with-brand-or-detail td, tr.with-name-or-desc td {
   padding-bottom: 10px;
 }
 
+/* tr.isStockAboveMinimum{
+  background-color: rgba(0, 255, 0, 0.2);
+} 
+tr.isStockBelowMinimum {
+  background-color: rgba(255, 0, 0, 0.2);
+} */
+
+/* .table-striped tbody tr.isStockBelowMinimum:nth-of-type(odd) {
+  background-color: rgba(255, 0, 0, 0.2) !important;
+}
+
+.table-striped tbody tr.isStockBelowMinimum:nth-of-type(even) {
+  background-color: rgba(255, 0, 0, 0.2) !important;
+}
+
+.table-striped tbody tr.isStockAboveMinimum:nth-of-type(odd) {
+  background-color: rgba(0, 255, 0, 0.2) !important;
+}
+
+.table-striped tbody tr.isStockAboveMinimum:nth-of-type(even) {
+  background-color: rgba(0, 255, 0, 0.2) !important;
+} */
+
+.isStockAboveMinimum td:nth-child(1) {
+  box-shadow: inset 
+    12px 0 0px 0px rgba(0, 255, 0, 0.3) !important;
+}
+
+.isStockBelowMinimum td:nth-child(1) {
+  box-shadow: inset 
+    12px 0 0px 0px rgba(255, 0, 0, 0.3) !important;
+}
+
 /* #tbodyProducts tr td:nth-child(2) {
   max-width: 80px !important;
   min-width: 80px !important;

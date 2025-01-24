@@ -3,11 +3,18 @@ var textToSearch = null;
 var headingValue = null;
 var discountPercentage = null;
 
+var defaultIva = null;
+
 $('#modalCreateModifyProduct').on('shown.bs.modal', function () {
 	if(!discountPercentage){
 		let response = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
 		if(response.result == 2)
 			discountPercentage = response.configValue;
+	}
+	if(!defaultIva){
+		let response = sendPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"});
+		if(response.result == 2)
+			defaultIva = response.configValue;
 	}
 });
 
@@ -31,6 +38,11 @@ function loadPriceList(){
 	if ($('#inputToSearch').val() != null && $('#inputToSearch').val() != "" && $('#inputToSearch').val().length >= 3){
 		textToSearch = $('#inputToSearch').val();
 	}
+	let stockManagement = 'NO'
+	let responseManagementStock = sendPost("getConfiguration", {nameConfiguration: "MANEJO_DE_STOCK"});
+	if(responseManagementStock.result == 2)
+		stockManagement = responseManagementStock.configValue;
+
 	headingValue = $('#selectHeadingPriceList').val() || null;
 	let response = sendPost("loadPriceList", {lastId: lastID, textToSearch: textToSearch, heading: headingValue});
 	//console.log(response);
@@ -39,7 +51,8 @@ function loadPriceList(){
 			lastID = response.lastId;
 			let list = response.listResult;
 			for (let i = 0; i < list.length; i++) {
-				let row = createRowProduct(list[i].idArticulo, list[i].descripcion, list[i].detalle, list[i].marca, list[i].rubro, list[i].valor, list[i].costo, list[i].importe, list[i].descuento, list[i].monedaSimbol);
+				// console.log(list[i])
+				let row = createRowProduct(stockManagement, list[i].idArticulo, list[i].descripcion, list[i].detalle, list[i].marca, list[i].rubro, list[i].valor, list[i].costo, list[i].importe, list[i].descuento, list[i].inventario, list[i].inventarioMinimo,  list[i].monedaSimbol);
 				$('#tbodyProducts').append(row);
 			}
 		}
@@ -122,7 +135,7 @@ function searchProductByHeading(){
 // 	return row;
 // }
 
-function createRowProduct(idProduct, description, detail, band, heading, valueIVA, cost, amount, discount, symbolCoin) {
+function createRowProduct(stockManagement, idProduct, description, detail, band, heading, valueIVA, cost, amount, discount, inventory, minInventory, symbolCoin) {
     // Determine the appropriate class based on the presence of brand and detail
     let rowClass = '';
     if (band && detail) {
@@ -132,6 +145,10 @@ function createRowProduct(idProduct, description, detail, band, heading, valueIV
     } else {
         rowClass = 'with-nothing';
     }
+
+	if(stockManagement == 'SI'){
+		rowClass += inventory > minInventory ? ' isStockAboveMinimum' : ' isStockBelowMinimum'
+	}
 
     let row = `<tr id='row${idProduct}' class='${rowClass}'>`;
     
@@ -146,13 +163,16 @@ function createRowProduct(idProduct, description, detail, band, heading, valueIV
         ${band} ]
     </span>` : ''}
     </td>`;
+	if(stockManagement == 'SI'){
+    	row += `<td class='text-right notShowInPhone stock ${inventory > minInventory ? `isStockAboveMinimum` : `isStockBelowMinimum`}  '>${inventory}</td>`;
+	}
 
     row += `<td class='text-right notShowInPhone'>${valueIVA}</td>`;
     row += `<td class='text-right notShowInPhone'>${symbolCoin} ${cost}</td>`;
     row += `<td class='text-right'>${symbolCoin} ${amount}</td>`;
     row += `<td class='text-center'>
               <button class='btn btn-sm background-template-color2 text-template-background mr-2' 
-                      onclick='openModalModify(${idProduct})'>
+                      onclick='openModalModify("${stockManagement}", ${idProduct})'>
                 <i class='fas fa-edit'></i>
               </button>
               <button id='${idProduct}' 
@@ -168,17 +188,17 @@ function createRowProduct(idProduct, description, detail, band, heading, valueIV
     return row;
 }
 
-function openModalNewProduct(){
+function openModalNewProduct(stockManagement){
 	$('#titleModalCreateModifyProduct').html('Agregar artículo');
 	clearModalProduct();
 	$('#modalCreateModifyProduct').modal();
 	$('#btnConfirmProduct').off('click');
 	$('#btnConfirmProduct').click(function(){
-		createNewProduct();
+		createNewProduct(stockManagement);
 	});
 }
 
-function openModalModify(idProduct){
+function openModalModify(stockManagement, idProduct){
 	let response = sendPost('getProductById', {idProduct: idProduct});
 	if(response.result == 2){
 		$('#titleModalCreateModifyProduct').html('Modificar artículo')
@@ -187,12 +207,17 @@ function openModalModify(idProduct){
 		$('#modalCreateModifyProduct').modal();
 		$('#btnConfirmProduct').off('click');
 		$('#btnConfirmProduct').click(function(){
-			updateProduct(idProduct);
+			updateProduct(stockManagement, idProduct);
 		});
 	}else showReplyMessage(response.result, response.message, "Artículo no obtenido", null);
 }
 
 function clearModalProduct(){
+	if(!defaultIva){
+		let response = sendPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"});
+		if(response.result == 2)
+			defaultIva = response.configValue;
+	}
 	$('#inputDescription').val("");
 	$('#inputBrand').val("");
 	$('#textAreaDetail').val("");
@@ -202,7 +227,10 @@ function clearModalProduct(){
 	$('#inputCoefficient').val(0);
 	$('#inputDiscount').val(0);
 	$('#inputPriceNoIVA').val(0);
+	$('#selectIVA').val(defaultIva);
 	$('#inputPriceFinal').val(0);
+	$('#inputInventory').val(1);
+	$('#inputMinInventory').val(0);
 }
 
 function setValuesToEdit(productObject){
@@ -221,6 +249,37 @@ function setValuesToEdit(productObject){
 	$('#selectIVA').val(productObject.idIva);
 	$('#inputPriceNoIVA').val();
 	$('#inputPriceFinal').val(productObject.importe);
+	$('#inputInventory').val(productObject.inventario);
+	$('#inputMinInventory').val(productObject.inventarioMinimo);
+}
+
+function openModalNewRubro(){
+	$('#modalCreateModifyProduct').modal('hide');
+	$('#modalCreateNewRubro').modal();
+	$('#btnConfirmNewRubro').off('click');
+	$('#btnConfirmNewRubro').on("click",function(){
+		createNewRubro();
+	});
+	$('#btnCancelNewRubro').off('click');
+	$('#btnCancelNewRubro').on("click",function(){
+		$('#modalCreateModifyProduct').modal();
+	});
+}
+
+function createNewRubro(){
+	console.log("createNewRubro")
+	let rubro = $('#inputRubro').val() || null;
+
+	if(rubro && rubro.length > 4){
+		let response = sendPost('insertHeading', {nameHeading: rubro});
+		showReplyMessage(response.result, response.message, "Nuevo Rubro", "modalCreateNewRubro");
+
+		$('#modalResponse').on('hidden.bs.modal', function (e) {
+			if(response.result == 2){
+				window.location.reload();
+			}
+		})
+	}else showReplyMessage(1,"El Rubro no puede ingresarse vacia o contener menos de 5 caracteres.", "Rubro no valido");
 }
 
 function keyPressProduct(keyPress, value, size){
@@ -262,6 +321,8 @@ function keyPressProduct(keyPress, value, size){
 				$('#inputDiscount').focus();
 			else
 				$('#btnConfirmProduct').click();
+		}else if(keyPress.srcElement.id == "inputRubro"){
+			$('#btnConfirmNewRubro').click();
 		}
 	}else if(value != null && value.length == size) return false;
 }
@@ -339,7 +400,7 @@ function deleteProduct(idProduct){
 		$('#row' + idProduct).remove();
 }
 
-function createNewProduct(){
+function createNewProduct(stockManagement){
 	console.log("createNewProduct")
 	let description = $('#inputDescription').val() || null;
 	let brand = $('#inputBrand').val() || null;
@@ -352,6 +413,14 @@ function createNewProduct(){
 	let iva = $('#selectIVA').val();
 	let priceFinal = $('#inputPriceFinal').val() || 0;
 	let barcode = $('#inputBarcode').val() || null;
+
+	let inventory = $('#inputInventory').val() || null;
+	let minInventory = $('#inputMinInventory').val() || null;
+
+	if(stockManagement == "SI"){ // SI ESTAS MANEJANDO STOCK Y NO ESTA EL CAMPO PUESTO ENTONCES SE SETTEA A 0 A AMBOS
+		inventory = inventory === null ? 0 : inventory
+		minInventory = minInventory === null ? 0 : minInventory
+	}
 
 	let typeCoin = "UYU";
 	if(!typeCoinUYU)
@@ -370,23 +439,18 @@ function createNewProduct(){
 			amount: priceFinal,
 			barcode: barcode,
 			discount: discount,
-			inventory: null, //es el id de inventario que se encuentra como fk en la tabla de articulos
-			minInventory: null, //mìnima cantidad de articulos
+			inventory: inventory, //es el id de inventario que se encuentra como fk en la tabla de articulos
+			minInventory: minInventory //mìnima cantidad de articulos
 		}
 		let response = sendPost('insertProduct',data);
 		showReplyMessage(response.result, response.message, "Nuevo artículo", "modalCreateModifyProduct");
 
-		$("#modalButtonResponse").click(function(){
-			if(response.result == 2){
-				clearModalProduct();
-				window.location.reload();
-			}
-		});
+		$('#selectHeadingPriceList').trigger('change')
 	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido");
 
 }
 
-function updateProduct(idProduct){
+function updateProduct(stockManagement, idProduct){
 	console.log("updateProduct pricelist");
 	let description = $('#inputDescription').val() || null;
 	let brand = $('#inputBrand').val() || null;
@@ -399,6 +463,14 @@ function updateProduct(idProduct){
 	let iva = $('#selectIVA').val();
 	let priceFinal = $('#inputPriceFinal').val() || 0;
 	let barcode = $('#inputBarcode').val() || null;
+
+	let inventory = $('#inputInventory').val() || null;
+	let minInventory = $('#inputMinInventory').val() || null;
+
+	if(stockManagement == "SI"){ // SI ESTAS MANEJANDO STOCK Y NO ESTA EL CAMPO PUESTO ENTONCES SE SETTEA A 0 A AMBOS
+		inventory = inventory === null ? 0 : inventory
+		minInventory = minInventory === null ? 0 : minInventory
+	}
 
 	let typeCoin = "UYU";
 	if(!typeCoinUYU)
@@ -417,16 +489,13 @@ function updateProduct(idProduct){
 			coefficient: coefficient,
 			amount: priceFinal,
 			barcode: barcode,
-			discount: discount
+			discount: discount,
+			inventory: inventory,
+			minInventory: minInventory
 		}
 		let response = sendPost("updateProduct", data);
-		//console.log(response);
 		showReplyMessage(response.result, response.message, "Actualizar artículo", "modalCreateModifyProduct");
-		$("#modalButtonResponse").click(function(){
-			if(response.result == 2){
-				clearModalProduct();
-				window.location.reload();
-			}
-		});
+		$('#selectHeadingPriceList').trigger('change')
+
 	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido");
 }

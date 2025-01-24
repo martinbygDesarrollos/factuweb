@@ -15,7 +15,7 @@ return function (App $app){
 	$voucherController = new ctr_vouchers();
 	$productsClass = new products();
 
-	$app->get('/ver-lista-precios', function($request, $response, $args) use ($container, $userController, $voucherController){
+	$app->get('/ver-lista-precios', function($request, $response, $args) use ($container, $userController, $voucherController, $productsClass){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
@@ -24,6 +24,18 @@ return function (App $app){
 				$responseGetIVA = $voucherController->getIVAsAllowed($responseCurrentSession->currentSession);
 				if($responseGetIVA->result == 2)
 					$args['listIVA'] = $responseGetIVA->listResult;
+				//TEST NEW ---------------------------------------
+					
+					$responseGetHeadings = $productsClass->getHeading($responseCurrentSession->currentSession->idEmpresa);
+					if($responseGetHeadings->result == 2)
+						$args['listHeadings'] = $responseGetHeadings->listResult;
+
+					$responseStockManagement = $userController->getVariableConfiguration("MANEJO_DE_STOCK", $responseCurrentSession->currentSession);
+					if($responseStockManagement->result == 2){
+						$args['stockManagement'] = $responseStockManagement->configValue;
+					}
+					
+				//TEST NEW ---------------------------------------
 				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
 				return $this->view->render($response, "priceList.twig", $args);
 			} else return json_encode($responsePermissions);
@@ -45,12 +57,12 @@ return function (App $app){
 		}else return $response->withRedirect('iniciar-sesion');
 	})->setName('Caja');
 
-	$app->post('/insertHeading', function(Request $request, Response $response){
-		$responseCurrentSession = ctr_users::validateCurrentSession(null);
+	$app->post('/insertHeading', function(Request $request, Response $response) use ($userController, $productController){
+		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
 			$nameHeading = $data['nameHeading'];
-			return json_encode(ctr_products::insertHeading($nameHeading));
+			return json_encode($productController->insertHeading($nameHeading, $responseCurrentSession->currentSession->idEmpresa));
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -62,7 +74,7 @@ return function (App $app){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$data = $request->getParams();
-			$idHeading = $data['idHeading'];
+			$idHeading = $data['idHeading'] == "" ? null : $data['idHeading'];
 			$idIva = $data['idIva'];
 			$description = $data['description'];
 			$detail = $data['detail'];
@@ -71,7 +83,7 @@ return function (App $app){
 			$cost = $data['cost'];
 			$coefficient = $data['coefficient'];
 			$barcode = $data['barcode'];
-			$inventory = $data['inventory'];
+			$inventory = $data['inventory'] == "" ? null : $data['inventory'];
 			$minInventory = $data['minInventory'];
 			$discount = $data['discount'];
 			$amount = $data['amount'];//importe
@@ -97,8 +109,10 @@ return function (App $app){
 			$amount = $data['amount'];
 			$barcode = $data['barcode'];
 			$discount = $data['discount'];
+			$inventory = (!isset($data['inventory']) || $data['inventory'] === "") ? null : $data['inventory'];
+			$minInventory = (!isset($data['minInventory']) || $data['minInventory'] === "") ? null : $data['minInventory'];
 
-			return json_encode($productController->updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $responseCurrentSession->currentSession));
+			return json_encode($productController->updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 

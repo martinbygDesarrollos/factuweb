@@ -707,6 +707,10 @@ function createNewFactura(){ // VER VER VER
 	if(typeVoucher != 211 && typeVoucher != 311){ // NO es ninguno de los CREDITOS
 		mediosPago = extractPaymentMethods()
 		console.log(mediosPago)
+		if(mediosPago.length == 0){ // NO HAY MEDIO DE PAGO INGRESADO
+			showReplyMessage(1, "Debe ingresar un medio de pago", "Medio de pago requerido", "modalSetPayments");
+			return;
+		}
 	}
 	
 	// let shapePayment = $('#selectShapePayment').val() || null; 
@@ -724,7 +728,7 @@ function createNewFactura(){ // VER VER VER
 	// newArrayToInvoice = prepareToCreateNewFactura(arrayDetails);
 	newArrayToInvoice = prepareToCreateNewFactura(productsInCart);
 	console.log(newArrayToInvoice)
-
+	
 	if(newArrayToInvoice.length != 0){
 		if(dateVoucher){
 			if(typeVoucher == 211 || typeVoucher == 311){ // los 2 CREDITOS
@@ -739,12 +743,12 @@ function createNewFactura(){ // VER VER VER
 			for (var i = newArrayToInvoice.length - 1; i >= 0; i--) {
 				if(newArrayToInvoice[i].idArticulo == 0){ //significa que es un articulo nuevo por crear
 					// if ( headingval ){
-						createNewProduct(newArrayToInvoice[i], null); // Creo un producto nuevo sin rubro
+						console.log(createNewProduct(newArrayToInvoice[i], null)); // Creo un producto nuevo sin rubro
 					// }
-				}else{
+				}else{ // NO VA A ACTUALIZAR EL PRODUCTO NI SU INVENTARIO ACA, SE HARA AL FINALIZAR EL CFE
 					// if ( typeCoin == newArrayToInvoice[i].typeCoin){
 					// 	//console.log("se va a actualizar el producto porque las monedas son iguales, sino no se actualiza");
-					// 	updateProduct(newArrayToInvoice[i]);
+					// console.log(updateProduct(newArrayToInvoice[i])); // Updateo el inventario de un producto
 					// }
 				}
 			}
@@ -919,7 +923,7 @@ function createNewProduct(producto, heading){
 	if(producto.description && producto.description.length > 4){
 		if( producto.amount > 0 ){
 			let data = {
-				idHeading: 2, // ARTICULOS POR DEFECTO
+				idHeading: null, // 'VARIOS' POR DEFECTO
 				idIva: producto.idIva,
 				description: producto.description,
 				detail: producto.detail,
@@ -930,7 +934,7 @@ function createNewProduct(producto, heading){
 				amount: producto.amount,
 				barcode: null,
 				discount: producto.discount,
-				inventory: producto.idInventary,
+				inventory: producto.count, // ES LA CANTIDAD QUE DEBE TENER EN STOCK
 				minInventory: 0, //mìnima cantidad de articulos en stock
 			}
 			let response = sendPost('insertProduct',data);

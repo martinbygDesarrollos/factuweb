@@ -14,10 +14,13 @@
 				</div>
 				<div class="d-flex">
 					{# <div class="col mb-1" style="min-width: 170px; max-width: 250px;"> #}
-						<select id="selectHeadingPriceList" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm mr-1" onchange="searchProductByHeading()" style="min-width: 100px; max-width: 250px;">
+						<select id="selectHeadingPriceList" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm mr-1" onchange="searchProductByHeading()" style="min-width: 100px; max-width: 250px; cursor: pointer;">
+						{% for rubro in listHeadings %}
+							<option value="{{ rubro.idRubro }}">{{ rubro.rubro }}</option>
+						{% endfor %}
 						</select>
 					{# </div> #}
-					<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalNewProduct()" style="min-width: 90px "><i class="fas fa-plus-circle"></i> Nuevo</button>
+					<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalNewProduct('{{stockManagement}}')" style="min-width: 90px "><i class="fas fa-plus-circle"></i> Nuevo</button>
 				</div>
 			</div>
 			<div id="containerTable" style="max-height: 75vh;">
@@ -26,6 +29,9 @@
 						<tr>
 							{# <th class="text-left" scope="col" id="priceListTableColDescription" >Descripcíon</th> #}
 							<th class="text-left notShowInPhone col-5" scope="col" id="priceListTableColDetail" >Detalle</th>
+							{% if stockManagement == 'SI' %}
+								<th class="text-right" scope="col" id="stock" >Stock</th>
+							{% endif %}
 							{# <th class="text-left notShowInPhone" scope="col" id="priceListTableColBrand" >Marca</th> #}
 							<!--th class="text-left notShowInPhone" scope="col" id="" >Rubro</th-->
 							<!--th class="text-center notShowInPhone" scope="col" id="" ></th-->
@@ -62,6 +68,26 @@
 		</div>
 	</div>
 </div>
+<div class="modal fade" id="modalCreateNewRubro" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Insertar nuevo Rubro</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<label for="inputRubro">Rubro</label>
+				<input type="text" class="form-control form-control-sm shadow-sm" id="inputRubro" onkeypress="return keyPressProduct(event, this.value, 30)" required="required" tabindex=1>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button id="btnCancelNewRubro"type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmNewRubro" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
 <div class="modal fade" id="modalCreateModifyProduct" tabindex="-1" role="dialog">
 	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 		<div class="modal-content">
@@ -83,7 +109,12 @@
 					</div>
 					<div class="form-group col-md-4">
 						<label for="selectRubro">Rubro</label>
+						<button class="btn btn-sm mb-1" type="button" onclick="openModalNewRubro()" style="height:24px;width: 24px;padding: .1rem;background-color: transparent;"><i class="fas fa-plus-circle"></i></button>
+						{# <i class="fas fa-plus-circle"></i> #}
 						<select id="selectRubro" class="custom-select custom-select-sm shadow-sm " required tabindex=4>
+						{% for rubro in listHeadings %}
+							<option value="{{ rubro.idRubro }}">{{ rubro.rubro }}</option>
+						{% endfor %}
 						</select>
 					</div>
 					<div class="form-group col-md-4">
@@ -137,6 +168,19 @@
 						<input type="text" class="form-control form-control-sm text-center shadow-sm" id="inputPriceFinal" onkeypress="return keyPressProduct(event, null, null)" required="required" tabindex=13>
 					</div>
 				</div>
+				{% if stockManagement == 'SI' %}
+					<hr>
+					<div class="form-row mt-2">
+						<div class="form-group col">
+							<label for="inputInventory">Stock</label>
+							<input type="number" min="0" class="form-control form-control-sm text-center shadow-sm" id="inputInventory" onkeypress="return keyPressProduct(event, null, null)" tabindex=14>
+						</div>
+						<div class="form-group col">
+							<label for="inputMinInventory">Stock Mínimo</label>
+							<input type="number" class="form-control form-control-sm text-center shadow-sm" id="inputMinInventory" onkeypress="return keyPressProduct(event, null, null)" tabindex=15>
+						</div>
+					</div>
+				{% endif %}
 			</div>
 			<div class="modal-footer justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
@@ -146,7 +190,7 @@
 	</div>
 </div>
 {# {% include("buttonUp.twig") %} #}
-{%block script%}
+{% block script %}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/priceList.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
@@ -158,7 +202,7 @@
 		$('#containerTable').css('height', heightwindow+'px');
 	});
 	loadPriceList();
-	loadHeadings();
+	{# loadHeadings(); #}
 	$('#containerTable').on('scroll', function() {
 		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 4) {
 			loadPriceList();

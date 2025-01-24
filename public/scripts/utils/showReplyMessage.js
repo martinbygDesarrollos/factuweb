@@ -1,32 +1,53 @@
 function showReplyMessage(codeResult, message, title, currentModal){
-	$("#modalButtonResponse").off('click');
-	if(currentModal)
-		$('#' + currentModal).modal('hide');
+	if(currentModal) {
+        $('#' + currentModal).on('hidden.bs.modal', function() {
+            showNewModal();
+            $(this).off('hidden.bs.modal'); // Remove handler after use
+        }).modal('hide');
+    } else {
+        showNewModal();
+    }
 
-	$('#modalColourResponse').removeClass('alert-success');
-	$('#modalColourResponse').removeClass('alert-warning');
-	$('#modalColourResponse').removeClass('alert-danger');
+    function showNewModal() {
+        // Setup modal shown event
+        $('#modalResponse').on('shown.bs.modal', function () {
+            $('#modalButtonResponse').trigger('focus');
+            $(this).off('shown.bs.modal'); // Remove handler after use
+        });
 
-	if(codeResult == 0)
-		$('#modalColourResponse').addClass('alert-danger');
-	else if(codeResult == 2)
-		$('#modalColourResponse').addClass('alert-success');
-	else if(codeResult == 1)
-		$('#modalColourResponse').addClass('alert-warning');
+        // Remove any existing click handlers
+        $("#modalButtonResponse").off('click');
 
-	$('#modalTitleResponse').html(title);
-	$('#modalMessageResponse').html(message);
+        // Reset and set modal color classes
+        $('#modalColourResponse')
+            .removeClass('alert-success alert-warning alert-danger')
+            .addClass(getColorClass(codeResult));
 
-	$('#modalButtonResponse').click(function(){
-		$('#modalResponse').modal('hide');
-		if(currentModal && codeResult != 2)
-			$('#' + currentModal).modal();
-	});
+        // Update modal content
+        $('#modalTitleResponse').html(title);
+        $('#modalMessageResponse').html(message);
 
-	$("#modalResponse").modal();
-	//document.getElementById("modalButtonResponse").focus();ç
-	$('#modalButtonResponse').focus();
+        // Setup button click handler
+        $('#modalButtonResponse').click(function() {
+            $('#modalResponse').modal('hide');
+            if(currentModal && codeResult != 2) {
+                $('#' + currentModal).modal('show');
+            }
+        });
 
+        // Show the modal
+        $("#modalResponse").modal('show');
+    }
+
+    // Helper function to determine color class
+    function getColorClass(code) {
+        switch(code) {
+            case 0: return 'alert-danger';
+            case 1: return 'alert-warning';
+            case 2: return 'alert-success';
+            default: return '';
+        }
+    }
 }
 
 function openLoadModal(animation){

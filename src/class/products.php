@@ -24,15 +24,33 @@ class products{
 		}
 
 		//echo $heading;
-		$query = "SELECT * FROM articulos AS A, rubro AS R, indicadores_facturacion AS I";
-		$where = " WHERE A.idRubro = R.idRubro AND A.idIva = I.id
-					AND A.idEmpresa = ?
-					AND A.idArticulo < ?
-					AND A.descripcion LIKE '%". $textToSearch ."%'";
+		// $query = "SELECT * FROM articulos AS A, rubro AS R, indicadores_facturacion AS I";
+		// $where = " WHERE A.idRubro = R.idRubro AND A.idIva = I.id
+		// 			AND A.idEmpresa = ?
+		// 			AND A.idArticulo < ?
+		// 			AND A.descripcion LIKE '%". $textToSearch ."%'";
+		// if( $heading ){
+		// 	$where .= " AND R.idRubro = " . $heading;
+		// }
+		// $orderAndLimit = " ORDER BY A.idArticulo DESC LIMIT 20 ";
+
+		$query = "SELECT A.*, R.*, I.*, 
+				INV.inventario, 
+				INV.inventarioMinimo, 
+				INV.fechaInventario
+		FROM articulos AS A
+		JOIN rubro AS R ON A.idRubro = R.idRubro
+		JOIN indicadores_facturacion AS I ON A.idIva = I.id
+		LEFT JOIN inventario AS INV ON A.idInventario = INV.idInventario";
+
+		$where = " WHERE A.idEmpresa = ? 
+				AND A.idArticulo < ? 
+				AND A.descripcion LIKE '%". $textToSearch ."%'";
 		if( $heading ){
-			$where .= " AND R.idRubro = " . $heading;
+  			$where .= " AND R.idRubro = " . $heading;
 		}
-		$orderAndLimit = " ORDER BY A.idArticulo DESC LIMIT 20 ";
+		$orderAndLimit = " ORDER BY A.idArticulo DESC LIMIT 20";
+
 		$responseQuery = $dbClass->sendQuery($query . $where . $orderAndLimit, array('ii', $idBusiness, $lastId), "LIST");
 		if($responseQuery->result == 2){
 			$newLastID = $lastId;
@@ -98,8 +116,19 @@ class products{
 		$dbClass = new DataBase();
 		$responseQuery = $dbClass->sendQuery("SELECT * FROM rubro WHERE idEmpresa = ?", array('i', $idBusiness), "LIST");
 		if($responseQuery->result == 1)
-			$responseQuery->message = "El rubro seleccionado no fue encontrado en la base de datos.";
+			$responseQuery->message = "Ningun rubro en el sistema aún";
 
+		return $responseQuery;
+	}
+	//UPDATED
+	public function insertDefaultRubro($idBusiness){
+		$dbClass = new DataBase();
+		$productsClass = new products();
+
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM rubro WHERE rubro = ? AND idEmpresa = ?", array('si', "Varios", $idBusiness), "OBJECT");
+		if($responseQuery->result != 2){
+			return $responseQuery2 = $productsClass->insertHeading("Varios", $idBusiness);
+		}
 		return $responseQuery;
 	}
 	//UPDATED
@@ -110,6 +139,16 @@ class products{
 		if($responseQuery->result == 1)
 			$responseQuery->message = "El rubro seleccionado no fue encontrado en la base de datos.";
 
+		return $responseQuery;
+	}
+
+	//UPDATED
+	public function getRubroByName($rubro, $idBusiness){
+		$dbClass = new DataBase();
+
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM rubro WHERE rubro = ? AND idEmpresa = ?", array('si', $rubro, $idBusiness), "OBJECT");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "El rubro seleccionado no fue encontrado en la base de datos.";
 		return $responseQuery;
 	}
 	//UPDATED
@@ -169,7 +208,13 @@ class products{
 		$dbClass = new DataBase();
 		$othersClass = new others();
 		error_log("PRODUCTO: " . $idProduct . " de EMPRESA: " . $idBusiness);
-		$responseQuery = $dbClass->sendQuery("SELECT * FROM articulos WHERE idArticulo = ? AND idEmpresa = ?", array('ii', $idProduct, $idBusiness), "OBJECT");
+		$responseQuery = $dbClass->sendQuery("SELECT A.*, 
+												INV.inventario, 
+												INV.inventarioMinimo, 
+												INV.fechaInventario
+											FROM articulos as A 
+											LEFT JOIN inventario AS INV ON A.idInventario = INV.idInventario 
+											WHERE A.idArticulo = ? AND A.idEmpresa = ?", array('ii', $idProduct, $idBusiness), "OBJECT");
 		if($responseQuery->result == 2){
 			$responseQueryGetIva = $othersClass->getValueIVA($responseQuery->objectResult->idIva);
 			if($responseQueryGetIva->result == 2){
@@ -206,12 +251,12 @@ class products{
 		$inventory = ($inventory === "" || $inventory === null) ? 1 : $inventory;
 		$minInventory = ($minInventory === "" || $minInventory === null) ? 0 : $minInventory;
 		$dbClass = new DataBase();
-		return $dbClass->sendQuery("INSERT INTO inventario(inventario, inventarioMinimo, fechaInventario, idEmpresa) VALUES (?,?,?,?)", array('iiii', $inventory, $minInventory, $dateInventory, $idEmpresa), "BOOLE");
+		return $dbClass->sendQuery("INSERT INTO inventario(inventario, inventarioMinimo, fechaInventario, idEmpresa) VALUES (?,?,?,?)", array('iisi', $inventory, $minInventory, $dateInventory, $idEmpresa), "BOOLE");
 	}
 	//UPDATED
 	public function updateInventory($inventory, $minInventory, $dateInventory, $idInventory, $idBusiness){
 		$dbClass = new DataBase();
-		return $dbClass->sendQuery("UPDATE inventario SET inventario = ?, inventarioMinimo = ?, fechaInventario = ? WHERE idInventario = ? AND idEmpresa = ?", array('iiiii', $inventory, $minInventory, $dateInventory, $idInventory, $idBusiness), "BOOLE");
+		return $dbClass->sendQuery("UPDATE inventario SET inventario = ?, inventarioMinimo = ?, fechaInventario = ? WHERE idInventario = ? AND idEmpresa = ?", array('iisii', $inventory, $minInventory, $dateInventory, $idInventory, $idBusiness), "BOOLE");
 	}
 	//UPDATED
 	public function deleteInventory($idInventory, $idBusiness){

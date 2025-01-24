@@ -49,12 +49,6 @@ class ctr_products{
 		$response = new \stdClass();
 		$productsClass = new products();
 		return $productsClass->loadPriceList($idEmpresa, $lastId, $textToSearch, $heading);
-
-		// $responseGetBusiness = ctr_users::getBusinesSession();
-		// if($responseGetBusiness->result == 2){
-		// }else return $responseGetBusiness;
-
-		// return $response;
 	}
 	//UPDATED
 	public function insertHeading($nameHeading, $idEmpresa){
@@ -83,13 +77,23 @@ class ctr_products{
 		return $response;
 	}
 	//UPDATED
-	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $idEmpresa){
+	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $idEmpresa){ // $idHeading si es NULL va a VARIOS
 		$response = new \stdClass();
 		$productsController = new ctr_products();
 		$productsClass = new products();
 		$othersClass = new others();
 		$handleDateTimeClass = new handleDateTime();
 		error_log("INSERTAR PRODUCTO: RUBRO: $idHeading, IVA: $idIva, DESCRIPCION: $description, DETALLES: $detail, MARCA: $brand, MONEDA: $typeCoin, COSTO: $cost, COEFICIENTE: $coefficient, DESCUENTO: $discount, CODIGO DE BARRAS: $barcode, INVENTARIO: $inventory, INVENTARIO MINIMO: $minInventory, IMPORTE: $amount, EMPRESA: $idEmpresa.");
+		
+		if(is_null($idHeading)){ // SIGNIFICA QUE VA A VARIOS
+			$responseGetHeading = $productsClass->insertDefaultRubro($idEmpresa);
+			if($responseGetHeading->result == 2){
+				if(isset($responseGetHeading->objectResult))
+					$idHeading = $responseGetHeading->objectResult->idRubro;
+				else
+					$idHeading = $responseGetHeading->id;
+			}
+		}
 		$responseGetHeading = $productsClass->getHeadingById($idHeading, $idEmpresa);
 		if($responseGetHeading->result == 2){
 			$responseGetProductByDescription = $productsClass->getProductByDescription($description, $idEmpresa);
@@ -123,10 +127,11 @@ class ctr_products{
 		return $response;
 	}
 
-	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $currentSession){
+	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $currentSession){
 		$response = new \stdClass();
 		$productsController = new ctr_products();
 		$productsClass = new products();
+		$handleDateTimeClass = new handleDateTime();
 
 		// $responseGetBusiness = ctr_users::getBusinesSession();
 		// if($responseGetBusiness->result == 2){
@@ -138,7 +143,17 @@ class ctr_products{
 				if($responseIsAuthorized->result == 2){
 					$responseGetProductByDescription = $productsClass->getProductByDescription($description, $currentSession->idEmpresa);
 					if(($responseGetProductByDescription->result == 2 && $responseGetProductByDescription->objectResult->idArticulo == $idProduct) || ($responseGetProductByDescription->result != 2)){
-						$responseUpdateProduct = $productsClass->updateProduct($idHeading, $idIva, null, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $currentSession->idEmpresa);
+
+						if(!is_null($inventory) && !is_null($minInventory)){ // SI estos datos no son NULL, los actualizo
+							$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
+							error_log("INVENTARIO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
+							// Y no me interesa si funciona
+							$responseInsertInventory = $productsClass->updateInventory($inventory, $minInventory, $dateInventory, $responseGetProduct->objectResult->idInventario, $currentSession->idEmpresa);
+							if($responseInsertInventory->result == 2)
+								error_log("INVENTARIO ACTUALIZADO CON EXITO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
+						}
+
+						$responseUpdateProduct = $productsClass->updateProduct($idHeading, $idIva, $responseGetProduct->objectResult->idInventario, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $currentSession->idEmpresa);
 						if($responseUpdateProduct->result == 2){
 							$response->result = 2;
 							$response->message = "El producto fue actualizado correctamente.";
@@ -157,43 +172,30 @@ class ctr_products{
 
 	public function updateStockProduct($detalle, $currentSession){
 		$response = new \stdClass();
-		// $productsController = new ctr_products();
 		$productsClass = new products();
 		$handleDateTimeClass = new handleDateTime();
-
-		// $responseGetBusiness = ctr_users::getBusinesSession();
-		// if($responseGetBusiness->result == 2){
-		// $responseGetProduct = $productsClass->getProductById($idProduct, $currentSession->idEmpresa);
-		// if($responseGetProduct->result == 2){
-		// 	$responseGetHeading = $productsClass->getHeadingById($idHeading, $currentSession->idEmpresa);
-		// 	if($responseGetHeading->result == 2){
-		// 		$responseIsAuthorized = $productsController->authorizedToUse($idIva, $currentSession);
-		// 		if($responseIsAuthorized->result == 2){
-					$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->nomItem, $currentSession->idEmpresa);
-					if($responseGetProductByDescription->result == 2){
-						if(!$responseGetProductByDescription->objectResult->idInventario){// Si no tiene inventario creo uno
-							$idNewInventory = null;
-							$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
-							$responseInsertInventory = $productsClass->insertInventory($detalle->cantidad, 0, $dateInventory, $currentSession->idEmpresa);
-							if($responseInsertInventory->result == 2){
-								$idNewInventory = $responseInsertInventory->id;
-								$productsClass->setInventoryToProduct($responseGetProductByDescription->objectResult->idArticulo, $idNewInventory, $currentSession->idEmpresa);
-							}
-						}
-						$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
-						if($responseUpdateStock->result == 2){
-							$response->result = 2;
-							$response->message = "El stock fue actualizado correctamente.";
-						}else return $responseUpdateStock;
-					}else{
-						$response->result = 0;
-						$response->message = "Producto no encontrado.";
-					}
-		// 		}else return $responseIsAuthorized;
-		// 	}else return $responseGetHeading;
-		// }else return $responseGetProduct;
-		// }else return $responseGetBusiness;
-
+		$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->nomItem, $currentSession->idEmpresa);
+		if($responseGetProductByDescription->result == 2){
+			if(!isset($responseGetProductByDescription->objectResult->idInventario)){// Si no tiene inventario creo uno
+				$idNewInventory = null;
+				$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
+				error_log("PRODUCTO SIN INVENTARIO. CREO UNO( Inventario: $detalle->cantidad, min Inventario: 0, fecha Inventario: $dateInventory");
+				$responseInsertInventory = $productsClass->insertInventory($detalle->cantidad, 0, $dateInventory, $currentSession->idEmpresa);
+				if($responseInsertInventory->result == 2){
+					$idNewInventory = $responseInsertInventory->id;
+					$productsClass->setInventoryToProduct($responseGetProductByDescription->objectResult->idArticulo, $idNewInventory, $currentSession->idEmpresa);
+				}
+				$responseGetProductByDescription->objectResult->idInventario = $idNewInventory;
+			}
+			$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+			if($responseUpdateStock->result == 2){
+				$response->result = 2;
+				$response->message = "El stock fue actualizado correctamente.";
+			}else return $responseUpdateStock;
+		}else{
+			$response->result = 0;
+			$response->message = "Producto no encontrado.";
+		}
 		return $response;
 	}
 
