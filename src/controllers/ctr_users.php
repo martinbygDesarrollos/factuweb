@@ -12,6 +12,7 @@ require_once 'ctr_products.php';
 require_once 'ctr_vouchers.php';
 require_once 'ctr_vouchers_emitted.php';
 require_once 'ctr_vouchers_received.php';
+require_once '../src/utils/utils.php';
 
 
 class ctr_users{
@@ -125,6 +126,28 @@ class ctr_users{
 	public function getListIvas(){
 		$othersClass = new others();
 		return $othersClass->getListIva();
+	}
+	// NEW
+	public function getCaes($currentSession){
+		$response = new \stdClass();
+		$utilClass = new utils();
+		$restController = new ctr_rest();
+		$responseConsultCaes = $restController->consultarCaes($currentSession->rut, $currentSession->tokenRest);
+		$responseCompanyData = $restController->getCompanyData($currentSession->rut, $currentSession->tokenRest);
+		// var_dump($responseConsultCaes->caes->caes);
+		// echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+		// var_dump($responseCompanyData->caes);
+		// echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+		if($responseConsultCaes->result == 2 && $responseCompanyData->result == 2){
+			$response->result = 2;
+			$response->caes = $utilClass->combinarArraysPorTipo($responseConsultCaes->caes->caes, $responseCompanyData->caes);
+			// echo "EEEEEEEEEEEEEEEEEEEEEEEEEEEE";	
+			// var_dump($response->caes);
+		} else {
+			$response->result = 2;
+			$response->caes = array();
+		}
+		return $response;
 	}
 
 	//UPDATED

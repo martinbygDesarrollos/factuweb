@@ -139,4 +139,81 @@ class utils{
 
 		return $reponse;
 	}
+
+	public function combinarArraysPorTipo($resultCaes, $companyCaes) {
+		$utilsClass = new utils();
+		$resultado = [];
+		$resultadoTemporal = [];
+		
+		// Recorrer el primer array
+		foreach ($resultCaes as $cae1) {
+			$cfeType = $cae1->cfeType;
+			$encontrado = false;
+			
+			// Buscar coincidencia en el segundo array
+			foreach ($companyCaes as $cae2) {
+				if ($cae1->cfeType == $cae2->tipoCFE) {
+					// Combinar los atributos
+					$itemCombinado = (object) [
+						'cfeType' => $cae1->cfeType,
+						'serie' => $cae1->serie,
+						'from' => $cae1->from,
+						'to' => $cae1->to,
+						'expirationDate' => $cae1->expirationDate,
+						'emissionDate' => $cae1->emissionDate,
+						'nextNumber' => $cae1->nextNumber,
+						'isUsable' => $cae1->isUsable,
+						'type' => $cae1->type,
+						'typeText' => $utilsClass->getCaeTypeText($cae1->type),
+						// Atributos del segundo array con valores predeterminados
+						'vencimiento' => $cae2->vencimiento ?? '---',
+						'disponibles' => $cae2->disponibles ?? '---',
+						'total' => $cae2->total ?? '---'
+					];
+					
+					$resultadoTemporal[$cfeType] = $itemCombinado;
+					$encontrado = true;
+					break;
+				}
+			}
+			
+			// Si no se encuentra coincidencia en el segundo array
+			if (!$encontrado) {
+				$itemCombinado = (object) [
+					'cfeType' => $cae1->cfeType,
+					'serie' => $cae1->serie,
+					'from' => $cae1->from,
+					'to' => $cae1->to,
+					'expirationDate' => $cae1->expirationDate,
+					'emissionDate' => $cae1->emissionDate,
+					'nextNumber' => $cae1->nextNumber,
+					'isUsable' => $cae1->isUsable,
+					'type' => $cae1->type,
+					'typeText' => $utilsClass->getCaeTypeText($cae1->type),
+					// Valores predeterminados para atributos no encontrados
+					'vencimiento' => '---',
+					'disponibles' => '---',
+					'total' => '---'
+				];
+				
+				$resultadoTemporal[$cfeType] = $itemCombinado;
+			}
+		}
+		
+		// Convertir el array asociativo a un array indexado
+		$resultado = array_values($resultadoTemporal);
+		
+		return $resultado;
+	}
+
+	public function getCaeTypeText($tipo){
+		switch ($tipo) {
+			case 0: return "Normal";
+			case 1: return "Exonerado";
+			case 2: return "Literal E";
+			case 3: return "Monotributo";
+			case 4: return "Monotributo MIDES";
+			default: return "";
+		}
+	}
 }

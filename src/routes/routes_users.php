@@ -111,6 +111,23 @@ return function (App $app){
 			return $this->view->render($response, "settings.twig", $args);
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("Settings");
+	// NEW
+	$app->get('/caes', function ($request, $response, $args) use ($container, $userController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$args['systemSession'] = $responseCurrentSession->currentSession;
+			$listResult = null;
+			$companyCaes = $userController->getCaes($responseCurrentSession->currentSession);
+			if($companyCaes->result == 2) {
+				$listResult = $companyCaes->caes;
+			} else {
+				$listResult = array();
+			}
+			$args['caes'] = $listResult;
+			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+			return $this->view->render($response, "caes.twig", $args);
+		}else return $response->withRedirect($request->getUri()->getBaseUrl());
+	})->setName("Caes");
 
 	$app->get('/iniciar-sesion[/{user}[/{rut}]]', function ($request, $response, $args) use ($container, $userController) {
 		$responseCurrentSession = $userController->validateCurrentSession();

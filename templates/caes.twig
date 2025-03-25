@@ -1,0 +1,94 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 350px; width: 100%;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
+			<h5>Constancias de Autorización para Emisión</h5>
+		</div>
+		<div class="card-body">
+			<div class="d-flex justify-content-between">
+			</div>
+			<div id="containerTable">
+				<table class="table table-striped table-hover">
+					<thead class="background-template-color text-template-color" style="">
+						<tr>
+							<th class="text-left" scope="col" id="priceListTableColDescription" >CFE</th>
+							<th class="text-center" style="width: 150px; max-width: 150px;" scope="col" id="priceListTableColDetail" >Tipo</th>
+							<th class="text-center" style="width: 150px; max-width: 150px;" scope="col" id="priceListTableColBrand" >Vencimiento</th>
+							<th class="text-center" style="width: 150px; max-width: 150px;" scope="col" id="priceListTableColIva" >Disponibles</th>
+							<th class="text-center" style="width: 150px; max-width: 150px;" scope="col" id="priceListTableColCost" >Total</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyCaes">
+                        {% for cae in caes %}
+                            <tr>
+                                <td class="text-left cfe-type-cell" data-cfe="{{ cae.cfeType }}"></td>
+                                <td class="text-center">{{ cae.typeText }}</td>
+                                <td class="text-center date-cell" data-date="{{ cae.expirationDate }}"></td>
+                                <td class="text-center">{{ cae.disponibles }}</td>
+                                <td class="text-center">{{ cae.total }}</td>
+                            </tr>
+                        {% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+{% block script %}
+<script type="text/javascript">
+	$(document).ready( function(){
+        console.log("Ready!")
+        // Seleccionar todas las celdas que contienen los tipos CFE
+        var typeCells = document.querySelectorAll('.cfe-type-cell');
+        
+        // Aplicar la transformación a cada celda
+        typeCells.forEach(function(cell) {
+            var cfeType = cell.getAttribute('data-cfe');
+            cell.textContent = tableCfeType(cfeType);
+        });
+
+        // Transformar las fechas
+        var dateCells = document.querySelectorAll('.date-cell');
+        dateCells.forEach(function(cell) {
+            var date = cell.getAttribute('data-date');
+            cell.textContent = dateTypeHtml(date);
+        });
+
+        function tableCfeType(type) {
+            type = parseInt(type, 10);
+            switch (type) {
+                case 101: return "e-Ticket";
+                case 102: return "Nota de crédito de e-Ticket";
+                case 103: return "Nota de débito de e-Ticket";
+                case 111: return "e-Factura";
+                case 112: return "Nota de crédito de e-Factura";
+                case 113: return "Nota de débito de e-Factura";
+                case 121: return "e-Factura Exportación";
+                case 122: return "Nota de crédito de e-Factura Exportación";
+                case 123: return "Nota de débito de e-Factura Exportación";
+                case 124: return "e-Remito de Exportación";
+                case 131: return "e-Ticket Venta por Cuenta Ajena";
+                case 132: return "Nota de crédito de e-Ticket Venta por Cuenta Ajena";
+                case 133: return "Nota de débito de e-Ticket Venta por Cuenta Ajena";
+                case 141: return "e-Factura Venta por Cuenta Ajena";
+                case 142: return "Nota de crédito de e-Factura Venta por Cuenta Ajena";
+                case 143: return "Nota de débito de e-Factura Venta por Cuenta Ajena";
+                case 151: return "e-Boleta de entrada";
+                case 152: return "Nota de crédito de e-Boleta de entrada";
+                case 153: return "Nota de débito de e-Boleta de entrada";
+                case 181: return "e-Remito";
+                case 182: return "e-Resguardo";
+                default: return "";
+            }
+        }
+        function dateTypeHtml( date ){ // entrada 2023-02-04T23:24:21.142-03:00 salida 04/02/2023
+            newDate = date.substr(8, 2)+"/"+date.substr(5,2)+"/"+date.substr(2,2);
+            return newDate;
+        }
+	});
+</script>
+{% endblock %}
+{% endblock %}

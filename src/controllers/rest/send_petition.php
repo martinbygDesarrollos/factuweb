@@ -148,6 +148,11 @@ class sendPetition{
 		$sendPetitionInstance = new sendPetition();
 		return $sendPetitionInstance->prepareAndSendCurl("GET", "caes/" . $rut, $token, null);
 	}
+	// NEW
+	public function getCompanyData($rut, $token){
+		$thisClass = new sendPetition();
+		return $thisClass->prepareAndSendCurl("GET", "company/".$rut."?CustomFields=*&IncludeLogo=1", $token, null);
+	}
 
 	public function consultarCertificadoDigital($rut, $token){
 		$sendPetitionInstance = new sendPetition();

@@ -365,6 +365,23 @@ class ctr_rest{
 
 		return $response;
 	}
+	// NEW
+	public function getCompanyData($rut, $token){
+		$response = new \stdClass();
+		$sendPetitionClass = new sendPetition();
+		$restControllerInstance = new ctr_rest();
+		$responseRest =  json_decode($sendPetitionClass->getCompanyData($rut, $token));
+		if($responseRest->resultado->codigo == 200){
+			$response->result = 2;
+			unset($responseRest->resultado);
+			$response->caes = $responseRest->caes;
+		}else{
+			$response->result = 0;
+			$response->message = $responseRest->resultado->error;
+		}
+
+		return $response;
+	}
 
 	public function listarClientes($rut){
 		$response = new \stdClass();
