@@ -1,14 +1,35 @@
 <footer id="sticky-footer" class="text-white background-template-color">
-	<div class="d-flex justify-content-between" >
-		<div></div>
-		<small class="text-white m-3"><a class="text-white" href="https://byg.uy">www.byg.uy</a> &copy; 2021</small>
-		<div>
-			{% if systemSession %}
-			<div class="row mr-2">
-				<p id="textUpdate" class="h6 text-white mt-2 mr-2" style="visibility: hidden;">Actualizando datos...</p>
-				<button class="btn btn-sm background-template-color2 text-template-background mt-2 mr-2" onclick="updateVouchers('FOOTER');" data-toggle="tooltip" data-placement="top" title="Actualizar comprobantes almacenados"><i id="btnUpdateFooter" class="fas fa-sync-alt"></i></button>
-			</div>
-			{% endif %}
+	<div class="d-flex justify-content-center" >
+		{# <div></div> #}
+		<span class="m-3">
+			<small class="text-white m-0"><a class="text-white" href="https://byg.uy">www.byg.uy</a> &copy; 2025</small>
+		</span>
+		{% if systemSession %}
+			<span id="infoSold" class="infoSold m-3" style="display: none;">
+				<small class="m-0" id="SoldLastMonth" style="display: inline-block; ">  </small>
+				<small class="m-0" id="SoldCurrentMonth" style="display: inline-block; ">  </small>
+			</span>
+		{% endif %}
+
+		{% if systemSession %}
+		<div class="row m-2 align-items-center" style="position: absolute; right: 0; bottom: 0;">
+			<p id="textUpdate" class="h6 text-white m-0 mr-2" style="visibility: hidden;">Actualizando datos...</p>
+			<button class="btn btn-sm background-template-color2 text-template-background m-1" onclick="updateVouchers('FOOTER');" data-toggle="tooltip" data-placement="top" title="Actualizar comprobantes almacenados"><i id="btnUpdateFooter" class="fas fa-sync-alt"></i></button>
 		</div>
+		{% endif %}
 	</div>
 </footer>
+{% block script %}
+    <script type="text/javascript">
+        $(document).ready( function(){
+            console.log("Ready Footer!")
+            let response = sendPost("getConfiguration", {nameConfiguration: "VER_TOTAL_VENTAS_FOOTER"});
+            if(response.result == 2){
+                if(response.configValue == "SI"){
+                    let fakeCheckbox = { checked: true };
+                    updateSoldInfo(fakeCheckbox);
+                }
+            }
+        });
+    </script>
+{% endblock %}

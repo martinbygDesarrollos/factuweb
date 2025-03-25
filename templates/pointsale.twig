@@ -2,14 +2,14 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-<div class="d-flex justify-content-center">
+<div id="pointSaleSeccion" class="d-flex justify-content-center">
 	<div class="card shadow mt-4 mb-2" style="min-width: 780px;">
 		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
 			<h5>Punto de venta</h5>
 		</div>
 		<div class="card-body">
 			<div class="row">
-				<div id="step-2" class="col d-none" style="max-width: 280px;">
+				<div id="clientSelection" class="col p-0 pr-1" style="max-width: 280px;">
 					<div class="border rounded shadow-sm p-2" style="height: 100%;">
 						<div class="d-flex justify-content-center ml-3 mb-4">
 							<button id="buttonModalClientWithName" class="btn btn-sm background-template-color2 text-template-background shadow-sm" style="max-width: 95%;" accesskey="c" data-tipo="" data-toggle="modal" data-target="#modalSetClient">Agregar <u>C</u>liente <i class="fas fa-user-plus"></i></button>
@@ -71,14 +71,14 @@
 						</div>
 					</div>
 				</div>
-				<div class="col">
+				<div class="col p-0">
 					<div class="border rounded p-2 shadow-sm">
 						<div class="d-flex justify-content-between  mb-2">
 							{% if productsNoEntered == "SI" %}
 							<button class="btn btn-sm background-template-color2 text-template-background shadow-sm" onclick="openModalAddProduct()" id="buttonAgregarArticulo" accesskey="a" tabindex="8">Agregar <u>A</u>rtículo (+)<i class="fas fa-cart-plus"></i></button>
 							{% endif %}
 							{% if listProducts == "SI" %}
-						<button data-toggle="modal" data-target="#modalListPrice" class="btn btn-sm background-template-color2 text-template-background shadow-sm" onclick="openModalGetPrices()" accesskey="p">Lista de <u>P</u>recios (Shift +)<i class="fas fa-cart-plus"></i></button>
+						<button data-toggle="modal" class="btn btn-sm background-template-color2 text-template-background shadow-sm" onclick="openModalGetPrices()" accesskey="p">Lista de <u>P</u>recios (Shift +)<i class="fas fa-cart-plus"></i></button>
 							{% endif %}
 						</div>
 
@@ -117,10 +117,10 @@
 					</div>
 					<div class="">
 						<div>
-							<button id="discardSales" class="btn btn-secondary shadow-sm mt-3" onclick="discardSalesProducts()">Descartar</button>
-							<button id="nextStep" class="btn btn-success shadow-sm mt-3" onclick="nextStep()" tabindex="9" style="float:right;"><span class="maintext"> Siguiente </span>  <span class="shortcut"> (Ctrl + Fin) </span></button>
+							<button id="discardSales" class="btn btn-secondary shadow-sm mt-3" onclick="discardSalesProducts()"><span class="maintext"> Descartar </span>  <span class="shortcut"> (Ctrl + Supr) </span></button>
+							{# <button id="nextStep" class="btn btn-success shadow-sm mt-3" onclick="nextStep()" tabindex="9" style="float:right;"><span class="maintext"> Siguiente </span>  <span class="shortcut"> (Ctrl + Fin) </span></button> #}
 							{# <button id="idButtonCreateNewFactura" class="btn btn-success shadow-sm mt-3 d-none" onclick="createNewFactura()" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button> #}
-							<button id="idButtonShowModalPayment" class="btn btn-success shadow-sm mt-3 d-none" onclick="nextStep()" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+							<button id="confirmSaleBtn" class="btn btn-success shadow-sm mt-3" onclick="" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
 						</div>
 					</div>
 				</div>
@@ -162,84 +162,211 @@
 			else
 				$('#headerTdDesc').text("Descuento($)")
 		}
+		let responseSeeClient = sendPost("getConfiguration", {nameConfiguration: "VER_SIEMPRE_CLIENTE"});
+		if(responseSeeClient.result == 2){
+			if(responseSeeClient.configValue == "SI"){
+				setClientFinal()
+				$('#clientSelection').removeClass("d-none")
+			} else {
+				$('#clientSelection').addClass("d-none")
+			}
+		}
+		let responseSkipClient = sendPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
+		if(responseSkipClient.result == 2){
+			if(responseSkipClient.configValue == "SI"){
+				setClientFinal()
+				setNextStep('selectTypeVoucher')
+			} else {
+				setNextStep('selectClient')
+			}
+		}
 	//////////////////////////////////////////////////////////////////////////////
 	//BARCODE
 		let barcode="";
 		$(document).keydown(function(e) {
-			console.log(barcode);
-			let elementFocused = document.activeElement.tagName;
+			
+			if($('.loaderback').css('display') == 'block' &&  $('.loader').css('display') == 'block'){
+				return;
+			}
+			console.log("barcode: '" + barcode + "'");
+			let elementFocused = document.activeElement;
+//			let elementFocused = document.activeElement.tagName;
 			let elementFocusedID = document.activeElement.id;
 			console.log(elementFocusedID);
-			if ( elementFocused == "BODY" ){
-				//console.log("");
-				console.log("BODy");
-                console.log(e);
+			if ( elementFocused.tagName == "BODY" ){ //
+			//if ( elementFocused.closest('#pointSaleSeccion')){ //
+				console.log("BODY Focus");
 				let code = (e.keyCode ? e.keyCode : e.which);
 				let character = e.key;
-				if(code == 13 && barcode != ""){
-					if(barcode.length > 0)
-						addProductByCodeBar(barcode);
-					barcode = "";
-					code = null;
-				}
-				else if (code == 107 && !e.shiftKey){
-					openModalAddProduct();
-				}
-				else if (code == 107 && e.shiftKey){
-					openModalGetPrices()
-				}
-				else if (code == 35 && e.ctrlKey){
+				if(code == 13){ // Enter
+					console.log("Enter pressed with:", {
+						event: e,
+						ctrlKey: e.ctrlKey,
+						preventDefaultCalled: e.defaultPrevented,
+						eventPhase: e.eventPhase,
+						bubbles: e.bubbles,
+						cancelable: e.cancelable,
+						target: e.target,
+						currentTarget: e.currentTarget
+					});
+					
+					// Explicitly prevent default behavior
+					e.preventDefault();
+					e.stopPropagation();
+					
+					if(barcode != ""){ // Si hay barcode entonces busco el producto
+						if(barcode.length > 0)
+							addProductByCodeBar(barcode);
+						barcode = "";
+						code = null;
+					} else {
+						if (countNonRemovedItems(productsInCart) > 0){
+							$('#confirmSaleBtn').click();
+						} else {
+							showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+						}
+					}
+				} else if (code == 107){ // +
+					if (e.shiftKey){ // Shift pressed too
+						openModalGetPrices()
+					} else { // Just + pressed
+						openModalAddProduct();
+					}
+				} else if (code == 35 && e.ctrlKey){ // Ctr + Fin
 					console.log(productsInCart)
-					console.log(productsInCart.length)
-					if (countNonRemovedItems(productsInCart) > 0)
-						nextStep();
-					else
+					if (countNonRemovedItems(productsInCart) > 0){
+						//confirmSale();
+						$('#confirmSaleBtn').click();
+					} else {
 						showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
-					// createNewFactura();
+					}
+				} else if(code >= 37 && code <= 40){ // Arrow key handling
+					let $rows = $('#tbodyDetailProducts tr:not(.removedElement)');
+					let currentRowIndex = $rows.index($rows.filter('.selected'));
+					
+					switch(code){
+						case 37: // Left arrow
+							// Handle left navigation logic
+							break;
+						case 38: // Up arrow
+							if(currentRowIndex > 0){
+								$rows.removeClass('selected');
+								$rows.eq(currentRowIndex - 1).addClass('selected');
+							}
+							break;
+						case 39: // Right arrow
+							// Handle right navigation logic
+							break;
+						case 40: // Down arrow
+							if(currentRowIndex < $rows.length - 1){
+								$rows.removeClass('selected');
+								$rows.eq(currentRowIndex + 1).addClass('selected');
+							}
+							break;
+					}
+				} else if(code == 46 ){ // 46 is the keyCode for Delete/Supr key
+					if(e.ctrlKey) { // Ctr pessed too (discard chart)
+						console.log("Descartar carrito");
+						$('#discardSales').click();
+					} else { // Just Supr pressed (delete item)
+						let $row = $('#tbodyDetailProducts tr.selected:not(.removedElement)');
+						if($row.length) { 
+							// $row.find('.btn-danger').click();
+							// or alternatively:
+							$row.find('.fa-trash-alt').parent().click();
+						}
+					}
 				}
-				else {
+				else { // Is a character (concat to barcode)
 					if ( character.length == 1 ){
 						barcode = barcode + character;
 					}
 				}
 				
-			} else if(elementFocusedID == "inputTextToSearchClient"){
+			} else if(elementFocused.closest('#modalSetClient')){ // Si esta focus el modal de seleccion de cliente
 				let code = (e.keyCode ? e.keyCode : e.which);
-				if (code == 27) {
-					// 'Escape' key pressed
+				if (code == 27) { // 'Escape' key pressed
 					e.preventDefault(); // Prevent the default behavior (closing the modal)
-					$('#modalConfirm').on('shown.bs.modal', function(){
-						$('#modalConfirmButtonSI').focus();
+					setClientFinal()
+					$('#clientSelection').removeClass("d-none")
+					setNextStep('selectPaymentWay')
+					$('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function(){
+						$('#selectTypeVoucher').focus();
 					})
-					showConfirmMessage("¿Facturar como consumidor final?", "Confirmar", setClientFinal(), "modalSetClient");
+					$('#modalSetClient').modal('hide')
 				}
-			} else if(elementFocusedID == "selectTypeVoucher" || elementFocusedID == "inputDateExpirationVoucher" || elementFocusedID == "inputNotUseExpirationDate" || elementFocusedID == "inputAdenda"){
+			} else if(elementFocused.closest('#clientSelection')){ // Si esta en la seccion de cliente y voucher
 				let code = (e.keyCode ? e.keyCode : e.which);
-				if (code == 35 && e.ctrlKey){
-					nextStep();
-					// createNewFactura();
-				} 
-			} else if (elementFocusedID == "modalSetPayments"){
+				if (code == 13 || (code == 35 && e.ctrlKey)) { // 'Enter' key pressed
+					// Explicitly prevent default behavior
+					e.preventDefault();
+					e.stopPropagation();
+					if (countNonRemovedItems(productsInCart) > 0){
+						setNextStep('selectPaymentWay')
+						$('#confirmSaleBtn').click();
+					} else {
+						showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+					}
+				}
+			}else if (elementFocused.closest('#modalSetPayments')){ 
 				let code = (e.keyCode ? e.keyCode : e.which);
 				console.log(code);
+				//e.preventDefault();
+				//e.stopPropagation();
 				if (code == 45) {
 					$('#btnAddPayment').click();
 				} else if(code == 35 && e.ctrlKey){
 					console.log('CREAR FACTURA')
-					createNewFactura()
+					$('#modalSetPaymentsbtnConfirmSale').click();
+				} else if (code == 13) {
+					// Explicitly prevent default behavior
+					e.preventDefault();
+					e.stopPropagation();
+					console.log('CREAR FACTURA')
+					$('#modalSetPaymentsbtnConfirmSale').click();
 				}
-			} else if(elementFocusedID == "modalInsertNewPaymentMethodOptions" || elementFocusedID == "modalInsertNewPaymentMethodAmount"){
+			} else if(elementFocused.closest('#modalInsertNewPaymentMethod')){ 
 				let code = (e.keyCode ? e.keyCode : e.which);
 				console.log(code);
+				//e.preventDefault();
+				//e.stopPropagation();
 				if (code == 45) {
-					$('#modalInsertNewPaymentMethodButtonConfirm').click();
+					$('#modalInsertNewPaymentMethodButtonConfirm').off('click').on('click', function(){
+						insertPaymentMethod()
+					}).click();
 				}
-			} else if(elementFocusedID == "inputTextToSearchPrice"){
+			} else if(elementFocused.closest('#modalListPrice')){ 
 				let code = (e.keyCode ? e.keyCode : e.which);
 				if(code == 13){
-					// Get the number of rows in the tbody element
-					if($('#tbodyListPrice tr').length == 1){
-						$('#tbodyListPrice tr button').click();
+					// Find the row with "selected" class
+					let $selectedRow = $('#tbodyListPrice tr.selected');
+					// If a selected row exists, click its button
+					if($selectedRow.length) {
+						$selectedRow.find('button').click();
+					}
+				} else if(code >= 37 && code <= 40){
+					// Arrow key handling
+					let $rows = $('#tbodyListPrice tr');
+					let currentRowIndex = $rows.index($rows.filter('.selected'));
+					switch(code){
+						case 37: // Left arrow
+							// Handle left navigation logic
+							break;
+						case 38: // Up arrow
+							if(currentRowIndex > 0){
+								$rows.removeClass('selected');
+								$rows.eq(currentRowIndex - 1).addClass('selected');
+							}
+							break;
+						case 39: // Right arrow
+							// Handle right navigation logic
+							break;
+						case 40: // Down arrow
+							if(currentRowIndex < $rows.length - 1){
+								$rows.removeClass('selected');
+								$rows.eq(currentRowIndex + 1).addClass('selected');
+							}
+							break;
 					}
 				}
 			}
@@ -251,6 +378,19 @@
 				item.removed !== "true" // checks for string "true"
 			).length;
 		};
+
+		$('#inputTextToSearchPrice').on('keyup', function(e) { // esto para evitar disparar el evento de change cuando apreto una flecha, ya que ahora las flechas mueven el selected
+			let code = (e.keyCode ? e.keyCode : e.which);
+			
+			// Check if the key is an arrow key
+			if(code >= 37 && code <= 40) {
+				// Prevent getListPrice() for arrow keys
+				return;
+			}
+			
+			// Call original change logic
+			this.onchange();
+		});
 	//////////////////////////////////////////////////////////////////////////////
 	});
 </script>

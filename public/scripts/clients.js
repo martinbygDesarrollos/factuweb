@@ -127,7 +127,7 @@ function createRow(idReceiver, docReceiver, nameReceiver, address, numberMobile,
 
 	row += "<td class='text-right' > <p> $ " + balanceUYU + " </p> <p> U$S " + balanceUSD + " </p></td>";
 	// row += "<td class='text-right' >" + balanceUSD + "</td>";
-	row += "<td class='text-center p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1 update-btn' onclick='handleButtonClick(event," + idReceiver + ")' title='Editar información'><i class='fas fa-user-edit text-mycolor'></i></button>";
+	row += "<td class='text-center align-middle p-1'><button class='btn btn-sm background-template-color2 text-template-background shadow-sm mr-1 update-btn' onclick='handleButtonClick(event," + idReceiver + ")' title='Editar información'><i class='fas fa-user-edit text-mycolor'></i></button>";
 	row += "<button class='btn btn-sm background-template-color2 text-template-background shadow-sm new-fee-btn' onclick='handleButtonClick(event," + idReceiver + ")' data-toggle='tooltip' data-placement='left' title='Nueva cuota por servicio'>";
 	row += "<i class='fas fa-plus-circle text-mycolor'></i></button></td></tr>";
 

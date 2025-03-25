@@ -320,6 +320,88 @@ class vouchersEmitted{
 		}
 		return $responseQuery;
 	}
+	public function getSoldInfo($typeCoin, $myBusiness){
+		$dbClass = new DataBase();
+		$handleDateTimeClass = new handleDateTime();
+		$mesAnterior = intval($handleDateTimeClass->getPreviousDateInt());
+		$mesActual = intval($handleDateTimeClass->getCurrentDateInt());
+		$query = "SELECT * 
+				FROM comprobantes 
+				WHERE isAnulado != 1 
+				AND fecha >= ?
+				AND fecha <= ?
+				AND moneda = ?
+				AND tipoCFE IN ('101', '102', '103', '111', '112', '113') 
+				AND idEmisor = ?
+				ORDER BY fecha";
+		
+		$responseQuery = $dbClass->sendQuery($query, array('iisi', $mesAnterior, $mesActual, $typeCoin, $myBusiness), "LIST");
+		$gananciasMesActualUYU = 0;
+		$gananciasMesAnteriorUYU = 0;
+		$gananciasMesActualUSD = 0;
+		$gananciasMesAnteriorUSD = 0;
+		if($responseQuery->result != 0){
+			if($responseQuery->result == 2){
+				foreach($responseQuery->listResult as $key => $row){
+					if (intval($row['fecha']) >= $mesAnterior && intVal($row['fecha']) <= intval(substr($mesAnterior, 0 , 6) . "31")) { // MES ANTERIOR
+						if ($row['tipoCFE'] == '101' || $row['tipoCFE'] == '103' || $row['tipoCFE'] == '111' || $row['tipoCFE'] == '113') { // ++++++
+							if($row['moneda'] == "UYU"){
+								$gananciasMesAnteriorUYU += floatval($row['total']);
+							} else if($row['moneda'] == "USD"){
+								$gananciasMesAnteriorUSD += floatval($row['total']);
+							}
+						} else if($row['tipoCFE'] == '102' || $row['tipoCFE'] == '112') { // ------
+							if($row['moneda'] == "UYU"){
+								$gananciasMesAnteriorUYU -= floatval($row['total']);
+							} else if($row['moneda'] == "USD"){
+								$gananciasMesAnteriorUSD -= floatval($row['total']);
+							}
+						}
+					} elseif (intval($row['fecha']) > intval(substr($mesAnterior, 0 , 6) . "31") && intVal($row['fecha']) <= $mesActual) { // MES ACTUAL
+						if ($row['tipoCFE'] == '101' || $row['tipoCFE'] == '103' || $row['tipoCFE'] == '111' || $row['tipoCFE'] == '113') { // ++++++
+							if($row['moneda'] == "UYU"){
+								$gananciasMesActualUYU += floatval($row['total']);
+							} else if($row['moneda'] == "USD"){
+								$gananciasMesActualUSD += floatval($row['total']);
+							}
+						} else if($row['tipoCFE'] == '102' || $row['tipoCFE'] == '112') { // ------
+							if($row['moneda'] == "UYU"){
+								$gananciasMesActualUYU -= floatval($row['total']);
+							} else if($row['moneda'] == "USD"){
+								$gananciasMesActualUSD -= floatval($row['total']);
+							}
+						}
+					}
+				}
+			}else if($responseQuery->result == 1){
+				$responseQuery->message = "Actualmente no hay un Comprobantes emitidos para generar estadisticas.";
+			}
+		}
+		$meses = [
+			'01' => 'Enero',
+			'02' => 'Febrero',
+			'03' => 'Marzo',
+			'04' => 'Abril',
+			'05' => 'Mayo',
+			'06' => 'Junio',
+			'07' => 'Julio',
+			'08' => 'Agosto',
+			'09' => 'Septiembre',
+			'10' => 'Octubre',
+			'11' => 'Noviembre',
+			'12' => 'Diciembre'
+		];
+		unset($responseQuery->listResult);
+		$monthNumberAnterior = substr((string)$mesAnterior, 4, 2);
+		$monthNumberActual = substr((string)$mesActual, 4, 2);
+		$responseQuery->mesActualName = $meses[$monthNumberActual];
+		$responseQuery->mesAnteriorName = $meses[$monthNumberAnterior];
+		$responseQuery->soldMesActualUYU = number_format(floatval($gananciasMesActualUYU), 2, ".", "");
+		$responseQuery->soldMesAnteriorUYU = number_format($gananciasMesAnteriorUYU, 2, ".", "");
+		$responseQuery->soldMesActualUSD = number_format(floatval($gananciasMesActualUSD), 2, ".", "");
+		$responseQuery->soldMesAnteriorUSD = number_format($gananciasMesAnteriorUSD, 2, ".", "");
+		return $responseQuery;
+	}
 
 	//obtener el importe de los vouchers
 	//UPDATED

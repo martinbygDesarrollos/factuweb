@@ -63,6 +63,19 @@ class handleDateTime{
 		return substr($dateTime, 6, 4) . substr($dateTime, 0, 2) . substr($dateTime, 3, 2) . substr($dateTime,11,2) . substr($dateTime, 14, 2) . substr($dateTime, 17, 2);
 	}
 
+	public function getCurrentDateInt(){
+		date_default_timezone_set('America/Montevideo');
+		$dateTime = date('m-d-Y');
+		return substr($dateTime, 6, 4) . substr($dateTime, 0, 2) . substr($dateTime, 3, 2);
+	}
+
+	public function getPreviousDateInt() {
+		date_default_timezone_set('America/Montevideo');
+		$dateTime = date('Y-m-d'); // Get current date in Y-m-d format
+		$previousDate = date('m-d-Y', strtotime($dateTime . ' -1 month')); // More reliable way to subtract a month
+		return substr($previousDate, 6, 4) . substr($previousDate, 0, 2) . "01";
+	}
+
 	//esta funcion cambia el formato de la fecha que llega por parametro y devuelve año mes dia en formato string concatenado
 	public function getDateInt($date){
 		$onlyDate = explode(" ", $date);

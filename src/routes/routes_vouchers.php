@@ -272,6 +272,15 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 	});
 
+	$app->post('/updateSoldInfo', function(Request $request, Response $response) use ($userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$data = $request->getParams();
+			$typeCoin = $data['typeCoin'];
+			return json_encode($voucherController->getSoldInfo($typeCoin, $responseCurrentSession->currentSession->idEmpresa));
+		}else return json_encode($responseCurrentSession);
+	});
+
 	$app->post('/exportExcelCFE', function(Request $request, Response $response) use ($userController, $userClass, $voucherController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){

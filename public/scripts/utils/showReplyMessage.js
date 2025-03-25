@@ -1,18 +1,44 @@
 function showReplyMessage(codeResult, message, title, currentModal){
+	// console.log("showReplyMessage")
+    console.log("showReplyMessage start", {codeResult, message, title, currentModal});
+
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 	if(currentModal) {
-        $('#' + currentModal).on('hidden.bs.modal', function() {
+        $('#' + currentModal).off('hidden.bs.modal').on('hidden.bs.modal', function() {
             showNewModal();
             $(this).off('hidden.bs.modal'); // Remove handler after use
         }).modal('hide');
     } else {
         showNewModal();
     }
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// const originalHandlers = currentModal ? 
+    //     ($('#' + currentModal).data('events')?.['hidden.bs.modal'] || []) : 
+    //     [];
+
+	// if(currentModal) {
+    //     $('#' + currentModal).off('hidden.bs.modal').on('hidden.bs.modal', function(e) {
+    //         // Restore original handlers first
+    //         originalHandlers.forEach(handler => {
+    //             $('#' + currentModal).on('hidden.bs.modal', handler.handler);
+    //         });
+
+    //         showNewModal();
+    //         $(this).off('hidden.bs.modal'); // Remove this temporary handler
+    //     }).modal('hide');
+    // } else {
+    //     showNewModal();
+    // }
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     function showNewModal() {
         // Setup modal shown event
-        $('#modalResponse').on('shown.bs.modal', function () {
+        $('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function () {
             $('#modalButtonResponse').trigger('focus');
-            $(this).off('shown.bs.modal'); // Remove handler after use
+            // $(this).off('shown.bs.modal'); // Remove handler after use
         });
 
         // Remove any existing click handlers
@@ -23,16 +49,16 @@ function showReplyMessage(codeResult, message, title, currentModal){
             .removeClass('alert-success alert-warning alert-danger')
             .addClass(getColorClass(codeResult));
 
-        // Update modal content
         $('#modalTitleResponse').html(title);
         $('#modalMessageResponse').html(message);
 
         // Setup button click handler
-        $('#modalButtonResponse').click(function() {
-            $('#modalResponse').modal('hide');
-            if(currentModal && codeResult != 2) {
-                $('#' + currentModal).modal('show');
-            }
+        $('#modalButtonResponse').off('click').on('click', function() {
+			$('#modalResponse').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+				if(currentModal && codeResult != 2) {
+					$('#' + currentModal).modal('show');
+				}
+			}).modal('hide');
         });
 
         // Show the modal
@@ -49,6 +75,68 @@ function showReplyMessage(codeResult, message, title, currentModal){
         }
     }
 }
+
+// function showReplyMessage(codeResult, message, title, currentModal){
+//     console.log("showReplyMessage start", {codeResult, message, title, currentModal});
+    
+//     function showNewModal() {
+//         console.log("showNewModal start");
+        
+//         // Remove old handlers
+//         $('#modalResponse').off('shown.bs.modal');
+        
+//         // Setup modal shown event
+//         $('#modalResponse').on('shown.bs.modal', function () {
+//             console.log("Modal shown event triggered");
+//             $('#modalButtonResponse').trigger('focus');
+//             $(this).off('shown.bs.modal');
+//         });
+
+//         console.log("Setting up modal content");
+//         $('#modalColourResponse')
+//             .removeClass('alert-success alert-warning alert-danger')
+//             .addClass(getColorClass(codeResult));
+
+//         $('#modalTitleResponse').html(title);
+//         $('#modalMessageResponse').html(message);
+        
+//         console.log("About to show modal");
+//         $("#modalResponse").modal('show');
+//         console.log("Modal show called");
+//     }
+
+//     // Setup button click handler OUTSIDE showNewModal
+//     $('#modalButtonResponse').off('click').on('click', function() {
+//         console.log("Button clicked");
+//         if(currentModal && codeResult != 2) {
+//             $('#modalResponse').modal('hide');
+//             setTimeout(() => {
+//                 $('#' + currentModal).modal('show');
+//             }, 150); // small delay to ensure first modal is fully hidden
+//         } else {
+//             $('#modalResponse').modal('hide');
+//         }
+//     });
+
+//     if(currentModal) {
+//         console.log("Has current modal, setting up hide handler");
+//         $('#' + currentModal).on('hidden.bs.modal', function() {
+//             showNewModal();
+//             $(this).off('hidden.bs.modal');
+//         }).modal('hide');
+//     } else {
+//         showNewModal();
+//     }
+
+//     function getColorClass(code) {
+//         switch(code) {
+//             case 0: return 'alert-danger';
+//             case 1: return 'alert-warning';
+//             case 2: return 'alert-success';
+//             default: return '';
+//         }
+//     }
+// }
 
 function openLoadModal(animation){
 	$('#progressBarRestoreFile').removeClass('loadProgressBar');

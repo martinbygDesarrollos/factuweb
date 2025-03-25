@@ -231,6 +231,11 @@ tr.isStockBelowMinimum {
     12px 0 0px 0px rgba(255, 0, 0, 0.3) !important;
 }
 
+.selected{
+  box-shadow: inset 
+    0px 0px 0px 3px rgba(0, 0, 0, 1) !important;
+}
+
 /* #tbodyProducts tr td:nth-child(2) {
   max-width: 80px !important;
   min-width: 80px !important;
@@ -264,4 +269,17 @@ tr.isStockBelowMinimum {
 
 .nav-item:hover{
   cursor: pointer;
+}
+
+/* @keyframes focusPulse {
+  0% { box-shadow: 0px 0px 4px 2px #63BBB2; }
+  50% { box-shadow: 0px 0px 8px 6px #63BBB2; }
+  100% { box-shadow: 0px 0px 4px 2px #63BBB2; }
+}
+
+.focus-animation {
+  animation: focusPulse 1.5s infinite;
+} */
+#selectTypeVoucher:focus{
+  box-shadow: 0px 0px 4px 2px #63BBB2 !important;
 }

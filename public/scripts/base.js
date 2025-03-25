@@ -38,3 +38,35 @@ function mostrarLoader(valor){
 		$('.loader').css('display', 'none')
 	}
 }
+
+function updateSoldInfo(inputVariable){
+	let value = inputVariable.checked;
+	// console.log(value)
+	if(value){
+		$('#infoSold').css('display', 'block')
+		sendAsyncPost("updateSoldInfo", {typeCoin : "UYU"})
+		.then(function(response){
+			// console.log(response)
+			if (response.result == 2 ){
+				// console.log("Exito")
+				// console.log(response)
+				$('#SoldLastMonth').text(response.mesAnteriorName + " $" + response.soldMesAnteriorUYU + ". U$D " + response.soldMesAnteriorUSD)
+				$('#SoldCurrentMonth').text(response.mesActualName + " $" + response.soldMesActualUYU + ". U$D " + response.soldMesActualUSD)
+			} else {
+				// showReplyMessage(response.result, response.message, "Nueva factura", null);
+				console.log("Error")
+				$('#SoldLastMonth').text("--")
+				$('#SoldCurrentMonth').text("--")
+			}
+		})
+		.catch(function(response){
+			// console.log("Error")
+			$('#SoldLastMonth').text("--")
+			$('#SoldCurrentMonth').text("--")
+			// console.log("este es el catch", response);
+		});
+	} else {
+		$('#infoSold').css('display', 'none')
+	}
+
+}

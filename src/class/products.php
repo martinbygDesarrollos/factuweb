@@ -141,16 +141,6 @@ class products{
 
 		return $responseQuery;
 	}
-
-	//UPDATED
-	public function getRubroByName($rubro, $idBusiness){
-		$dbClass = new DataBase();
-
-		$responseQuery = $dbClass->sendQuery("SELECT * FROM rubro WHERE rubro = ? AND idEmpresa = ?", array('si', $rubro, $idBusiness), "OBJECT");
-		if($responseQuery->result == 1)
-			$responseQuery->message = "El rubro seleccionado no fue encontrado en la base de datos.";
-		return $responseQuery;
-	}
 	//UPDATED
 	public function getHeadingByName($nameHeading, $idBusiness){
 		$dbClass = new DataBase();
@@ -191,7 +181,7 @@ class products{
 
 	public function addProductByCodeBar($barcode, $idEmpresa){
 		$dbClass = new DataBase();
-		$responseQuery = $dbClass->sendQuery("SELECT * FROM articulos WHERE codigoBarra = ? AND idEmpresa = ?", array('si', $barcode, $idEmpresa), "LIST");
+		$responseQuery = $dbClass->sendQuery("SELECT A.*,R.rubro FROM articulos as A LEFT JOIN rubro AS R ON A.idRubro = R.idRubro WHERE A.codigoBarra = ? AND A.idEmpresa = ?", array('si', $barcode, $idEmpresa), "LIST");
 		/*if($responseQuery->result == 2){
 			$responseQueryGetIva = others::getValueIVA($responseQuery->objectResult->idIva);
 			if($responseQueryGetIva->result == 2)

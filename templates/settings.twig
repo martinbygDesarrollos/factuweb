@@ -19,20 +19,33 @@
 					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-branchCompany-tab" data-toggle="pill" href="#bCompanyContainer" onclick="loadBranchCompany()" role="tab" aria-controls="v-pills-branchCompany-tab" aria-selected="false">Sucursales</a><!-- href="#bCompanyContainer" -->
 					{% if systemSession.superUser == 'SI' %}
 					<a class="btn background-template-color2 text-template-background mb-2" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Administrador</a>
+					<a class="btn background-template-color2 text-template-background mb-2" id="cashRegisterContainer-tab" data-toggle="pill" href="#cashRegisterContainer" role="tab" aria-controls="cashRegisterContainer" aria-selected="true">Caja</a>
 					{% endif %}
 				</div>
 				<div class="tab-content col ml-1">
 					<!-- INICIO -->
 					<div class="tab-pane fade active show border-template shadow p-2" id="initContainer" role="tabpanel">
 						<p class="text-center text-template-background font-italic h5 mt-1">Inicio</p>
-						<div class="input-group">
+						<div class="input-group mb-2 align-items-center">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch m-0">
 									<input id="VER_COTIZACION_INICIO" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Mostrar cotizaciones en pantalla.</p>
+							<p class="ml-2 m-0">Mostrar cotizaciones en pantalla.</p>
+						</div>
+						<div class="input-group mb-2 align-items-center">
+							<div class="input-group-prepend">
+								<label class="switch m-0">
+									<input id="VER_TOTAL_VENTAS_FOOTER" type="checkbox" onchange="updateSoldInfo(this); updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2 m-0">Mostrar total de ventas en el footer.</p> 
+							<button class="btn btn-sm background-template-color2 text-template-background ml-2 m-0" onclick="updateSoldInfo(document.querySelector('#VER_TOTAL_VENTAS_FOOTER'));" title="Actualizar valores">
+								<i id="btnUpdateFooter" class="fas fa-sync-alt"></i>
+							</button>
 						</div>
 					</div>
 					<!-- VISUALIZACIONES -->
@@ -298,6 +311,24 @@
 							</div>
 							<p class="ml-2">Manejo de stock.</p>
 						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="VER_SIEMPRE_CLIENTE" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Mostrar siempre el cliente (Punto de venta).</p>
+						</div>
+						<div class="input-group">
+							<div class="input-group-prepend">
+								<label class="switch">
+									<input id="SKIP_SELECT_CLIENTE" type="checkbox" onchange="updateConfigurationBoolean(this)">
+									<span class="slider round"></span>
+								</label>
+							</div>
+							<p class="ml-2">Saltarse selección de cliente (Punto de venta).</p>
+						</div>
 						<hr>
 						<div id="">
 							<div class="row form-group mb-2">
@@ -418,6 +449,60 @@
 						<div class="d-flex flex-row-reverse">
 							<button class="btn btn-success btn-sm shadow-sm" onclick="updateEnabledSections()">Confirmar</button>
 						</div>
+					</div>
+					{# CAJA #}
+					<div class="tab-pane fade border-template shadow p-2" id="cashRegisterContainer" role="tabpanel" aria-labelledby="cashRegisterContainer-tab">
+						<p class="text-center text-template-background font-italic h5 mt-1">Caja</p>
+						{# <div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadDataFirstLogin();"><i id="iconButtonUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Obtener comprobantes por primera vez.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="updateSuperVouchers();"><i id="iconBtnUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Analizar y cargar comprobantes emitidos no encontrados.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadProductsFromDetails();"><i id="iconButtonGetDetailSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Cargar artículos por comprobantes emitidos.</p>
+						</div>
+						<div class="d-flex flex-row">
+							<button class="btn btn-link btn-sm" onclick="loadCustomers();" title="Se crean los clientes que se hayan encontrado en Sigecom y no en EFactura."><i id="iconBtnLoadCustomersEfactura" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
+							<p class="pt-2 pl-2">Cargar clientes en EFactura.</p>
+						</div>
+						<hr>
+						<p class="text-left text-template-background font-italic h6 mt-1">Respaldos</p>
+						<div class="row d-flex justify-content-center m-1">
+							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="openSelectFile()"><i class="fas fa-file-archive"></i>&nbsp;Importar archivo de respaldo (.zip)</button>
+							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="exportBackUp()"><i class="fas fa-file-archive"></i>&nbsp;Exportar archivo de respaldo (.zip)</button>
+						</div>
+						<input type="file" id="inputSelectFileImport" onchange="importBackUp()" style="visibility: hidden;">
+						<hr>
+						<p class="text-left text-template-background font-italic h6 mt-1">Secciones</p>
+						<table class="table table-sm table-bordered">
+							<thead class="background-template-color text-template-color">
+								<tr>
+									<th class="text-center">Sección</th>
+									<th class="text-center" scope="col">Acción</th>
+								</tr>
+							</thead>
+							<tbody id="tbodyEnabledSections">
+								{% for s in section %}
+								<tr>
+									<td class="text-center">{{ s.seccion }}</td >
+									<td class="text-center w-25">
+										{% if s.permiso == 'SI' %}
+										<input id="checkEnable{{ s.id }}" type="checkbox" checked>
+										{% else %}
+										<input id="checkEnable{{ s.id }}" type="checkbox">
+										{% endif %}
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						<div class="d-flex flex-row-reverse">
+							<button class="btn btn-success btn-sm shadow-sm" onclick="updateEnabledSections()">Confirmar</button>
+						</div> #}
 					</div>
 					{% endif %}
 				</div>

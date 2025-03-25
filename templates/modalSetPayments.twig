@@ -59,7 +59,7 @@
                     </div> #}
                 </div>
 				<div class="d-flex flex-row-reverse mt-2">  <!-- ESTE DIV CONTENDRA LAS ACCIONES (EN PRINCIPIO SOLO AGREGAR NUEVO MODO DE PAGO QUE MUESTRA UN MODAL PARA SELECCIONAR UNO Y LO AÑADE) -->
-                    <button id="btnAddPayment" type="button" class="btn btn-success shadow-sm" onclick="insertNewPayment()" onkeypress="return keyPressAddDetail(event, null,null)">Agregar (Ins) <i class="fas fa-wallet"></i></button>
+                    <button id="btnAddPayment" type="button" class="btn btn-success shadow-sm" onclick="insertNewPayment()" >Agregar (Ins) <i class="fas fa-wallet"></i></button>
                 </div>
                 <div class="d-flex flex-row-reverse mt-2">
                     <label for="inputPriceSale2" class="label-decoration-venta"><b>Total:</b>
@@ -73,7 +73,7 @@
 			</div>
 			<div class="modal-footer justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
-				<button id="btnConfirmSale" type="button" class="btn btn-success shadow-sm" onclick="createNewFactura()"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+				<button id="modalSetPaymentsbtnConfirmSale" type="button" class="btn btn-success shadow-sm" onclick="createNewFactura()"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
 			</div>
 		</div>
 	</div>
@@ -106,7 +106,7 @@
                         </select>
                     </div>
                     <div class="col">
-                        <input class="form-control form-control-sm text-right" type="float" id="modalInsertNewPaymentMethodAmount" onkeypress="return keyPressAddPaymentMethod(event, value)" tabindex="2">
+                        <input class="form-control form-control-sm text-right" type="float" id="modalInsertNewPaymentMethodAmount" tabindex="2">
                     </div>
                 </div>
             </div>

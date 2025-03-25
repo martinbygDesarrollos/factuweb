@@ -34,7 +34,15 @@ $('#inputDiscountProduct').change(function(){
 	calculateInverseByCost();
 });
 
-$('#modalAddProduct').on('shown.bs.modal', function () {
+// $('#selectTypeVoucher').on('focus', function() {
+// 	$(this).addClass('focus-animation');
+// });
+
+// $('#selectTypeVoucher').on('blur', function() {
+// 	$(this).removeClass('focus-animation');
+// });
+
+$('#modalAddProduct').off('shown.bs.modal').on('shown.bs.modal', function () {
 	if(!includeIva){
 		let response = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
 		if(response.result == 2)
@@ -53,40 +61,44 @@ $('#modalAddProduct').on('shown.bs.modal', function () {
 	$('#inputDescriptionProduct').focus();
 });
 
-$('#modalListPrice').on('shown.bs.modal', function () {
-	console.log("Modal abierto LIST PRICES")
-	$('#inputTextToSearchPrice').focus();
-});
+// $('#modalListPrice').on('shown.bs.modal', function () {
+// 	console.log("Modal abierto LIST PRICES")
+// 	$('#inputTextToSearchPrice').focus();
+// });
 
-$('#modalSetClient').on('hidden.bs.modal', function () {
+$('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+	console.log("modalSetClient.onHidden")
     // Check if the modalConfirm modal is open
-    if ($('#modalConfirm').hasClass('show')) {
-		console.log("Modal setClient cerrado pero Confirm esta abierto")
-		// $('#modalConfirmButtonSI').focus();
-	} else {
+    // if ($('#modalConfirm').hasClass('show')) {
+	// 	console.log("Modal setClient cerrado pero Confirm esta abierto")
+	// 	// console.log("Modal setClient Cerrado")
+	// 	// $('#modalConfirmButtonSI').focus();
+	// } else {
 		console.log("Modal setClient cerrado")
-		$('#selectTypeVoucher').focus();
-	}
-});
-
-$('#modalSetPayments').on('hidden.bs.modal', function () {
-	console.log("Modal setPayments cerrado")
-	$('#selectTypeVoucher').focus();
-});
-
-function keyPressAddPaymentMethod(keyPress, value){
-	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
-		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
-			$('#modalInsertNewPaymentMethodButtonConfirm').click();
-	}
-	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
-		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
-			$('#modalInsertNewPaymentMethodOptions').focus();
-	}
-	// if(value == null || value.length == 0) {
-	// 	return false;
+		setNextStep('selectTypeVoucher')
+		// $('#selectTypeVoucher').focus();
 	// }
-}
+});
+
+// $('#modalSetPayments').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+// 	console.log("Modal setPayments cerrado")
+// 	$('#selectTypeVoucher').focus();
+// });
+
+// function keyPressAddPaymentMethod(keyPress, value){
+// 	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
+// 		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
+// 			$('#modalInsertNewPaymentMethodButtonConfirm').on('click', function(){
+// 		})
+// 	}
+// 	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
+// 		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
+// 			$('#modalInsertNewPaymentMethodOptions').trigger('focus');
+// 	}
+// 	// if(value == null || value.length == 0) {
+// 	// 	return false;
+// 	// }
+// }
 function keyPressAddDetail(keyPress, value, size){
 	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
 		if(keyPress.srcElement.id == "inputCountProduct")
@@ -115,26 +127,41 @@ function keyPressAddDetail(keyPress, value, size){
 	}
 }
 
-$('#modalInsertNewPaymentMethod').on('shown.bs.modal', function () {
-	console.log("Modal new payment method abierto")
-	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
-	// $('#').val();
-	$('#modalInsertNewPaymentMethodOptions').focus();
-});
+// $('#modalInsertNewPaymentMethod').off('shown.bs.modal').on('shown.bs.modal', function () {
+// 	console.log("Modal new payment method abierto")
+// 	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
+// 	// $('#').val();
+// 	$('#modalInsertNewPaymentMethodOptions').trigger('focus');
+// });
 
-$('#modalInsertNewPaymentMethod').on('hidden.bs.modal', function () {
-	console.log("Modal new payment method cerrado")
-	$('#modalSetPayments').modal();
-});
+// $('#modalInsertNewPaymentMethod').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+// 	console.log("Modal new payment method cerrado")
+// 	$('#modalSetPayments').modal();
+// });
 
-$('#modalInsertNewPaymentMethodButtonConfirm').click(function(){ // Confirmacion de nuevo modo de pago añadido
+// $('#modalInsertNewPaymentMethodButtonConfirm').on('click', function(){ // Confirmacion de nuevo modo de pago añadido
+// 	let selectedOption = $('#modalInsertNewPaymentMethodOptions').val();
+// 	let amount = $('#modalInsertNewPaymentMethodAmount').val();
+// 	newRowPaymentMethod(selectedOption, amount);
+// 	$('#modalInsertNewPaymentMethod').modal('hide');
+// })
+function insertPaymentMethod(){
+	// calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
 	let selectedOption = $('#modalInsertNewPaymentMethodOptions').val();
 	let amount = $('#modalInsertNewPaymentMethodAmount').val();
 	newRowPaymentMethod(selectedOption, amount);
-	$('#modalInsertNewPaymentMethod').modal('hide');
-})
-
-function newRowPaymentMethod(method, amount){		
+	// $('#modalInsertNewPaymentMethod').modal('hide');
+	$('#modalInsertNewPaymentMethod').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+		// $('#modalSetPayments').modal();
+		$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
+			// $('#inputPriceSale2').val($('#inputPriceSale').val())
+			$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
+			calculateRemainingAmount('inputPriceSale22');
+		}).modal();
+	}).modal('hide');
+}
+function newRowPaymentMethod(method, amount){	
+	console.log("newRowPaymentMethod")	
     // Creating a new row with the selected payment method and amount
     let newRow = $('<div class="row mt-1" style="align-items: center;"></div>');
 
@@ -157,10 +184,19 @@ function newRowPaymentMethod(method, amount){
 
 function insertNewPayment(){
 	console.log("inserNewPayment")
-	$('#modalSetPayments').modal('hide');
-	setTimeout(function() {
-		$('#modalInsertNewPaymentMethod').modal('show');
-    }, 150); // Delay of 0 milliseconds to ensure it's executed after current execution stack
+	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
+	$('#modalSetPayments').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+		// $('#modalInsertNewPaymentMethod').modal();
+		$('#modalInsertNewPaymentMethod').off('shown.bs.modal').on('shown.bs.modal', function () {
+			$('#modalSetPayments').off('hidden.bs.modal')
+			$('#modalInsertNewPaymentMethodOptions').trigger('focus');
+		}).modal();
+	}).modal('hide');
+
+	// $('#modalSetPayments').modal('hide');
+	// setTimeout(function() {
+	// 	$('#modalInsertNewPaymentMethod').modal('show');
+    // }, 150); // Delay of 0 milliseconds to ensure it's executed after current execution stack
 	// $('#modalSetPayments').modal('hide', function(){
 	// 	console.log("Modal setPayments cerrado");
 	// 	$('#modalInsertNewPaymentMethod').modal('show');
@@ -195,10 +231,10 @@ function calculateRemainingAmount(campo){
 	$('#inputPriceSale22').trigger('change')
 }
 
-$('#modalSetPayments').on('shown.bs.modal', function () {
-	$('#inputPriceSale2').val($('#inputPriceSale').val())
-	calculateRemainingAmount('inputPriceSale22');
-});
+// $('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
+// 	$('#inputPriceSale2').val($('#inputPriceSale').val())
+// 	calculateRemainingAmount('inputPriceSale22');
+// });
 
 
 //se llama esta funciòn cuando se ingresa texto para buscar un nuevo producto.
@@ -406,6 +442,11 @@ function insertNewDetailProcess(){
 				let row = createDetailRow(indexDetail, description, detail, count, price, discount, idIva, ivaValue, price);
 				addTotal();
 				$('#tbodyDetailProducts').prepend(row);
+
+				$('#tbodyDetailProducts tr').removeClass('selected')
+                           .first()
+                           .addClass('selected');
+
 				// $('#selectTypeCoin').prop( "disabled", true );
 				// $('#checkboxConfigIvaIncluido').prop( "disabled", true );
 				$('#modalAddProduct').modal('hide');
@@ -511,13 +552,25 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 			$('#tbodyListPrice').empty();
 			if( response.listResult.length > 1 ){
 				let list = response.listResult;
+				firstRow = true;
 				for (var i = 0; i < list.length; i++) {
-					let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, "", list[i].importe, list[i].moneda);
+					console.log(list[i].descripcion + " = " + list[i].codigoBarra)
+					let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
 					$('#tbodyListPrice').append(row);
+					if(firstRow){
+						$('#tbodyListPrice tr:first').addClass('selected')
+						firstRow = false
+					}
 				}
+
+
 				$('#modalListPrice .modal-title').text("Seleccionar producto");
-				$('#modalListPrice input').val("");
-				$('#modalListPrice input').prop( "disabled", true );
+				$('#inputTextToSearchPrice').val("");
+				$('#inputTextToSearchPrice').prop( "readOnly", true );
+				$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
+					console.log("addProductByCodeBar")
+					$('#inputTextToSearchPrice').focus();
+				});
 				$('#modalListPrice').modal('show');
 			}
 			else if( response.listResult.length == 1 ){
@@ -574,6 +627,11 @@ function modalBorrarDetail(trItem){
 	// let disabledTypeCoin = false;
 	// let disabledIva = false;
 	$('#textDeleteDetail').html("¿Desea eliminar '"+ productsInCart[position].description +"'?");
+	
+	$('#modalDeleteDetail').off('shown.bs.modal').on('shown.bs.modal', function () {
+		$('#btnConfirmDeleteDetail').focus();
+	});
+
 	$('#modalDeleteDetail').modal();
 	$('#btnConfirmDeleteDetail').off('click');
 	$('#btnConfirmDeleteDetail').click(function(){
@@ -643,7 +701,7 @@ function nextStep(){
 				$('#modalSetClient').modal({
 					backdrop: 'static'
 				});
-				$('#step-2').removeClass('d-none'); // Seccion del cliente
+				$('#clientSelection').removeClass('d-none'); // Seccion del cliente
 		} else {
 			showReplyMessage(1, "Ningun producto ingresado", "Productos requeridos", null);
 		}
@@ -890,6 +948,7 @@ function getCode(glosa){
 }
 
 function prepareToNewSale(){
+	console.log("prepareToNewSale")
 	cancelClientSelected();
 	$('#tbodyDetailProducts').empty();
 	$('#inputDateVoucher').val(getCurrentDate());
@@ -905,18 +964,84 @@ function prepareToNewSale(){
 	if(adenda.result == 2)
 		adendaValue = adenda.configValue;
 	$('#inputAdenda').val(adendaValue);
-	$('#step-2').addClass('d-none')
+
+	let responseShowClient = sendPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
+	if(responseShowClient.result == 2){
+		if(responseShowClient.configValue == "SI"){
+			$('#clientSelection').removeClass('d-none')
+		} else {
+			$('#clientSelection').addClass('d-none')
+		}
+	}
+
 
 	// Select all rows that contain input elements within the containerPayments div
 	let $allPaymentsWay = $('#containerPayments .row:has(input)');
   
 	// Remove the selected rows
 	$allPaymentsWay.remove();
+	
+	let responseSkipClient = sendPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
+	if(responseSkipClient.result == 2){
+		if(responseSkipClient.configValue == "SI"){
+			setClientFinal()
+			setNextStep('selectTypeVoucher')
+		} else {
+			setNextStep('selectClient')
+		}
+	}
+	// setNextStep('selectClient')
+	// $('#idButtonShowModalPayment').addClass('d-none')
+	// $('#nextStep').removeClass('d-none');
 
-	$('#idButtonShowModalPayment').addClass('d-none')
-	$('#nextStep').removeClass('d-none');
 	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
 	// document.getElementById("idButtonCreateNewFactura").disabled=false;
+}
+
+function confirmSale(){
+	console.log("confirmSale")
+	$('#confirmSaleBtn').click();
+}
+
+function setNextStep(step){ // le settea el siguiente paso al boton de confirmar
+	console.log("setNextStep: " + step)
+	switch (step) {
+		case 'selectClient':
+			$('#confirmSaleBtn').off('click').on('click', function () {
+				$('#modalSetClient').modal({
+					backdrop: 'static'
+				});
+			});
+			break;
+		case 'selectPaymentWay':
+			$('#confirmSaleBtn').off('click').on('click', function () {
+				// setClientFinal()
+				let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
+				if(typeVoucher == 211 || typeVoucher == 311){
+					createNewFactura()
+					return;
+				}
+				$('#inputPriceSale2').val($('#inputPriceSale').val())
+				calculateRemainingAmount('inputPriceSale22');
+				$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
+					$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
+				});
+				showModalPayment()
+			});
+			break;
+		case 'selectTypeVoucher':
+			$('#clientSelection').removeClass('d-none')
+			$('#confirmSaleBtn').off('click').on('click', function () {
+				if($('#buttonModalClientWithName').text() == "Consumidor final"){
+					setClientFinal()
+				}
+				$('#selectTypeVoucher').focus()
+				setNextStep('selectPaymentWay')
+			});
+			break;
+		default:
+			break;
+	}
 }
 
 function createNewProduct(producto, heading){ 
@@ -1188,78 +1313,53 @@ function openModalAddProduct(){
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function openModalGetPrices(){
-	// mostrarLoader(true)
-	// $('.loaderback').css('display', 'block')
+	console.log("openModalGetPrices")
 	$('#inputTextToSearchPrice').val("");
-	// $('#inputTextToSearchPrice').focus();
-	$('#modalListPrice input').prop( "disabled", false );
-	getListPrice();
-
-	$('#modalListPrice').on('shown.bs.modal', function () {
-		$('#inputTextToSearchPrice').focus();
-	});
-	$('#modalListPrice').modal("show");
-}
-
-// async function openModalGetPrices() {
-//     mostrarLoader(true);
-//     $('#inputTextToSearchPrice').val("");
-//     $('#modalListPrice input').prop("disabled", false);
-    
-//     try {
-//         await getListPrice();
-//         $('#modalListPrice').modal("show");
-//     } catch (error) {
-//         console.error("Error:", error);
-//     } finally {
-//         mostrarLoader(false);
-//     }
-// }
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-//obtener la lista de articulos usando getSuggestionProductByDescription
-function getListPrice(){
-	// let coin = $('#selectTypeCoin').val();
 	let valueToSearch = $('#inputTextToSearchPrice').val();
 	let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
 	$('#tbodyListPrice').empty();
 	if(response.result == 2){
 		let list = response.listResult;
+		firstRow = true;
 		for (var i = 0; i < list.length; i++) {
 			let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
 			$('#tbodyListPrice').append(row);
+			if(firstRow){
+				$('#tbodyListPrice tr:first').addClass('selected')
+				firstRow = false
+			}
+		}
+		$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
+			$('#inputTextToSearchPrice').prop( "readOnly", false );
+			$('#inputTextToSearchPrice').focus();
+		});
+		$('#modalListPrice').modal("show");
+	}
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+//obtener la lista de articulos usando getSuggestionProductByDescription
+function getListPrice(element){
+	console.log("getListPrice")
+	if($(element).val().length > 0 || $('#inputTextToSearchPrice').prop( "readOnly") == false){
+		let valueToSearch = $('#inputTextToSearchPrice').val();
+		let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
+		$('#tbodyListPrice').empty();
+		if(response.result == 2){
+			let list = response.listResult;
+			firstRow = true;
+			for (var i = 0; i < list.length; i++) {
+				let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
+				$('#tbodyListPrice').append(row);
+				if(firstRow){
+					$('#tbodyListPrice tr:first').addClass('selected')
+					firstRow = false
+				}
+			}
 		}
 	}
 }
 
-// async function getListPrice() {
-//     try {
-//         let valueToSearch = $('#inputTextToSearchPrice').val();
-//         let response = await sendAsyncPost("getSuggestionProductByDescription", 
-//             {textToSearch: valueToSearch}
-//         );
-        
-//         $('#tbodyListPrice').empty();
-//         if(response.result == 2) {
-//             let list = response.listResult;
-//             for (var i = 0; i < list.length; i++) {
-//                 let row = createRowListPrice(
-//                     list[i].idArticulo, 
-//                     list[i].descripcion, 
-//                     list[i].rubro, 
-//                     list[i].importe, 
-//                     list[i].moneda
-//                 );
-//                 $('#tbodyListPrice').append(row);
-//             }
-//         }
-//     } catch (error) {
-//         console.error("Error in getListPrice:", error);
-//         throw error; // Re-throw the error to be caught by openModalGetPrices
-//     }
-// }
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -1283,17 +1383,17 @@ function createRowListPrice(idProduct, description, heading, price, coin){
 
 	// let moneyToConvert = "";
 	if (coin == 'UYU'){
-		priceUYU = "<td class='text-center'> $  "+ price +"</td>";
+		priceUYU = "<td class='text-center align-middle'> $  "+ price +"</td>";
 	}
 	else if (coin == 'USD'){
-		priceUSD = "<td class='text-center'> U$S  "+ price +"</td>";
+		priceUSD = "<td class='text-center align-middle'> U$S  "+ price +"</td>";
 	}
 
-	row += "<td class='text-left'>"+ description +"</td>";
-	row += "<td class='text-left'>"+ heading +"</td>";
+	row += "<td class='text-left align-middle'>"+ description +"</td>";
+	row += "<td class='text-left align-middle'>"+ heading +"</td>";
 	row += priceUYU;
 	row += priceUSD
-	row += "<td class='text-center'><button onclick='addToCar(this, " + idProduct + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
+	row += "<td class='text-center align-middle'><button onclick='addToCar(this, " + idProduct + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
 
 	return row;
 }

@@ -1,9 +1,9 @@
 
-$('#modalSetClient').on('shown.bs.modal', function(){
+$('#modalSetClient').off('shown.bs.modal').on('shown.bs.modal', function(){
 	$('#inputTextToSearchClient').focus();
 })
 
-$('#modalResponse').on('shown.bs.modal', function(){
+$('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function(){
 	$('#modalResponse button').focus();
 })
 
@@ -16,7 +16,31 @@ function selectClient(){
 	let department = $('#inputDepartmentClient').val() || null;
 	let email = $('#inputEmailClient').val() || null;
 	let phone = $('#inputPhoneClient').val() || null;
+	console.log(department)
+	console.log(city)
+	console.log(address)
+	// console.log(department.trim())
+	// console.log(city.trim())
+	// console.log(address.trim())
+	if((!department || !city || !address)){
+		showReplyMessage(1, "Para ingresar un cliente este debe contar con dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
+		console.log("A")
+		return;
+	} else {
+		if(department.trim() == "" || city.trim() == "" || address.trim() == ""){
+			console.log("B")
+			showReplyMessage(1, "Para ingresar un cliente este debe contar con dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
+			return;
+		} else {
 
+		}
+	}
+	//  else {
+	// 	if(department.trim() == "" || city.trim() == "" || address.trim() == ""){
+	// 		showReplyMessage(1, "Para ingresar un cliente este debe contar dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
+	// 		return;
+	// 	}
+	// }
 	$("#selectTypeVoucher").empty();
 	// $('#divComprobante').children().remove();
 	if($('#inputDocumentClient').val().length > 8){
@@ -53,6 +77,11 @@ function selectClient(){
 			}
 			$('#buttonModalClientWithName').html(nameClient + " " +  documentClient);
 			$('#buttonCancelClient').css('display', 'block');
+			$('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+				console.log("modalSetClient.onHidden")
+				setNextStep('selectTypeVoucher')
+			});
+
 			$('#modalSetClient').modal('hide');
 		}else showReplyMessage(1, "El documento ingresado no pudo validarse como RUT y tampoco como CI por favor vuelva a ingresarlo", "Documento no valido", "modalSetClient");
 	}else showReplyMessage(1, "Para ingresar un cliente este debe contar con Nombre y Documento, de lo contrario no ingresar.", "Nombre y Documento requeridos", "modalSetClient");
@@ -73,6 +102,7 @@ function createClient(documentClient, nameClient, address, city, department, ema
 
 //esta función busca cliente desde la vista de ventas
 function searchClient(inputToSearch, e){ //cuando se ingresan numeros el el buscador de cliente por rut se llama a esta función para buscar los datos
+	console.log("searchClient")
 	e.preventDefault();
 	if ( inputToSearch.value.length > 2 ){
 		//$('#listClient').empty();

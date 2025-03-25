@@ -266,6 +266,27 @@ class users{
     	if($responseGetAdenda->result == 1){
     		$userClass->insertConfigurationUser($idUser, "VALUE", "ADENDA", "");
     	}
+
+		$responseStockManagement = $userClass->getConfigurationUser($idUser, "MANEJO_DE_STOCK");
+    	if($responseStockManagement->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "MANEJO_DE_STOCK", "NO");
+		}
+
+		$responseStockManagement = $userClass->getConfigurationUser($idUser, "VER_TOTAL_VENTAS_FOOTER");
+    	if($responseStockManagement->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_TOTAL_VENTAS_FOOTER", "NO");
+		}
+		
+		$responseStockManagement = $userClass->getConfigurationUser($idUser, "VER_SIEMPRE_CLIENTE");
+    	if($responseStockManagement->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_SIEMPRE_CLIENTE", "NO");
+		}
+
+		$responseStockManagement = $userClass->getConfigurationUser($idUser, "SKIP_SELECT_CLIENTE");
+    	if($responseStockManagement->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SKIP_SELECT_CLIENTE", "NO");
+		}
+
     }
 
     public function getListConfigurationsWithBusiness($idBusiness){

@@ -171,7 +171,7 @@ function createRowProduct(stockManagement, idProduct, description, detail, band,
     row += `<td class='text-right notShowInPhone'>${symbolCoin} ${cost}</td>`;
     row += `<td class='text-right'>${symbolCoin} ${amount}</td>`;
     row += `<td class='text-center'>
-              <button class='btn btn-sm background-template-color2 text-template-background mr-2' 
+              <button class='btn btn-sm background-template-color2 text-template-background mr-1' 
                       onclick='openModalModify("${stockManagement}", ${idProduct})'>
                 <i class='fas fa-edit'></i>
               </button>

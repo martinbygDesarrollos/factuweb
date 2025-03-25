@@ -288,6 +288,12 @@ class ctr_vouchers{
 		return $restController->obtenerCotizacion($dateQuote, $dateQuote, $typeCoin);
 	}
 
+	public function getSoldInfo($typeCoin, $idEmpresa){
+		$vouchersEmittedClass = new vouchersEmitted();
+		$handleDateTimeClass = new handleDateTime();
+		return $vouchersEmittedClass->getSoldInfo($typeCoin, $idEmpresa);
+	}
+
 
 	//obtiene la cotizacion de varias monedas
 	//UPDATED
