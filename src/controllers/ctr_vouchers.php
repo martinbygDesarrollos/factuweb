@@ -677,7 +677,7 @@ class ctr_vouchers{
 		elseif ( $entity == "PROVIDER" ) {
 			$resultProvAccountState = $vouchersReceivedClass->getAccountState($idEntity, $dateInitINT, $dateFinishINT, $typeCoin, $idBusiness);
 			if ($resultProvAccountState->result != 0){
-				$resultGetProv = $provController->getProvider($idEntity);
+				$resultGetProv = $provController->getProvider($idEntity, $idBusiness);
 				if ( $resultGetProv->result == 2 ) {
 					$accountState = $resultProvAccountState->listResult;
 					$resultExcel = $spreadsheetClass->accountState($accountState, $resultGetProv->provider->rut, $resultGetProv->provider->razonSocial, $dateInitBar, $dateFinishBar, $entity, $idBusiness, $nameBusiness);
