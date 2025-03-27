@@ -586,7 +586,7 @@ class vouchersEmitted{
 
 	public function getVoucherByTipoSerieNum($tipoCFE, $serieCFE, $numeroCFE, $idBusiness){
 		$dataBaseClass = new DataBase();
-		$responseQuery = $dataBaseClass->sendQuery("SELECT indice, isAnulado FROM `comprobantes`
+		$responseQuery = $dataBaseClass->sendQuery("SELECT indice, isAnulado, isCobranza FROM `comprobantes`
 			WHERE tipoCFE = ? AND serieCFE = ? AND numeroCFE = ? AND idEmisor = ?", array('isii', $tipoCFE, $serieCFE, $numeroCFE, $idBusiness), "OBJECT");
 		return $responseQuery;
 	}
