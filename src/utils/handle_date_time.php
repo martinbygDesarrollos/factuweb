@@ -96,8 +96,28 @@ class handleDateTime{
 	}
 
 	//la fecha que llega por parametro la formatea de manera que si ingreso 20210625 te la devuelve con guiones 2021-06-25
-	public function setFormatHTMLDate($intDate = ""){
-		return  substr($intDate, 0, 4) . "-" .  substr($intDate, 4, 2) . "-" . substr($intDate, 6, 2);
+	// public function setFormatHTMLDate($intDate = ""){
+	// 	return  substr($intDate, 0, 4) . "-" .  substr($intDate, 4, 2) . "-" . substr($intDate, 6, 2);
+	// }
+
+	public function setFormatHTMLDate($intDate = ""): string {
+		// Check if the input is null or empty
+		if ($intDate === null || $intDate === "") {
+			return "";
+		}
+		
+		// Validate input length
+		if (strlen($intDate) < 8) {
+			return "";
+		}
+		
+		// Safely format the date
+		return sprintf(
+			"%s-%s-%s", 
+			substr($intDate, 0, 4), 
+			substr($intDate, 4, 2), 
+			substr($intDate, 6, 2)
+		);
 	}
 
 	//la fecha hora que llega por parametro la formatea de manera si ingreso 20210625120423 te devuelve 2021-06-25 12:04:23
