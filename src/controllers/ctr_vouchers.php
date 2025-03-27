@@ -135,7 +135,7 @@ class ctr_vouchers{
 				$lastVoucher = $voucherEmittedController->getLastVoucherEmitted($currentSession->idEmpresa);
 				if ( $lastVoucher->result == 2 )
 					$lastVoucherId = $lastVoucher->objectResult->id;
-				else $lastVoucherId;
+				else $lastVoucherId = "";
 
 				$responseGetVouchers = $voucherEmittedController->getVouchersEmittedFromRest($currentSession, 1, $lastVoucherId, null, null);
 				if($responseGetVouchers->result == 2){

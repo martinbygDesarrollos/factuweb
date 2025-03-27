@@ -874,6 +874,7 @@ function createNewFactura(){ // VER VER VER
 				}
 			})
 			.catch(function(response){
+				mostrarLoader(false)
 				console.log("este es el catch", response);
 			});
 		}else showReplyMessage(1, "Debe seleccionar una fecha para el comprobante que quiere emitir.", "Fecha requerida", null);
