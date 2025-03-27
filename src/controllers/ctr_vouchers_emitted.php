@@ -456,7 +456,12 @@ class ctr_vouchers_emitted{
 				$counterInserted = $counterInserted +  $responseRecursive->counterInserted;
 				$arrayErrors = array_merge($arrayErrors, $responseRecursive->arrayErrors);
 			}
-		}else return $responseSendRest;
+		}else {
+			$responseSendRest->arrayErrors = array();
+			$responseSendRest->counterRecords = 0;
+			$responseSendRest->counterInserted = 0;
+			return $responseSendRest;
+		}
 
 		$response->counterRecords = $counterRecords;
 		$response->counterInserted = $counterInserted;
