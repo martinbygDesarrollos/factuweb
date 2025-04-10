@@ -476,7 +476,7 @@ class ctr_rest{
 		return $response;
 	}
 
-	public function nuevoCFE($rut, $tipoCFE, $fecha, $montosBrutos, $formaPago, $fechaVencimiento, $tipoMoneda, $exchangeRate, $detalle, $receptor, $indCobranza, $referencias, $adenda, $sucursal, $idBuy, $mediosPago, $tokenRest){
+	public function nuevoCFE($rut, $tipoCFE, $fecha, $montosBrutos, $formaPago, $fechaVencimiento, $tipoMoneda, $exchangeRate, $detalle, $receptor, $indCobranza, $referencias, $adenda, $sucursal, $idBuy, $mediosPago, $ticketFormat, $tokenRest){
 		$response = new \stdClass();
 		$sendPetitionClass = new sendPetition();
 		$restControllerInstance = new ctr_rest();
@@ -532,7 +532,11 @@ class ctr_rest{
 		if(!is_null($mediosPago)){
 			$data['mediosPago'] = $mediosPago;
 		}
-
+		if(!is_null($ticketFormat)){
+			$data['conRepresentacionImpresa'] = 1;
+			$data['formatoRepresentacionImpresa'] = $ticketFormat;
+		}
+		
 		$responseRest = json_decode($sendPetitionClass->nuevoCFE($rut, $data, $tokenRest));
 		if($responseRest->resultado->codigo == 201){
 			$response->result = 2;

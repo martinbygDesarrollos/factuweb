@@ -287,6 +287,11 @@ class users{
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SKIP_SELECT_CLIENTE", "NO");
 		}
 
+		$responseStockManagement = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE");
+    	if($responseStockManagement->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SUPERFAST_SALE", "NO");
+		}
+
     }
 
     public function getListConfigurationsWithBusiness($idBusiness){

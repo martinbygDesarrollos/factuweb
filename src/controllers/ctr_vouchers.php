@@ -141,9 +141,11 @@ class ctr_vouchers{
 				if($responseGetVouchers->result == 2){
 					$response->result = 2;
 					$response->message = "El comprobante fue emitido correctamente y ya se encuentra en el sistema.";
+					$response->voucher = $responseCreateCFE->cfe->representacionImpresa;
 				}else{
 					$response->result = 1;
 					$response->message = "El comprobante fue emitido correctamente pero un error no permitio traerlo al sistema. Actualice los comprobantes almacenados para obtenerlo.";
+					$response->voucher = $responseCreateCFE->cfe->representacionImpresa;
 				}
 			}else return $responseCreateCFE;
 		}else return $responseGetGrossAmount;
@@ -258,7 +260,7 @@ class ctr_vouchers{
 		if(!is_null($dateExpiration))
 			$dateExpiration = $handleDateTimeClass->getDateInt($dateExpiration);
 
-		$resultNuevoCFE = $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->tokenRest);
+		$resultNuevoCFE = $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->ticketFormat, $currentSession->tokenRest);
 		
 		if($resultNuevoCFE->result == 2){ // Si funciona la creacion del CFE entonces descuento las cantidades (actualizo stocks)
 			// $detail
@@ -590,7 +592,7 @@ class ctr_vouchers{
 
 		$receiver = $utilsClass->convertObjectClientToReceiver($objClient->client);
 
-		return $restController->nuevoCFE($currentSession->rut, $typeVoucher, $dateVoucherINT, $grossAmount, $shapePayment , null, $typeCoin, $exchangeRate, $detalleCreditNote, $receiver , 0, $arrayReference, null, $branchCompany, null, null, $currentSession->tokenRest);
+		return $restController->nuevoCFE($currentSession->rut, $typeVoucher, $dateVoucherINT, $grossAmount, $shapePayment , null, $typeCoin, $exchangeRate, $detalleCreditNote, $receiver , 0, $arrayReference, null, $branchCompany, null, null, null, $currentSession->tokenRest);
 		// 	}else return $responseInfoBusiness;
 		// }else return $responseGetBusiness;
 

@@ -751,6 +751,110 @@ function showModalPayment(){
 	});
 }
 
+function superFastSale(){
+	const countNonRemovedItems = (items) => {
+		return items.filter(item => 
+			item.removed !== true && // checks for boolean true
+			item.removed !== "true" // checks for string "true"
+		).length;
+	};
+
+	if (countNonRemovedItems(productsInCart) <= 0){
+		showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+		return;
+	}
+
+	let dateVoucher = getCurrentDate();
+	let adenda = $('#inputAdenda').val() || null; // ADENDA
+	let idBuy = $('#inputIdBuy').val() || null; // NO SE, NULL
+	let amount = null; // TOTAL
+	let discountPercentage = null
+	
+	let total = 0;
+	let totalProduct = 0;
+	let quantity = 1;
+	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+	if(responseDesc.result == 2)
+		discountPercentage = responseDesc.configValue;
+	// console.log('DESC EN %: ' + discountPercentage )
+	for (var i = 0; i < productsInCart.length; i++){
+		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
+			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
+				productsInCart[i].discount = 0;
+			discount = productsInCart[i].discount;
+			quantity = productsInCart[i].count;
+				if(!discountPercentage || discountPercentage == "NO")
+                	totalProduct =  parseFloat(productsInCart[i].amount) * quantity - discount;
+				else if(discountPercentage == "SI")
+	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
+			// console.log(productsInCart[i].amount)
+			// console.log(totalProduct)
+			total = totalProduct + total;
+			parseFloat(total).toFixed(2)
+		}
+	}
+	amount = parseFloat(total).toFixed(2);
+
+	if(responseDesc.result == 2)
+		discountPercentage = responseDesc.configValue;
+	let mediosPago = [{
+		codigo: 1,
+		glosa: "Efectivo",
+		valor: parseFloat(total).toFixed(2)
+	}]
+	// console.log(mediosPago)
+
+	newArrayToInvoice = prepareToCreateNewFactura(productsInCart);
+	// console.log(newArrayToInvoice)
+	if(newArrayToInvoice.length != 0){
+		for (var i = newArrayToInvoice.length - 1; i >= 0; i--) {
+			if(newArrayToInvoice[i].idArticulo == 0){ //significa que es un articulo nuevo por crear
+				console.log(createNewProduct(newArrayToInvoice[i], null)); // Creo un producto nuevo sin rubro
+			}
+		}
+		let data = {
+			client: [],
+			typeVoucher: 101, // 101/111
+			typeCoin: "UYU",
+			shapePayment: 1,
+			dateVoucher: dateVoucher,
+			adenda: adenda,
+			idBuy: idBuy,
+			detail: JSON.stringify(newArrayToInvoice),
+			amount: amount, // ESTO SE ENVIA AL PEDO
+			discountTipo: discountPercentage == "SI" ? 2 : 1,
+			mediosPago: JSON.stringify(mediosPago)
+		};
+		mostrarLoader(true)
+		sendAsyncPost("createNewVoucher", data)
+		.then(function(response){
+			mostrarLoader(false)
+			// console.log(response)
+			if (response.result == 2 ){
+				let responseVoucher = sendPost("getLastVoucherEmitted");
+				if (responseVoucher.result == 2) {
+					let data = {id:responseVoucher.objectResult.id}
+					openModalVoucher(data, "CLIENT", "sale");
+				}
+				prepareToNewSale();
+				removeAllElementsArrayDetail();
+			} else {
+				// console.log(response.message)
+				prepareToNewSale();
+				removeAllElementsArrayDetail();
+				updateVouchersById();
+				showReplyMessage(response.result, response.message, "Nueva factura", null);
+			}
+		})
+		.catch(function(response){
+			mostrarLoader(false)
+			console.log("este es el catch", response);
+		});
+	} else {
+		showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", null);
+	}
+}
+
 //VL:si se ingresaron artìculos que no se encuentran guardados, se guardan
 //si se agregan artìculos y se identifican cambios en los datos del artìculo se actualiza en la base
 function createNewFactura(){ // VER VER VER

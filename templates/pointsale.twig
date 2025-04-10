@@ -120,7 +120,11 @@
 							<button id="discardSales" class="btn btn-secondary shadow-sm mt-3" onclick="discardSalesProducts()"><span class="maintext"> Descartar </span>  <span class="shortcut"> (Ctrl + Supr) </span></button>
 							{# <button id="nextStep" class="btn btn-success shadow-sm mt-3" onclick="nextStep()" tabindex="9" style="float:right;"><span class="maintext"> Siguiente </span>  <span class="shortcut"> (Ctrl + Fin) </span></button> #}
 							{# <button id="idButtonCreateNewFactura" class="btn btn-success shadow-sm mt-3 d-none" onclick="createNewFactura()" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button> #}
-							<button id="confirmSaleBtn" class="btn btn-success shadow-sm mt-3" onclick="" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+							<div style="float:right;">
+								<button id="confirmSaleBtn" class="btn btn-success shadow-sm mt-3" onclick="" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+								<button id="fastSaleConfirm" class="btn btn-info shadow-sm mt-3 mr-2 d-none" onclick="superFastSale()" tabindex="10" style="float:right;" title="Venta super rápida (contado, efectivo, consumidor final)"><span class="maintext"> <i class="fas fa-bolt"></i></span> <span class="shortcut"> (Fin) </span></button>
+							</div>
+							{# <button id="confirmSaleBtn" class="btn btn-success shadow-sm mt-3" onclick="" tabindex="9" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button> #}
 						</div>
 					</div>
 				</div>
@@ -180,6 +184,16 @@
 				setNextStep('selectClient')
 			}
 		}
+
+		let responseSuperFastSale = sendPost("getConfiguration", {nameConfiguration: "SUPERFAST_SALE"});
+		if(responseSuperFastSale.result == 2){
+			if(responseSuperFastSale.configValue == "SI"){
+				setClientFinal()
+				$('#fastSaleConfirm').removeClass("d-none")
+			} else {
+				$('#fastSaleConfirm').addClass("d-none")
+			}
+		}
 	//////////////////////////////////////////////////////////////////////////////
 	//BARCODE
 		let barcode="";
@@ -232,13 +246,22 @@
 					} else { // Just + pressed
 						openModalAddProduct();
 					}
-				} else if (code == 35 && e.ctrlKey){ // Ctr + Fin
-					console.log(productsInCart)
-					if (countNonRemovedItems(productsInCart) > 0){
-						//confirmSale();
-						$('#confirmSaleBtn').click();
-					} else {
-						showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+				} else if (code == 35){ // Fin
+					if (e.ctrlKey){ // Ctrl pressed too (Ctrl + Fin)
+						console.log(productsInCart)
+						if (countNonRemovedItems(productsInCart) > 0){
+							//confirmSale();
+							$('#confirmSaleBtn').click();
+						} else {
+							showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+						}
+					} else { // Fin
+						//console.log(productsInCart)
+						//if (countNonRemovedItems(productsInCart) > 0){
+							$('#fastSaleConfirm').click();
+						//} else {
+						//	showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+						//}
 					}
 				} else if(code >= 37 && code <= 40){ // Arrow key handling
 					let $rows = $('#tbodyDetailProducts tr:not(.removedElement)');

@@ -126,7 +126,7 @@ return function (App $app){
 		return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("AccountState");
 	//UPDATED
-	$app->post('/createNewVoucher', function(Request $request, Response $response) use ($container, $userController, $voucherController){
+	$app->post('/createNewVoucher', function(Request $request, Response $response) use ($container, $userClass, $userController, $voucherController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
@@ -147,6 +147,13 @@ return function (App $app){
 				// var_dump($mediosPago);
 				// var_dump($listDetail);
 				// exit;
+				$idUser = $responseCurrentSession->currentSession->idUser;
+				$responseGetFormato = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
+				if($responseGetFormato->result == 2){
+					$ticketFormat = "application/pdf;template=".$responseGetFormato->objectResult->valor;
+				}
+				// Le agrego al objecto de la sesion el formato del tiket (POR AHORA)
+				$responseCurrentSession->currentSession->ticketFormat = $ticketFormat;
 				return json_encode($voucherController->createNewVoucher($objClient, $typeVoucher, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idBuy, $discountTipo, $mediosPago, $responseCurrentSession->currentSession));
 			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
