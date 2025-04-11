@@ -82,6 +82,36 @@
 			</div>
 		</div>
 	</div>
+
+	<div id="modalConfirmDelete" class="modal" role="dialog">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div id="modalConfirmDeleteColor" class="modal-header">
+					<span id="modalConfirmDeleteTitle" class="modal-title"></span>
+					<button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger mb-0" role="alert">
+						Advertencia: Esto es una acción desctructiva
+					</div>
+					<hr>
+					<ul>
+						<li> <p> Elimina todos los comprobantes emitidos y recibidos </p> </li>
+						<li> <p> Elimina todos los usuarios relacionados a la empresa </p> </li>
+						<li> <p> Elimina todos los clientes y proveedores de la empresa </p> </li>
+						<li> <p> Elimina inventario, cajas, articulos, configuraciones... </p> </li>
+					</ul>
+				</div>
+				<div class="modal-footer justify-content-between">
+					<button id="modalConfirmDeleteButtonNO" type="button" class="btn btn-success shadow-sm" >Cancelar</button>
+					<button id="modalConfirmDeleteButtonSI" type="button" class="btn btn-danger shadow-sm" >Eliminar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<div id="modalLoad" class="modal" tabindex="-1" role="dialog">
 		<div class="modal-dialog modal-dialog-centered" role="document">
 			<div class="modal-content">

@@ -260,6 +260,25 @@ class ctr_users{
 	// 	}
 	// 	return $response;
 	// }
+	public function eliminarEmpresa($currentSession){
+		$response = new \stdClass();
+		$usersClass = new users();
+		$responseGetSuperUser = $usersClass->itsSuperUser($currentSession->userName);
+		if($responseGetSuperUser->result == 2){ // Compruebo otra vez
+			$responseEliminarEmpresa = $usersClass->eliminarEmpresa($currentSession);
+			if ($responseEliminarEmpresa->result == 2) {
+				$response->result = 2;
+				$response->message = "Empresa eliminada con éxito.";
+			} else {
+				$response->result = 1;
+				$response->message = "Error. No se pudo eliminar la empresa";
+			}
+		} else {
+			$response->result = 0;
+			$response->message = "Esta función es exclusiva para usuarios administradores.";
+		}
+		return $response;
+	}
 
 	public function updateDataVouchersAdmin($currentSession){
 		$response = new \stdClass();

@@ -567,5 +567,16 @@ return function (App $app){
 			}else return json_encode($listProvider);
 		}else return json_encode($responseCurrentSession);
 	});
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ELiminar empresa
+	$app->post('/eliminarEmpresa', function(Request $request, Response $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2 && $responseCurrentSession->currentSession->superUser == "SI"){
+			// var_dump($responseCurrentSession->currentSession);
+			// $data = $request->getParams();
+			return json_encode($userController->eliminarEmpresa($responseCurrentSession->currentSession));
+		}else return json_encode($responseCurrentSession);
+	});
+
 }
 ?>

@@ -331,6 +331,17 @@ function changeFormatTicket(value){
 	})
 }
 
+function changeIndFactDefault(value){
+	console.log("valor a cambiar "+value);
+	sendAsyncPost('updateVariableConfiguration', {variable:'INDICADORES_FACTURACION_DEFECTO', value:value})
+	.then(( response )=>{
+		if ( response ){
+			showReplyMessage(response.result, response.message, "Facturación por defecto", null);
+		}
+		console.log(response);
+	})
+}
+
 
 function saveAdendaDefault(){
 	let value = $("#idTextareaAdendaConfiguration").val()

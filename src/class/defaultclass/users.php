@@ -19,7 +19,7 @@ class users{
 			$response->result = 2;
 		else if($responseQuery->result == 1){
 			$response->result = 1;
-			$response->message = "El rut ingresado corresponse a una empresa que no tiene este servicio contratado.";
+			$response->message = "El usuario no es administrador.";
 			//este mensaje sale cuando no se encuentra superusuario ???
 		}else return $responseQuery;
 
@@ -437,6 +437,79 @@ class users{
     		$responseQuery->message = "El identificador ingresado no corresponde a un usuario registrado.";
 
     	return $responseQuery;
+    }
+
+    public function eliminarEmpresa($currentSession){
+		$usersInstance = new users();
+    	$dbClass = new DataBase();
+
+		$response = new \stdClass();
+		$response->result = 2;
+		$errores = false;
+
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `comprobantes_recibidos` WHERE idReceptor = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `clientes` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `proveedores` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `cuotas_servicios` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `servicios` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `articulos` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `inventario` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `rubro` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `bitacora_comprobantes` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `usuarios` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `comprobantes` WHERE idEmisor = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `permisos_empresa` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `configuraciones` WHERE idUsuario = ?", array('i', $currentSession->idUser), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+		$responseQuery = $dbClass->sendQuery("DELETE FROM `empresas` WHERE idEmpresa = ?", array('i', $currentSession->idEmpresa), "BOOLE");
+    	if($responseQuery->result != 2){
+			$errores = true;
+		}
+
+		if($errores == true){
+			$response->result = 0;
+			$response->message = "Error.";
+		}
+
+    	return $response;
     }
 
     public function getUserByNickName($nickName){
