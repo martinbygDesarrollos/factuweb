@@ -62,11 +62,17 @@ function createRow(voucher){
 	typeCoin = voucher.moneda
 	total = voucher.total
 
+	colorClass = ""
+
 	if ( tipoCFE == "e-Ticket Cobranza"){
 		tipoCFE = "Recibo e-Ticket";
+		colorClass = "voucherRecibo"
 	}
 	else if ( tipoCFE == "e-Factura Cobranza"){
 		tipoCFE = "Recibo e-Factura";
+		colorClass = "voucherRecibo"
+	} else {
+		colorClass = "voucherNormal"
 	}
 
 	var nullCell = "<td class='text-right'></td>";
@@ -74,12 +80,9 @@ function createRow(voucher){
 
 
 	if ( voucher.isAnulado ){
-		row = "<tr id='" + idVoucher + "' onclick='openModalVoucherClient(this)' class='voucherDgiAnulado ' >";
-
-	}else{
-		row = "<tr id='" + idVoucher + "' onclick='openModalVoucherClient(this)'>";
-
+		colorClass = "voucherDgiAnulado"
 	}
+	row = `<tr id='${idVoucher}' onclick='openModalVoucherClient(this)' class="${colorClass}">`;
 
 
 	row += "<td class='text-right'>" + tipoCFE + " " + serieCFE + numeroCFE +"</td>";

@@ -227,11 +227,14 @@ class ctr_vouchers_emitted{
 		return $response;
 	}
 	//UPDATED
+	// MA: Por cada voucher emitido que no esta anulado por DGI verifico si se anuló (consulto a ormen de nuevo por cada CFE) POSIBLE REALENTIZACIÓN DE TODO (TESTEAR) => [de 3-4 decimas a 2 segundos... NO]
 	public function getVouchersEmitted($lastVoucherEmittedIdFound, $payMethod, $typeVoucher, $dateVoucher, $numberVoucher, $documentClient, $branchCompany, $currentSession){
 		$handleDateTimeClass = new handleDateTime();
 		$vouchersEmittedClass = new vouchersEmitted();
 		$clientController = new ctr_clients();
 		$utilsClass = new utils();
+		$restController = new ctr_rest();
+
 		// $responseGetBusiness = ctr_users::getBusinesSession();
 		// if($responseGetBusiness->result == 2){
 		if($dateVoucher != 0)
@@ -259,6 +262,13 @@ class ctr_vouchers_emitted{
 							$value['documentoCliente'] = "Consumidor Final";
 					}
 				}
+				// $responseRestGetCFE = $restController->consultarCFEFast($currentSession->rut, $value['tipoCFE_CODE'], $value['serieCFE'], $value['numeroCFE'], $currentSession->tokenRest);
+				// if($responseRestGetCFE->result == 2){
+				// 	if($responseRestGetCFE->cfe->isAnulado == 1 && $value['isAnulado'] == 0){
+				// 		$value['isAnulado'] = 1; // Cambio para el front
+				// 		$vouchersEmittedClass->cancelVoucherById($value['id'], $currentSession->idEmpresa); // Cambio En la BD
+				// 	}
+				// }
 				$newList[] = $value;
 				$responseGetVouchers->listResult = $newList;
 			}
@@ -651,6 +661,22 @@ class ctr_vouchers_emitted{
 
 		return $response;
 	}
+
+	// NEW
+	public function cancelVoucherById($idVoucher, $currentSession){
+		$response = new \stdClass();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$responseGetVoucher = $vouchersEmittedClass->cancelVoucherById($idVoucher, $currentSession->idEmpresa);
+		if($responseGetVoucher->result != 2){
+			$response->result = $responseGetVoucher->result;
+			$response->message ="Error. No se pudo anular el comprobante en la base";
+		}else{
+			$response->result = 2;
+			$response->message = "Comprobante actualizado con éxito!";
+		}
+		return $response;
+	}
+
 	//UPDATED
 	public function getClientAccountSate($idClient, $dateInit, $dateEnding, $typeCoin, $config, $currentSession){
 		$response = new \stdClass();
@@ -659,6 +685,7 @@ class ctr_vouchers_emitted{
 		$handleDateTimeClass = new handleDateTime();
 		$voucherController = new ctr_vouchers();
 		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
 
 		$dateInitINT = $handleDateTimeClass->getDateInt($dateInit);
 		$dateEndingINT = $handleDateTimeClass->getDateInt($dateEnding);
@@ -669,6 +696,21 @@ class ctr_vouchers_emitted{
 		if($resultGetClient->result == 2){
 			$variableShowBalance = $userController->getVariableConfiguration("VER_SALDOS_ESTADO_CUENTA", $currentSession);//consulto si el usuario tiene acceso a esa configuraciòn
 			if($variableShowBalance->result == 2){
+
+				// NUEVO (VERIFICO SI NO HAY ANULADOS)
+				$lastId = $vouchersEmittedClass->getMaxIdVouchers($currentSession->idEmpresa);
+				$responseRestGetCFEs = $vouchersEmittedClass->getListVouchersEmitted( $dateInitINT, $dateEndingINT, $idClient, null, null, $lastId, $currentSession->idEmpresa, 0 );
+				// var_dump($responseRestGetCFEs);
+				if($responseRestGetCFEs->result == 2){
+					foreach ($responseRestGetCFEs->listResult as $key => $value) {
+						$responseRestGetCFE = $restController->consultarCFEFast($currentSession->rut, $value['tipoCFE'], $value['serieCFE'], $value['numeroCFE'], $currentSession->tokenRest);
+						if($responseRestGetCFE->cfe->isAnulado == 1 && $value['isAnulado'] == 0){
+							$vouchersEmittedClass->cancelVoucherById($value['id'], $currentSession->idEmpresa); // Cambio En la BD porque esta anulado por dgi pero en la base no se refleja
+						}
+					}
+				}
+				// ###################################
+
 				//$responseAccountState se obtienen todos los datos para mostrar en el estado de cuentas
 				$responseAccountState = $vouchersEmittedClass->getAccountState($idClient, $dateInitINT, $dateEndingINT, $typeCoin, $currentSession->idEmpresa, $config);
 				if($responseAccountState->result != 0){

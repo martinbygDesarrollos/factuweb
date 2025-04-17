@@ -326,6 +326,28 @@ class ctr_rest{
 		return $response;
 	}
 
+	//UPDATED ESTA Funcion trae informacion del CFE mas rapido (sin representacion Impresa)
+	public function consultarCFEFast($rut, $tipoCFE, $serieCFE, $numeroCFE, $token){
+		$response = new \stdClass();
+		$sendPetitionClass = new sendPetition();
+		$restControllerInstance = new ctr_rest();
+		$responseRest = json_decode($sendPetitionClass->consultarCFEFast($rut, $tipoCFE, $serieCFE, $numeroCFE, $token));
+		if(isset($responseRest->result)){
+			if($responseRest->result->code == 200){
+				$response->result = 2;
+				unset($responseRest->result);
+				$response->cfe = $responseRest;
+			}else{
+				$response->result = 0;
+				$response->message = $responseRest->result->message;
+			}
+		}else{
+			$response->result = 0;
+			$response->message = $responseRest->result->error;
+		}
+		return $response;
+	}
+
 	public function consultarCertificadoDigital($rut){
 		$response = new \stdClass();
 		$sendPetitionClass = new sendPetition();

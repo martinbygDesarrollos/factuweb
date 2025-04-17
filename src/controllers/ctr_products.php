@@ -148,8 +148,14 @@ class ctr_products{
 							$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
 							error_log("INVENTARIO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
 							// Y no me interesa si funciona
-							$responseInsertInventory = $productsClass->updateInventory($inventory, $minInventory, $dateInventory, $responseGetProduct->objectResult->idInventario, $currentSession->idEmpresa);
-							if($responseInsertInventory->result == 2)
+							// Si el inventario del producto es NULL CREO uno para él 
+							if(!isset($responseGetProduct->objectResult->idInventario)){
+								$responseInsertInventory = $productsClass->insertInventory($inventory, $minInventory, $dateInventory, $currentSession->idEmpresa);
+								if($responseInsertInventory->result == 2)
+									$responseGetProduct->objectResult->idInventario = $responseInsertInventory->id;
+							}
+							$responseUpdateInventory = $productsClass->updateInventory($inventory, $minInventory, $dateInventory, $responseGetProduct->objectResult->idInventario, $currentSession->idEmpresa);
+							if($responseUpdateInventory->result == 2)
 								error_log("INVENTARIO ACTUALIZADO CON EXITO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
 						}
 
@@ -316,7 +322,7 @@ class ctr_products{
 			$toInsert = 0;
 
 			$includeIVA = $jsonPrintFormat->montosBrutos; // 1 IVA INCLUIDO
-			$heading = $productsClass->getHeadingByName("Articulos", $idBusiness);
+			$heading = $productsClass->getHeadingByName("Artículos", $idBusiness);
 			$idHeading = $heading->objectResult->idRubro;
 			foreach ($jsonPrintFormat->detalles as $key => $itemDetail) {
 				if(!is_null($itemDetail->nomItem) && strlen($itemDetail->nomItem) > 2){
@@ -327,7 +333,7 @@ class ctr_products{
 					}
 
 					$toInsert ++;
-					if(is_null($itemDetail->descripcion) ||  strlen($itemDetail->descripcion) == 0)
+					if(is_null($itemDetail->descripcion) || strlen($itemDetail->descripcion) == 0)
 						$itemDetail->descripcion = null;
 
 					$cost = $othersClass->getCostFromAmountAndIVA($itemDetail->precio, $itemDetail->indFact);

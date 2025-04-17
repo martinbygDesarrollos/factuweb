@@ -134,6 +134,13 @@
 
 
 .voucherDgiAnulado{
-  color: #bd2130;
-  font-weight: 400;
+  color: #000000;
+  font-weight: 600;
+  background-color: #e7484851 !important;
+}
+
+.voucherRecibo{
+  color: #000000;
+  font-weight: 600;
+  background-color: #48e75336 !important;
 }

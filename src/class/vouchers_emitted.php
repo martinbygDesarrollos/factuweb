@@ -111,6 +111,7 @@ class vouchersEmitted{
 
 				$value['fechaHoraEmision'] = substr($handleDateTimeClass->setFormatBarDateTime($value['fechaHoraEmision']), 0, 16);
 				$value['total'] = number_format($value['total'], 2, ",", ".");
+				$value['tipoCFE_CODE'] = $value['tipoCFE'];
 				$value['tipoCFE'] = $utilsClass->getNameVoucher($value['tipoCFE'], $value['isCobranza']);
 				$value['fecha'] = $handleDateTimeClass->setFormatBarDate($value['fecha']);
 
@@ -165,7 +166,7 @@ class vouchersEmitted{
 		if ( isset($limit) && $limit != "" && $limit != "0" ){
 			$orderAndLimit .= "LIMIT ".$limit." ";
 		}
-		error_log($sql . $where . $orderAndLimit);
+		error_log($sql . $where . $orderAndLimit . " : " . $dateFinish . " - " . $dateInit . " - " . $lastId . " - " . $idBusiness);
 		return $dataBaseClass->sendQuery($sql . $where . $orderAndLimit, array('sssi', $dateFinish, $dateInit, $lastId, $idBusiness), "LIST");
 	}
 
@@ -182,6 +183,11 @@ class vouchersEmitted{
 		return $dbClass->sendQuery("UPDATE comprobantes SET total= ?, fecha = ?, moneda = ? WHERE indice = ? AND idEmisor = ?", array('disii', $total, $dateReceipt, $typeCoin, $indexVoucher, $myBusiness), "BOOLE");
 	}
 
+	//UPDATED setea como anulado un comprobante 
+	public function cancelVoucherById($idVoucher, $myBusiness){
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE comprobantes SET isAnulado = 1 WHERE id = ? AND idEmisor = ?", array('si', $idVoucher, $myBusiness), "BOOLE");
+	}
 
 	//si un comprobante que se emitio por sigecom es anulado por dgi, se actualiza el campo isAnulado, para que no se tenga en cuenta en el estado de cuenta y demas
 	public function updateVoucherAnuladoByDgi($indexVoucher, $tipoCFE, $serieCFE, $numeroCFE, $isAnulado, $myBusiness){

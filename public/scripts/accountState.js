@@ -103,6 +103,20 @@ function openModalVoucher(button, prepareFor, view){
 			$('#buttonCancelVoucher').css('visibility', 'hidden');
 		}
 
+		if(responseGetCFE.voucherCFE.isAnulado){
+			if (view == 'vouchersEmitted' && !$('#' + idVoucher).hasClass('voucherDgiAnulado')){ // Esta anulado pero en nuestra base no
+				sendAsyncPost("cancelVoucherById", {idVoucher: idVoucher})
+				.then(( response )=>{
+					// console.log(response)
+					if ( response.result == 2 ){
+						$('#' + idVoucher).addClass('voucherDgiAnulado')
+					}
+				});
+				console.log(idVoucher)
+			}
+			$('#buttonCancelVoucher').css('visibility', 'hidden');
+		}
+
 		$('#modalSeeVoucher').modal();
 	}else {
 		mostrarLoader(false)

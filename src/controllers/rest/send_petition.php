@@ -144,6 +144,12 @@ class sendPetition{
 		return $sendPetitionInstance->prepareAndSendCurl("GET", $url, $token, null);
 	}
 	//UPDATED
+	public function consultarCFEFast($rut, $tipoCFE, $serieCFE, $numeroCFE, $token){
+		$sendPetitionInstance = new sendPetition();
+		$url = "company/" . $rut . "/cfe?tipocfe=" . $tipoCFE . "&seriecfe=" . $serieCFE . "&numerocfe=" . $numeroCFE;
+		return $sendPetitionInstance->prepareAndSendCurl("GET", $url, $token, null);
+	}
+	//UPDATED
 	public function consultarCaes($rut, $token)	{
 		$sendPetitionInstance = new sendPetition();
 		return $sendPetitionInstance->prepareAndSendCurl("GET", "caes/" . $rut, $token, null);

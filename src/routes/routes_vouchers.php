@@ -250,6 +250,15 @@ return function (App $app){
 			return json_encode($voucherController->getVoucherCFE($idVoucher, $prepareFor, "text/html;template=A5Vertical", $responseCurrentSession->currentSession)); /*a gusto*/
 		}else return json_encode($responseCurrentSession);
 	});
+	// NEW
+	$app->post('/cancelVoucherById', function(Request $request, Response $response) use ($container, $userController, $vouchEmittedController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$data = $request->getParams();
+			$idVoucher = $data['idVoucher'];
+			return json_encode($vouchEmittedController->cancelVoucherById($idVoucher, $responseCurrentSession->currentSession));
+		}else return json_encode($responseCurrentSession);
+	});
 	//UPDATED
 	$app->post('/getVoucherToExportCFE', function(Request $request, Response $response) use ($userController, $userClass, $voucherController){
 		$responseCurrentSession = $userController->validateCurrentSession();

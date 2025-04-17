@@ -123,7 +123,7 @@ function getAccountState(prepareFor){
 						let typeCoin = "USD";
 						if(selectedTypeCoin)
 							typeCoin = "UYU";
-
+						$('#modalAccountState').modal('hide'); mostrarLoader(true);
 						let url = getSiteURL() + 'generar-estado-cuenta/' + idSelected + '/' + selectedDateInit  + '/' + selectedDateEnding + '/' + typeCoin + '/' + prepareFor + '/' + showCashCollection;
 						window.location.href = url;
 					}else showReplyMessage(1, "La fecha de comienzo no puede ser posterior a la fecha final.", "Estado de cuenta", "modalAccountState");

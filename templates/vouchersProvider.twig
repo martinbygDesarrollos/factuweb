@@ -10,18 +10,18 @@
 		</div>
 		<div class="card-body">
 			<div class="form-row mb-3">
-				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+				<div class="col mr-1 ml-0 mb-1" style="min-width: 170px;">
 					<div class="input-group">
 						<input id="inputToSearchProvider" type="text" class="form-control form-control-sm shadow-sm" onchange="searchVoucherProvider(this)" onkeyup="this.onchange()" placeholder="Buscar proveedor..." title="RUT o Razón Social del proveedor.">
 					</div>
 				</div>
-				<div class="col m-1" style="min-width: 150px; max-width: 200px;">
+				<div class="col mr-1 ml-0 mb-1" style="min-width: 150px; max-width: 200px;">
 					<div class="input-group" >
 						<input id="inputToSearch" type="number" class="form-control form-control-sm shadow-sm" onchange="searchVoucherNumber(this)" onkeyup="this.onchange()" placeholder="Buscar comprobante..." title="Ingresar número de comprobante.">
 					</div>
 				</div>
 				{% if resultDatesVoucher.result == 2 %}
-				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+				<div class="col mr-1 ml-0 mb-1" style="min-width: 170px">
 					<div class="input-group">
 						<input id="inputDateFilter" type="date" class="form-control form-control-sm shadow-sm" min="{{ resultDatesVoucher.objectResult.minDate }}" max="{{ resultDatesVoucher.objectResult.maxDate }}" value="{{resultDatesVoucher.objectResult.maxDate}}">
 						<div class="input-group-append">
@@ -30,7 +30,7 @@
 					</div>
 				</div>
 				{% endif %}
-				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+				<div class="col mr-1 ml-0 mb-1" style="min-width: 170px;">
 					<select class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changePaymentMethod(this)">
 						<option value="0" selected>Formas de pago</option>
 						<option value="1">Contado</option>
@@ -38,7 +38,7 @@
 					</select>
 				</div>
 				{% if resultTypeVouchers.result == 2 %}
-				<div class="col m-1" style="min-width: 170px; max-width: 250px;">
+				<div class="col mr-0 ml-0 mb-1" style="min-width: 170px;">
 					<select id="selectTypeVoucher" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm" onchange="changeTypeVoucher(this)">
 						<option value="0" selected>Todos los comprobantes</option>
 						{% for typeCFE in resultTypeVouchers.listResult %}
