@@ -15,6 +15,10 @@ var discountPercentage = null; // Configuracion traida desde la BD
 
 var btnAddDetailClickNumber = 0;
 
+// Variable para almacenar el timestamp de la última ejecución
+let lastExecutionTime = 0;
+const MIN_EXECUTION_INTERVAL = 3000;
+
 var config_value = null;
 var headingval = null;
 
@@ -67,14 +71,14 @@ $('#modalAddProduct').off('shown.bs.modal').on('shown.bs.modal', function () {
 // });
 
 $('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-	console.log("modalSetClient.onHidden")
+	// console.log("modalSetClient.onHidden")
     // Check if the modalConfirm modal is open
     // if ($('#modalConfirm').hasClass('show')) {
 	// 	console.log("Modal setClient cerrado pero Confirm esta abierto")
 	// 	// console.log("Modal setClient Cerrado")
 	// 	// $('#modalConfirmButtonSI').focus();
 	// } else {
-		console.log("Modal setClient cerrado")
+		// console.log("Modal setClient cerrado")
 		setNextStep('selectTypeVoucher')
 		// $('#selectTypeVoucher').focus();
 	// }
@@ -110,7 +114,7 @@ function keyPressAddDetail(keyPress, value, size){
 		else if(keyPress.srcElement.id =="inputPriceProduct")
 			$('#inputDetailProduct').focus();
 		else if(keyPress.srcElement.id =="inputDetailProduct")
-			$('#btnConfirmAddDetail').click();
+			$('#btnConfirmAddDetail').click(); 
 	}
 	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
 		if(keyPress.srcElement.id == "inputDetailProduct")
@@ -315,9 +319,9 @@ function selectListItem(itemSelected){
 }
 
 function addValuesModalDetail(articulo){
-	console.log("ARTICULO");
-	console.log(articulo);
-	console.log("END ARTICULO");
+	// console.log("ARTICULO");
+	// console.log(articulo);
+	// console.log("END ARTICULO");
 	let allIndicatorsInvoice = [];
 	$('#inputDetailProduct').val(articulo.detalle);
 	$('#inputDiscountProduct').val(articulo.descuento);
@@ -381,13 +385,26 @@ function calcularCostoPorImporte(importe, idiva){
 
 //se confirma y se agrega un nuevo articulo a la tabla de facturacion
 function insertNewDetail(){
-	console.log("insertNewDetail")
-	btnAddDetailClickNumber++;//esto está porque cuando se daba enter varias veces seguidas en el confirmar de agregar un nuevo producto, se terminaba agregando muchas veces
-	if(btnAddDetailClickNumber == 1){
+
+	// Obtener el tiempo actual
+    const currentTime = Date.now();
+
+	// Verificar si ha pasado suficiente tiempo desde la última ejecución
+    if (currentTime - lastExecutionTime < MIN_EXECUTION_INTERVAL) {
+        console.log("Demasiado rápido, espera un momento...");
+        return; // Salir de la función sin hacer nada
+    }
+    
+    // Actualizar el timestamp de la última ejecución
+    lastExecutionTime = currentTime;
+
+	// console.log("insertNewDetail")
+	// btnAddDetailClickNumber++;//esto está porque cuando se daba enter varias veces seguidas en el confirmar de agregar un nuevo producto, se terminaba agregando muchas veces
+	// if(btnAddDetailClickNumber == 1){
 
 		if( productsInCart.length == 0){
 			insertNewDetailProcess();
-			btnAddDetailClickNumber = 0;
+			// btnAddDetailClickNumber = 0;
 		}
 		else if (productsInCart.length > 0){
 			const product = productsInCart.find(prod => prod.idArticulo == idProductSelected && ( prod.removed == false || prod.removed == "false"));
@@ -400,17 +417,17 @@ function insertNewDetail(){
 				addTotal();
 				// $('#selectTypeCoin').prop( "disabled", true );
 				$('#modalAddProduct').modal('hide');
-				btnAddDetailClickNumber = 0;
+				// btnAddDetailClickNumber = 0;
 				updateProductsInSession(position, "count", product.count);
 			}else{
 				insertNewDetailProcess();
-				btnAddDetailClickNumber = 0;
+				// btnAddDetailClickNumber = 0;
 			}
 		}
-	}
-	else{
-		btnAddDetailClickNumber = 0;
-	}
+	// }
+	// else{
+	// 	// btnAddDetailClickNumber = 0;
+	// }
 }
 
 function updateProductsInSession(product, indexProduct, data){
@@ -418,7 +435,7 @@ function updateProductsInSession(product, indexProduct, data){
 }
 
 function insertNewDetailProcess(){
-	console.log("insertNewDetailProcess")
+	// console.log("insertNewDetailProcess")
 
 	let description = $('#inputDescriptionProduct').val() || null;
 	let detail = $('#inputDetailProduct').val() || null;
@@ -436,7 +453,7 @@ function insertNewDetailProcess(){
 	if(description){
 		if(count && count >= 1){
 			if(price && price > 0){
-				btnAddDetailClickNumber = 0;
+				// btnAddDetailClickNumber = 0;
 				indexDetail++;
 				createDetailArray(count); // productsInCart es creado
 				let row = createDetailRow(indexDetail, description, detail, count, price, discount, idIva, ivaValue, price);
@@ -521,8 +538,12 @@ function createDetailArray(cant){
 
 	productsInCart.push(itemDetail);
 	// document.cookie = 'TYPECOIN='+$('#selectTypeCoin').val();
-	sendPost("saveProductsInSession", {product: itemDetail});
-	console.log(productsInCart)
+	responseSaveProduct = sendPost("saveProductsInSession", {product: itemDetail});
+	if (responseSaveProduct.result == 2){
+		console.log("CAMBIO NUMERO DE CLICKS")
+		// btnAddDetailClickNumber = 0;
+	}
+	// console.log(productsInCart)
 }
 
 function getObjectProductsInCart(trItem){
@@ -535,7 +556,7 @@ function getObjectProductsInCart(trItem){
 function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN 80 es de distintos? u 80 del mismo articulo tambien es el el limite? VER VER VER
 
 	var x = elementsNoRemoved();
-	console.log(x);
+	// console.log(x);
 	if(x < 80){
 		let data = null;
 		let newBarcode = barcode;
@@ -554,7 +575,7 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 				let list = response.listResult;
 				firstRow = true;
 				for (var i = 0; i < list.length; i++) {
-					console.log(list[i].descripcion + " = " + list[i].codigoBarra)
+					// console.log(list[i].descripcion + " = " + list[i].codigoBarra)
 					let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
 					$('#tbodyListPrice').append(row);
 					if(firstRow){
@@ -568,7 +589,7 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 				$('#inputTextToSearchPrice').val("");
 				$('#inputTextToSearchPrice').prop( "readOnly", true );
 				$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
-					console.log("addProductByCodeBar")
+					// console.log("addProductByCodeBar")
 					$('#inputTextToSearchPrice').focus();
 				});
 				$('#modalListPrice').modal('show');
@@ -576,7 +597,7 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 			else if( response.listResult.length == 1 ){
 				objeto = response.listResult[0];
 				addValuesModalDetail(objeto);
-				console.log(objeto);
+				// console.log(objeto);
 				idProductSelected = objeto.idArticulo
 				$('#modalListPrice').modal('hide');
 				$('#modalDeleteDetail').modal('hide');
@@ -611,7 +632,7 @@ function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN
 }
 
 function setClientFinal(){
-	console.log('Set cliente final');
+	// console.log('Set cliente final');
 	$('#inputTextToSearchClient').val("");
 	// $('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");
 	$("#selectTypeVoucher").empty();
@@ -1104,12 +1125,12 @@ function prepareToNewSale(){
 }
 
 function confirmSale(){
-	console.log("confirmSale")
+	// console.log("confirmSale")
 	$('#confirmSaleBtn').click();
 }
 
 function setNextStep(step){ // le settea el siguiente paso al boton de confirmar
-	console.log("setNextStep: " + step)
+	// console.log("setNextStep: " + step)
 	switch (step) {
 		case 'selectClient':
 			$('#confirmSaleBtn').off('click').on('click', function () {
@@ -1224,16 +1245,16 @@ function loadProductsInSession (){
 
 //se confirma y se agrega un nuevo articulo a la tabla de facturacion
 function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU y NO se toca el IVA, si tiene IVA se vende con él sino no
-    console.log("START COOKIES");
-    console.log(document.cookie);
-    console.log("END COOKIES");
+    // console.log("START COOKIES");
+    // console.log(document.cookie);
+    // console.log("END COOKIES");
 	// let disabledTypeCoin = null;
 	// let disabledIva = null;
 	// let selectTypeCoinValue = null;
 	if (productsInCart.length > 0){
 		let cookieData = document.cookie.split("; ");
 		for (var i = 0; i < cookieData.length; i++) {
-            console.log(cookieData[i]);
+            // console.log(cookieData[i]);
 			// if (cookieData[i].includes("TYPECOIN")){ // SI no tiene TypeCoin lo tomo como UYU
 			// 	selectTypeCoinValue = cookieData[i].split("=");
 			// 	selectTypeCoinValue.value = selectTypeCoinValue[1];
@@ -1345,7 +1366,7 @@ function addTotal(){
 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
 	if(responseDesc.result == 2)
 		discountPercentage = responseDesc.configValue;
-	console.log('DESC EN %: ' + discountPercentage )
+	// console.log('DESC EN %: ' + discountPercentage )
 	for (var i = 0; i < productsInCart.length; i++){
 		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
 			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
@@ -1361,8 +1382,8 @@ function addTotal(){
 				else if(discountPercentage == "SI")
 	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
             // }
-			console.log(productsInCart[i].amount)
-			console.log(totalProduct)
+			// console.log(productsInCart[i].amount)
+			// console.log(totalProduct)
 			// totalProduct =  parseFloat(productsInCart[i].amount) * quantity;
 			total = totalProduct + total;
 			parseFloat(total).toFixed(2)

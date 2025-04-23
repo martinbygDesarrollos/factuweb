@@ -202,18 +202,18 @@
 			if($('.loaderback').css('display') == 'block' &&  $('.loader').css('display') == 'block'){
 				return;
 			}
-			console.log("barcode: '" + barcode + "'");
+			// console.log("barcode: '" + barcode + "'");
 			let elementFocused = document.activeElement;
 //			let elementFocused = document.activeElement.tagName;
 			let elementFocusedID = document.activeElement.id;
-			console.log(elementFocusedID);
+			// console.log(elementFocusedID);
 			if ( elementFocused.tagName == "BODY" ){ //
 			//if ( elementFocused.closest('#pointSaleSeccion')){ //
-				console.log("BODY Focus");
+				// console.log("BODY Focus");
 				let code = (e.keyCode ? e.keyCode : e.which);
 				let character = e.key;
 				if(code == 13){ // Enter
-					console.log("Enter pressed with:", {
+					/* console.log("Enter pressed with:", {
 						event: e,
 						ctrlKey: e.ctrlKey,
 						preventDefaultCalled: e.defaultPrevented,
@@ -222,7 +222,7 @@
 						cancelable: e.cancelable,
 						target: e.target,
 						currentTarget: e.currentTarget
-					});
+					}); */
 					
 					// Explicitly prevent default behavior
 					e.preventDefault();

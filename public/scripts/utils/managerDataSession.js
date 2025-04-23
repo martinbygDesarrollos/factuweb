@@ -15,6 +15,8 @@ function updateDataSession(indice0, indice1, data){ //arrayIndexSession tiene un
 
 	let response = sendPost('updateDataSession', {index0:indice0, index1:indice1, newData: data});
 	if (response.result == 2){
+		console.log("CAMBIO NUMERO DE CLICKS")
+		// btnAddDetailClickNumber = 0;
 		return response;
 	}
 	else console.log(response.message);
