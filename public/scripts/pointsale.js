@@ -1526,39 +1526,54 @@ function createRowListPrice(idProduct, description, heading, price, coin){
 
 //agrega un nuevo producto al carro de compra
 function addToCar(element, idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
+	mostrarLoader(true)
 	console.log(element)
 	$("#tbodyListPrice button").attr('disabled', "true");
 	// $(element).attr('disabled', 'true')
 	$('#modalListPrice').modal("hide")
 	// $(element).off('click');
-	let response = sendPost('getProductById', { idProduct: idProduct});
-	if(response.result == 2){
-		$('#modalListPrice').modal('hide');
-		let newProduct = response.objectResult;
-		// console.log(newProduct);
-		if(newProduct.moneda == "USD")
-			newProduct.importe = calculeQuote(newProduct.importe, USD, newProduct.moneda, "UYU");
-		$('#inputDescriptionProduct').val(newProduct.descripcion);
-		$('#inputDetailProduct').val(newProduct.detalle);
-		$('#inputCountProduct').val(1)
-		$('#inputDiscountProduct').val(newProduct.descuento);
-		$('#inputTaxProduct').val(newProduct.idIva);
-		$('#inputPriceProduct').val(newProduct.importe);
-		idProductSelected = idProduct;
-		calculateInverseByCost();
-		insertNewDetail();
-		$("#tbodyListPrice button").attr('disabled', "false");
-		// $(element).on('click', function() {
-		// 	addToCar(element, idProduct);
-		// });
-	} else {
-		showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
-		$("#tbodyListPrice button").attr('disabled', "false");
+	// let response = sendPost('getProductById', { idProduct: idProduct});
+	// if(response.result == 2){
+
+	sendAsyncPost("getProductById", { idProduct: idProduct })
+		.then(( response )=>{
+			mostrarLoader(false)
+			$('#modalListPrice').modal('hide');
+			let newProduct = response.objectResult;
+			// console.log(newProduct);
+			if(newProduct.moneda == "USD")
+				newProduct.importe = calculeQuote(newProduct.importe, USD, newProduct.moneda, "UYU");
+			$('#inputDescriptionProduct').val(newProduct.descripcion);
+			$('#inputDetailProduct').val(newProduct.detalle);
+			$('#inputCountProduct').val(1)
+			$('#inputDiscountProduct').val(newProduct.descuento);
+			$('#inputTaxProduct').val(newProduct.idIva);
+			$('#inputPriceProduct').val(newProduct.importe);
+			idProductSelected = idProduct;
+			calculateInverseByCost();
+			insertNewDetail();
+			$("#tbodyListPrice button").attr('disabled', "false");
+			// $(element).on('click', function() {
+			// 	addToCar(element, idProduct);
+			// });
+		})
+		.catch(function(response){
+			mostrarLoader(false)
+			showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+			$("#tbodyListPrice button").attr('disabled', "false");
+
+			console.log("este es el catch", response);
+		});
+	// } else {
+		// mostrarLoader(false)
+
+		// showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+		// $("#tbodyListPrice button").attr('disabled', "false");
 		// $(element).on('click', function() {
 		// 	addToCar(element, idProduct);
 		// });
 
-	}
+	// }
 }
 
 function elementsNoRemoved (){ // Devuelve la cantidad de productos en el carro
