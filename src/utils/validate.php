@@ -7,7 +7,15 @@ class validate{
 		$ci = $ci ?? "";
 
 		$ciLimpia = preg_replace( '/\D/', '', $ci );
-		$validationDigit = $ciLimpia[-1];
+
+		// Verificamos si la cadena resultante tiene al menos 1 carácter
+		if (strlen($ciLimpia) === 0) {
+			// devolver un valor inválido o error si no hay dígitos
+			return -1;
+		}
+
+		// $validationDigit = $ciLimpia[-1];
+		$validationDigit = substr($ciLimpia, -1);
 		$ciLimpia = preg_replace('/[0-9]$/', '', $ciLimpia );
 
 		$ci = preg_replace( '/\D/', '', $ci );

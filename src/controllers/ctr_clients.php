@@ -116,14 +116,28 @@ class ctr_clients{
 		$response = new \stdClass();
 		$validateClass = new validate();
 
+		$documentClient = $documentClient ?? "";
+		$documentClient = trim($documentClient);
+
 		$responseValidateRut = $validateClass->validateRUT($documentClient);
 		$resultValidateCI = $validateClass->validateCI($documentClient);
 
-		$validationDigit = intval($documentClient[-1]);
-		if ($resultValidateCI === $validationDigit)
+		// Solo intentamos sacar el dígito si el string no está vacío
+		$validationDigit = null;
+		if (strlen($documentClient) > 0) {
+			$validationDigit = intval(substr($documentClient, -1));
+		}
+
+		if ($validationDigit !== null && $resultValidateCI === $validationDigit)
 			$resultValidateCI = true;
 		else
 			$resultValidateCI = false;
+
+		// $validationDigit = intval($documentClient[-1]);
+		// if ($resultValidateCI === $validationDigit)
+		// 	$resultValidateCI = true;
+		// else
+		// 	$resultValidateCI = false;
 
 		if($typeVoucher == 111 && $responseValidateRut->result == 2){
 			$response->result = 2;
