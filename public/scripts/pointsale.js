@@ -834,15 +834,15 @@ function superFastSale(){
 			}
 		}
 		let consumidorFinal = [];
-		consumidorFinal[0] = ({
-			document: null,
-			name: null,
-			address: null,
-			city: null,
-			department: null,
-			email: null,
-			phone: null
-		});
+		// consumidorFinal[0] = ({
+		// 	document: null,
+		// 	name: null,
+		// 	address: null,
+		// 	city: null,
+		// 	department: null,
+		// 	email: null,
+		// 	phone: null
+		// });
 
 		let data = {
 			client: JSON.stringify(consumidorFinal),
