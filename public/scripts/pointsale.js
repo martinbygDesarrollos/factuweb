@@ -833,8 +833,19 @@ function superFastSale(){
 				console.log(createNewProduct(newArrayToInvoice[i], null)); // Creo un producto nuevo sin rubro
 			}
 		}
+		let consumidorFinal = [];
+		consumidorFinal[0] = ({
+			document: null,
+			name: null,
+			address: null,
+			city: null,
+			department: null,
+			email: null,
+			phone: null
+		});
+
 		let data = {
-			client: [],
+			client: JSON.stringify(consumidorFinal),
 			typeVoucher: 101, // 101/111
 			typeCoin: "UYU",
 			shapePayment: 1,
