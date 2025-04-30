@@ -3,6 +3,9 @@
 class validate{
 
 	public function validateCI($ci){
+
+		$ci = $ci ?? "";
+
 		$ciLimpia = preg_replace( '/\D/', '', $ci );
 		$validationDigit = $ciLimpia[-1];
 		$ciLimpia = preg_replace('/[0-9]$/', '', $ciLimpia );
@@ -23,6 +26,8 @@ class validate{
 
 	public function validateRUT($rut){
 		$response = new \stdClass();
+
+		$rut = $rut ?? "";
 
 		$lengthRut = strlen($rut);
 		if(( $lengthRut < 10 || $lengthRut > 12)){
