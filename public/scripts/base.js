@@ -46,12 +46,20 @@ function updateSoldInfo(inputVariable){
 		$('#infoSold').css('display', 'block')
 		sendAsyncPost("updateSoldInfo", {typeCoin : "UYU"})
 		.then(function(response){
-			// console.log(response)
+			console.log(response)
 			if (response.result == 2 ){
 				// console.log("Exito")
 				// console.log(response)
-				$('#SoldLastMonth').text(response.mesAnteriorName + " $" + response.soldMesAnteriorUYU + ". U$D " + response.soldMesAnteriorUSD)
-				$('#SoldCurrentMonth').text(response.mesActualName + " $" + response.soldMesActualUYU + ". U$D " + response.soldMesActualUSD)
+				// $('#SoldLastMonth').text(response.mesAnteriorName + " $" + response.soldMesAnteriorUYU + (response.soldMesAnteriorUSD == "0.00") ? "" : (". U$D " + response.soldMesAnteriorUSD))
+				$('#SoldLastMonth').text(
+					response.mesAnteriorName + 
+					" $" + response.soldMesAnteriorUYU + 
+					((response.soldMesAnteriorUSD == "0.00") ? "" : (". U$D " + response.soldMesAnteriorUSD))
+				  	);
+				$('#SoldCurrentMonth').text(". " + response.mesActualName + " $" + response.soldMesActualUYU + 
+					((response.soldMesActualUSD == "0.00") ? "" : (". U$D " + response.soldMesActualUSD))
+				  	);
+				  // ". U$D " + response.soldMesActualUSD)
 			} else {
 				// showReplyMessage(response.result, response.message, "Nueva factura", null);
 				console.log("Error")
