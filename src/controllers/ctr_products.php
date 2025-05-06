@@ -176,7 +176,7 @@ class ctr_products{
 		return $response;
 	}
 
-	public function updateStockProduct($detalle, $currentSession){
+	public function updateStockProduct($detalle, $typeCFE, $currentSession){
 		$response = new \stdClass();
 		$productsClass = new products();
 		$handleDateTimeClass = new handleDateTime();
@@ -193,7 +193,13 @@ class ctr_products{
 				}
 				$responseGetProductByDescription->objectResult->idInventario = $idNewInventory;
 			}
-			$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+			$responseUpdateStock = null;
+			if($typeCFE == 101 || $typeCFE == 111 || $typeCFE == 103 || $typeCFE == 113){
+				$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+			} else if ($typeCFE == 102 || $typeCFE == 112){
+				$responseUpdateStock = $productsClass->increaseStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+			}
+			// $responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
 			if($responseUpdateStock->result == 2){
 				$response->result = 2;
 				$response->message = "El stock fue actualizado correctamente.";

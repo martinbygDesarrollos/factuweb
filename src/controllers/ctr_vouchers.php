@@ -273,7 +273,7 @@ class ctr_vouchers{
 			// var_dump($articulos); exit;
 
 			foreach ($articulos as $articulo) {
-				$productsController->updateStockProduct($articulo, $currentSession);
+				$productsController->updateStockProduct($articulo, $typeCFE, $currentSession);
 			}
 			// $productsController->updateStockProduct($detail, $currentSession);
 		}

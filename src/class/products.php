@@ -165,6 +165,12 @@ class products{
 		$dbClass = new DataBase();
 		return $dbClass->sendQuery("UPDATE inventario SET inventario = inventario - $cantidad WHERE idInventario = ?", array('i', $id), "BOOLE");
 	}
+	//UPDATED [NEW]
+	public function increaseStock($id, $cantidad){
+		$cantidad = intval($cantidad);
+		$dbClass = new DataBase();
+		return $dbClass->sendQuery("UPDATE inventario SET inventario = inventario + $cantidad WHERE idInventario = ?", array('i', $id), "BOOLE");
+	}
 
 	public function deleteHeading($idHeading, $idBusiness){
 		return DataBase::sendQuery("DELETE FROM rubro WHERE idRubro = ? AND idBusiness = ?", array('ii', $idHeading, $idBusiness), "BOOLE");
