@@ -76,28 +76,67 @@ function loadPriceListFromId($lastId){
 	}
 }
 
-function searchProduct(){
-	let textTemp = $('#inputToSearch').val();
+// function searchProduct(){
+// 	let textTemp = $('#inputToSearch').val();
 
-	if (textTemp != null){
-		if(textTemp.length >= 3){
-			textToSearch = textTemp;
-			lastID = 0;
-			$('#tbodyProducts').empty();
-			loadPriceList();
-		}else if(textTemp.length == 0){
-			textToSearch = null;
-			lastID = 0;
-			$('#tbodyProducts').empty();
-			loadPriceList();
-		}
-	}
-	else{
-		textToSearch = null;
-		lastID = 0;
-		$('#tbodyProducts').empty();
-		loadPriceList();
-	}
+// 	if (textTemp != null){
+// 		if(textTemp.length >= 3){
+// 			textToSearch = textTemp;
+// 			lastID = 0;
+// 			$('#tbodyProducts').empty();
+// 			loadPriceList();
+// 		}else if(textTemp.length == 0){
+// 			textToSearch = null;
+// 			lastID = 0;
+// 			$('#tbodyProducts').empty();
+// 			loadPriceList();
+// 		}
+// 	}
+// 	else{
+// 		textToSearch = null;
+// 		lastID = 0;
+// 		$('#tbodyProducts').empty();
+// 		loadPriceList();
+// 	}
+// }
+
+function searchProduct(event) {
+    let textTemp = $('#inputToSearch').val();
+    
+    if (textTemp != null) {
+        // Verificar si todos los caracteres son números
+        let isAllNumbers = /^\d+$/.test(textTemp);
+        
+        if (isAllNumbers) {
+            // Si son solo números, esperar a Enter (código 13) o Tab (código 9)
+            if (event && (event.keyCode === 13 || event.which === 13 || 
+                         event.keyCode === 9 || event.which === 9)) {
+                textToSearch = textTemp;
+                lastID = 0;
+                $('#tbodyProducts').empty();
+                loadPriceList();
+            }
+            // Si no es Enter/Tab, no hacer nada
+        } else {
+            // Si no son solo números, funcionar como antes (búsqueda normal)
+            if (textTemp.length >= 3) {
+                textToSearch = textTemp;
+                lastID = 0;
+                $('#tbodyProducts').empty();
+                loadPriceList();
+            } else if (textTemp.length == 0) {
+                textToSearch = null;
+                lastID = 0;
+                $('#tbodyProducts').empty();
+                loadPriceList();
+            }
+        }
+    } else {
+        textToSearch = null;
+        lastID = 0;
+        $('#tbodyProducts').empty();
+        loadPriceList();
+    }
 }
 
 function searchProductByHeading(){
