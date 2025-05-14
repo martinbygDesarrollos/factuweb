@@ -285,6 +285,8 @@ return function (App $app){
 					if ($offset == 0) {
 						$uploadedFilePath = PATH_IMPORTS . $file->getClientFilename();
 						$file->moveTo($uploadedFilePath);
+
+						error_log(PATH_IMPORTS . $file->getClientFilename());
 						
 						// Guardar la ruta en sesión para las siguientes llamadas
 						session_start();
