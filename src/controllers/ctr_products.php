@@ -166,7 +166,7 @@ class ctr_products{
 						}else return $responseUpdateProduct;
 					}else{
 						$response->result = 0;
-						$response->message = "La descripcíón que intenta asignarle a este artículo ya corresponde a otro distinto y el sistema no permite descripciones duplicadas.";
+						$response->message = "La descripción que intenta asignarle a este artículo ya corresponde a otro distinto y el sistema no permite descripciones duplicadas.";
 					}
 				}else return $responseIsAuthorized;
 			}else return $responseGetHeading;

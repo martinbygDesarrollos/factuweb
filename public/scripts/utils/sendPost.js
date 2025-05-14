@@ -40,3 +40,26 @@ function sendAsyncPost(nombreFuncion, parametros){
 		});
 	});
 }
+
+function sendFetch(nombreFuncion, formData) {
+    return new Promise(function (resolve, reject) {
+        fetch(getSiteURL() + nombreFuncion, {
+			async: true,
+            method: "POST",
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("Error uploading file");
+            }
+        })
+        .then(data => {
+            resolve(data);
+        })
+        .catch(error => {
+            reject(error);
+        });
+    });
+}

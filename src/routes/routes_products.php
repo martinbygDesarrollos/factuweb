@@ -6,6 +6,7 @@ use Slim\Http\Response;
 
 require_once '../src/controllers/ctr_users.php';
 require_once '../src/controllers/ctr_products.php';
+require_once '../src/utils/dbf_management.php';
 
 
 return function (App $app){
@@ -14,6 +15,7 @@ return function (App $app){
 	$productController = new ctr_products();
 	$voucherController = new ctr_vouchers();
 	$productsClass = new products();
+	$dbfManagement = new dbf_management();
 
 	$app->get('/ver-lista-precios', function($request, $response, $args) use ($container, $userController, $voucherController, $productsClass){
 		$responseCurrentSession = $userController->validateCurrentSession();
@@ -226,6 +228,124 @@ return function (App $app){
 				return json_encode($productsClass->getHeading($responseCurrentSession->currentSession->idEmpresa));
 			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
+	});
+
+	// $app->post('/importProducts', function(Request $request, Response $response) use ($userController, $productController, $productsClass, $dbfManagement){
+	// 	$responseCurrentSession = $userController->validateCurrentSession();
+	// 	if($responseCurrentSession->result == 2 && $responseCurrentSession->currentSession->superUser == "SI"){
+	// 		$uploadedFilePath = null;
+	// 		$data = $request->getParsedBody();
+	// 		$uploadedFiles = $request->getUploadedFiles();
+	// 		$file = $uploadedFiles['file'];
+	// 		// Check if a file was uploaded
+	// 		if ($file->getError() === UPLOAD_ERR_OK) {
+	// 			// Move the uploaded file to your desired location
+	// 			$uploadedFilePath = PATH_IMPORTS . $file->getClientFilename();
+	// 			$file->moveTo($uploadedFilePath);
+	// 			$urlMethod = 'https://admin.sigecom.uy/literalE/' . $responseCurrentSession->currentSession->rut . '?g=gog';
+	// 			$curlPetition = curl_init();
+	// 			curl_setopt($curlPetition, CURLOPT_URL, $urlMethod);
+	// 			curl_setopt($curlPetition, CURLOPT_RETURNTRANSFER, true);
+	// 			$responseCurl = curl_exec($curlPetition);
+	// 			curl_close($curlPetition);
+	// 			$isLiteralE = ($responseCurl == "SI") ? true : false;
+	// 			$responseFunction = $dbfManagement->importProducts($responseCurrentSession->currentSession, $isLiteralE, $uploadedFilePath);
+	// 			// insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $idEmpresa)
+	// 			if($responseFunction->result == 2){
+	// 				foreach ($responseFunction->products as $prod) {
+	// 					$productController->insertProduct(null, $prod->idIva, $prod->descripcion, $prod->detalle, $prod->marca, $prod->moneda, $prod->costo, $prod->coeficiente, $prod->descuento, $prod->codigoBarra, 1, 0, $prod->importe, $responseCurrentSession->currentSession->idEmpresa);
+	// 				}
+	// 			}
+	// 		} else {
+	// 			$responseFunction = [
+	// 				'result' => 1,
+	// 				'message' => 'Error al subir el archivo'
+	// 			];
+	// 			return json_encode($responseFunction);
+	// 		}
+	// 	} else return json_encode($responseCurrentSession);
+	// });
+
+	$app->post('/importProducts', function(Request $request, Response $response) use ($userController, $productController, $productsClass, $dbfManagement){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2 && $responseCurrentSession->currentSession->superUser == "SI"){
+			$uploadedFilePath = null;
+			$data = $request->getParsedBody();
+			$uploadedFiles = $request->getUploadedFiles();
+			
+			// Obtener parámetros de paginación
+			$offset = isset($data['offset']) ? intval($data['offset']) : 0;
+			$limit = isset($data['limit']) ? intval($data['limit']) : 500;
+			
+			if (isset($uploadedFiles['file'])) {
+				$file = $uploadedFiles['file'];
+				
+				if ($file->getError() === UPLOAD_ERR_OK) {
+					// Si es la primera llamada, guardar el archivo
+					if ($offset == 0) {
+						$uploadedFilePath = PATH_IMPORTS . $file->getClientFilename();
+						$file->moveTo($uploadedFilePath);
+						
+						// Guardar la ruta en sesión para las siguientes llamadas
+						session_start();
+						$_SESSION['current_import_file'] = $uploadedFilePath;
+					} else {
+						// Recuperar la ruta del archivo de la sesión
+						session_start();
+						$uploadedFilePath = $_SESSION['current_import_file'];
+					}
+				}
+			} else if ($offset > 0) {
+				// Si no hay archivo pero hay offset, recuperar de sesión
+				session_start();
+				$uploadedFilePath = $_SESSION['current_import_file'];
+			}
+			
+			if ($uploadedFilePath) {
+				$urlMethod = 'https://admin.sigecom.uy/literalE/' . $responseCurrentSession->currentSession->rut . '?g=gog';
+				$curlPetition = curl_init();
+				curl_setopt($curlPetition, CURLOPT_URL, $urlMethod);
+				curl_setopt($curlPetition, CURLOPT_RETURNTRANSFER, true);
+				$responseCurl = curl_exec($curlPetition);
+				curl_close($curlPetition);
+				$isLiteralE = ($responseCurl == "SI") ? true : false;
+				
+				// Llamar a la función modificada con parámetros de lotes
+				$responseFunction = $dbfManagement->importProductsBatch(
+					$responseCurrentSession->currentSession, 
+					$isLiteralE, 
+					$uploadedFilePath,
+					$offset,
+					$limit
+				);
+				
+				// Procesar solo los productos del lote actual
+				if($responseFunction->result == 2){
+					foreach ($responseFunction->products as $prod) {
+						$productController->insertProduct(
+							null, $prod->idIva, $prod->descripcion, $prod->detalle, 
+							$prod->marca, $prod->moneda, $prod->costo, $prod->coeficiente, 
+							$prod->descuento, $prod->codigoBarra, 1, 0, $prod->importe, 
+							$responseCurrentSession->currentSession->idEmpresa
+						);
+					}
+				}
+				
+				// Limpiar sesión si se completó
+				if ($responseFunction->isComplete) {
+					unset($_SESSION['current_import_file']);
+				}
+				
+				return $response->withJson($responseFunction);
+			} else {
+				return $response->withJson([
+					'result' => 1,
+					'message' => 'Error al procesar el archivo'
+				]);
+			}
+		} else {
+			return $response->withJson($responseCurrentSession);
+		}
 	});
 }
 ?>

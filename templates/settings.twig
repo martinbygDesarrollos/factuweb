@@ -26,7 +26,7 @@
 					<!-- INICIO -->
 					<div class="tab-pane fade active show border-template shadow p-2" id="initContainer" role="tabpanel">
 						<p class="text-center text-template-background font-italic h5 mt-1">Inicio</p>
-						<div class="input-group mb-2 align-items-center">
+						<div class="input-group align-items-center">
 							<div class="input-group-prepend">
 								<label class="switch m-0">
 									<input id="VER_COTIZACION_INICIO" type="checkbox" onchange="updateConfigurationBoolean(this)">
@@ -35,7 +35,7 @@
 							</div>
 							<p class="ml-2 m-0">Mostrar cotizaciones en pantalla.</p>
 						</div>
-						<div class="input-group mb-2 align-items-center">
+						<div class="input-group align-items-center">
 							<div class="input-group-prepend">
 								<label class="switch m-0">
 									<input id="VER_TOTAL_VENTAS_FOOTER" type="checkbox" onchange="updateSoldInfo(this); updateConfigurationBoolean(this)">
@@ -65,32 +65,32 @@
 					<!-- ESTADO DE CUENTA -->
 					<div class="tab-pane fade border-template shadow p-2" id="accountStateContainer" role="tabpanel" aria-labelledby="v-pills-settings-tab">
 						<p class="text-center text-template-background font-italic h5 mt-1">Estado de cuenta</p>
-						<div class="input-group mb-2">
+						<div class="input-group ">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="VER_SALDOS_ESTADO_CUENTA" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Mostrar saldos a la fecha en el estado de cuenta.</p>
+							<p class="ml-2 mb-0">Mostrar saldos a la fecha en el estado de cuenta.</p>
 						</div>
-						<div class="input-group mb-2">
+						<div class="input-group ">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="VER_SALDOS_ESTADO_CUENTA_PDF" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Mostrar saldos a la fecha en el estado de cuenta(PDF).</p>
+							<p class="ml-2 mb-0">Mostrar saldos a la fecha en el estado de cuenta(PDF).</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Incluir contados pendientes en estado de cuenta.</p>
+							<p class="ml-2 mb-0">Incluir contados pendientes en estado de cuenta.</p>
 						</div>
 						<hr>
 						<div class="d-flex justify-content-left">
@@ -270,84 +270,100 @@
 						<p class="text-center text-template-background font-italic h5 mt-1">Facturación</p>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="IVA_INCLUIDO" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Facturar con IVA Incluido.</p>
+							<p class="ml-2 mb-0">Facturar con IVA Incluido.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="DESCUENTO_EN_PORCENTAJE" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Manipular descuento como porcentaje.</p>
+							<p class="ml-2 mb-0">Manipular descuento como porcentaje.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="PERMITIR_PRODUCTOS_NO_INGRESADOS" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Facturar productos no ingresados.</p>
+							<p class="ml-2 mb-0">Facturar productos no ingresados.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="PERMITIR_LISTA_DE_PRECIOS" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Facturar con lista de precios.</p>
+							<p class="ml-2 mb-0">Facturar con lista de precios.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="PERMITIR_NOTAS_DE_DEBITO" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Permitir facturar notas de débito.</p>
+							<p class="ml-2 mb-0">Permitir facturar notas de débito.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="MANEJO_DE_STOCK" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Manejo de stock.</p>
+							<p class="ml-2 mb-0">Manejo de stock.</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="VER_SIEMPRE_CLIENTE" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Mostrar siempre el cliente (Punto de venta).</p>
+							<p class="ml-2 mb-0">Mostrar siempre el cliente (Punto de venta).</p>
 						</div>
 						<div class="input-group">
 							<div class="input-group-prepend">
-								<label class="switch">
+								<label class="switch mb-0">
 									<input id="SKIP_SELECT_CLIENTE" type="checkbox" onchange="updateConfigurationBoolean(this)">
 									<span class="slider round"></span>
 								</label>
 							</div>
-							<p class="ml-2">Saltarse selección de cliente (Punto de venta).</p>
+							<p class="ml-2 mb-0">Saltarse selección de cliente (Punto de venta).</p>
 						</div>
-						<div class="input-group">
-							<div class="input-group-prepend">
-								<label class="switch">
-									<input id="SUPERFAST_SALE" type="checkbox" onchange="updateConfigurationBoolean(this)">
-									<span class="slider round"></span>
-								</label>
+						<div class="input-group form-control">
+							<div class="d-flex w-100 justify-content-between">
+
+								<div class="d-flex align-items-center">
+									<div class="input-group-prepend">
+										<label class="switch mb-0">
+											<input id="SUPERFAST_SALE" type="checkbox" onchange="updateConfigurationBoolean(this)">
+											<span class="slider round"></span>
+										</label>
+									</div>
+									<p class="ml-2 mb-0" style="height: 28px;">Venta super rápida.</p>
+								</div>
+								
+								<div class="d-flex">
+									<div class="ml-2 input-group-prepend">
+										<label class="mb-0" style="height: 28px;">Medio de pago</label>
+										<select type="text" class="form-control form-control-sm text-center col ml-2 shadow-sm" id="SUPERFAST_SALE_MEDIOPAGO" onchange="changeSuperSaleMedioPago(this.value)">
+											{% if SUPERFAST_SALE_MEDIOPAGO == "Efectivo" %}<option value="Efectivo" selected >Efectivo</option>{% else %}<option value="Efectivo">Efectivo</option>{% endif %}
+											{% if SUPERFAST_SALE_MEDIOPAGO == "Tarjeta" %}<option value="Tarjeta" selected >Tarjeta</option>{% else %}<option value="Tarjeta">Tarjeta</option>{% endif %}
+										</select>
+									</div>
+								</div>
+
 							</div>
-							<p class="ml-2">Venta super rápida.</p>
 						</div>
 						<hr>
 						<div id="">

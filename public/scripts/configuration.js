@@ -331,6 +331,17 @@ function changeFormatTicket(value){
 	})
 }
 
+function changeSuperSaleMedioPago(value){
+	console.log("valor a cambiar "+value);
+	sendAsyncPost('updateVariableConfiguration', {variable:'SUPERFAST_SALE_MEDIOPAGO', value:value})
+	.then(( response )=>{
+		if ( response ){
+			showReplyMessage(response.result, response.message, "Ticket", null);
+		}
+		console.log(response);
+	})
+}
+
 function changeIndFactDefault(value){
 	console.log("valor a cambiar "+value);
 	sendAsyncPost('updateVariableConfiguration', {variable:'INDICADORES_FACTURACION_DEFECTO', value:value})

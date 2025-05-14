@@ -45,11 +45,13 @@ class products{
 
 		$where = " WHERE A.idEmpresa = ? 
 				AND A.idArticulo < ? 
-				AND A.descripcion LIKE '%". $textToSearch ."%'";
+				AND (A.descripcion LIKE '%". $textToSearch ."%' OR A.codigoBarra LIKE '%". $textToSearch ."%')";
 		if( $heading ){
   			$where .= " AND R.idRubro = " . $heading;
 		}
 		$orderAndLimit = " ORDER BY A.idArticulo DESC LIMIT 20";
+
+		error_log($query . $where . $orderAndLimit . "- EMPRESA: '" . $idBusiness . "' - LAST ID: '" . $lastId . "'");
 
 		$responseQuery = $dbClass->sendQuery($query . $where . $orderAndLimit, array('ii', $idBusiness, $lastId), "LIST");
 		if($responseQuery->result == 2){

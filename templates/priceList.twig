@@ -6,6 +6,11 @@
 	<div class="card shadow mt-4 mb-2" style="min-width: 350px; width: 100%;">
 		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic">
 			<h5>Lista de artículos</h5>
+			{% if systemSession.superUser == 'SI' %}
+			<div>
+				<button type="button" class="btn background-template-color2 btn-sm shadow-sm" data-toggle="modal" data-target="#modalImportArticles"> <i class="fas fa-cloud-upload-alt"></i> Importar </button>
+			</div>
+			{% endif %}
 		</div>
 		<div class="card-body pt-2">
 			<div class="d-flex justify-content-between mb-1">
@@ -23,7 +28,7 @@
 					<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalNewProduct('{{stockManagement}}')" style="min-width: 90px "><i class="fas fa-plus-circle"></i> Nuevo</button>
 				</div>
 			</div>
-			<div id="containerTable" style="max-height: 75vh;">
+			<div id="containerTable" style="max-height: 65vh;">
 				<table class="table table-striped">
 					<thead class="background-template-color text-template-color" style="">
 						<tr>
@@ -142,12 +147,12 @@
 						<input type="text" class="form-control form-control-sm text-center shadow-sm" id="inputCost" onkeypress="return keyPressProduct(event, null, null)" required="required" tabindex=9>
 					</div>
 					<div class="form-group col">
-						<label for="inputCoefficient">Coeficiente</label>
+						<label for="inputCoefficient">Coeficiente (% ganancia)</label>
 						<input type="text" class="form-control form-control-sm text-center shadow-sm" id="inputCoefficient" onkeypress="return keyPressProduct(event, null, null)" required="required" tabindex=10>
 					</div>
 					<div class="form-group col">
 						<label for="inputDiscount">Descuento</label>
-						<input type="text" class="form-control form-control-sm text-center shadow-sm" id="inputDiscount" onkeypress="return keyPressProduct(event, null, null)" required="required" tabindex=11>
+						<input type="number" min="0" max="100" class="form-control form-control-sm text-center shadow-sm" id="inputDiscount" onkeypress="return keyPressProduct(event, null, null)" required="required" tabindex=11>
 					</div>
 				</div>
 				<div class="form-row mt-2">
@@ -189,6 +194,59 @@
 		</div>
 	</div>
 </div>
+
+<div class="modal fade" id="modalImportArticles" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color">Importar Productos</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+
+				<div class="modal-body">
+					<div class="form-group">
+						<div class="custom-control custom-radio mb-3">
+							<input type="radio" id="radioDBF" name="importType" class="custom-control-input" checked>
+							<label class="custom-control-label" for="radioDBF">Importar desde archivo .DBF</label>
+						</div>
+						<div id="dbfSection" class="mb-3 pl-4">
+							<div class="input-group">
+								<div class="custom-file">
+									<label class="custom-file-label" for="dbfFileInput" aria-describedby="inputGroupFileAddon02">Seleccionar archivo .DBF</label>
+									<input type="file" class="custom-file-input" id="dbfFileInput" accept=".dbf" originalLabel="Seleccionar archivo .DBF">
+								</div>
+							</div>
+						</div>
+						
+						<div class="custom-control custom-radio mb-3" >
+							<input type="radio" id="radioXLSX" name="importType" class="custom-control-input" disabled="true">
+							<label class="custom-control-label" for="radioXLSX">Importar desde archivo .XLSX</label>
+						</div>
+						<div id="xlsxSection" class="mb-3 pl-4" style="display: none;">
+							<div class="input-group">
+								<div class="custom-file">
+									<label class="custom-file-label" for="xlsxFileInput" aria-describedby="inputGroupFileAddon02">Seleccionar archivo .XLSX</label>
+									<input type="file" class="custom-file-input" id="xlsxFileInput" accept=".xlsx" originalLabel="Seleccionar archivo .XLSX">
+									{# <label class="form-label" for="xlsxFileInput">Seleccionar archivo .XLSX</label>
+									<input type="file" class="form-control form-control-sm" id="xlsxFileInput" accept=".xlsx"> #}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button id="btnCancelImportArticles" type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmImportArticles" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 {# {% include("buttonUp.twig") %} #}
 {% block script %}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
@@ -197,17 +255,29 @@
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
 <script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
 <script type="text/javascript">
+	{# $(document).ready( function(){
+		let heightwindow = ($(document).height() * 65) / 100;
+		$('#containerTable').css('height', heightwindow+'px');
+	});
+	loadPriceList();
+	// loadHeadings(); 
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 4) {
+			loadPriceList();
+		}
+	}); #}
+
 	$(document).ready( function(){
 		let heightwindow = ($(document).height() * 65) / 100;
 		$('#containerTable').css('height', heightwindow+'px');
 	});
 	loadPriceList();
-	{# loadHeadings(); #}
 	$('#containerTable').on('scroll', function() {
-		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 4) {
+		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 2) {
 			loadPriceList();
 		}
 	});
+
 </script>
 {% endblock %}
 {% endblock %}

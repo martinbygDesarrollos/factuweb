@@ -225,6 +225,7 @@ function clearModalProduct(){
 	$('#typeCoinUYU').attr('checked',true).change();
 	$('#inputCost').val(0);
 	$('#inputCoefficient').val(0);
+	$('#inputCoefficient').removeClass('alert-danger');
 	$('#inputDiscount').val(0);
 	$('#inputPriceNoIVA').val(0);
 	$('#selectIVA').val(defaultIva);
@@ -245,6 +246,12 @@ function setValuesToEdit(productObject){
 		$('#typeCoinUSD').attr('checked',true).change();
 	$('#inputCost').val(productObject.costo);
 	$('#inputCoefficient').val(productObject.coeficiente);
+
+	if($('#inputCoefficient').val() < 0)
+		$('#inputCoefficient').removeClass().addClass('form-control form-control-sm text-center shadow-sm text-center shadow-sm alert-danger')
+	else
+		$('#inputCoefficient').removeClass('alert-danger')
+
 	$('#inputDiscount').val(productObject.descuento);
 	$('#selectIVA').val(productObject.idIva);
 	$('#inputPriceNoIVA').val();
@@ -274,12 +281,14 @@ function createNewRubro(){
 		let response = sendPost('insertHeading', {nameHeading: rubro});
 		showReplyMessage(response.result, response.message, "Nuevo Rubro", "modalCreateNewRubro");
 
-		$('#modalResponse').on('hidden.bs.modal', function (e) {
-			if(response.result == 2){
+		if(response.result == 2){
+			setTimeout(function(){
 				window.location.reload();
-			}
-		})
-	}else showReplyMessage(1,"El Rubro no puede ingresarse vacia o contener menos de 5 caracteres.", "Rubro no valido");
+			}, 500);
+		}
+		// $('#modalResponse').on('hidden.bs.modal', function (e) {
+		// })
+	}else showReplyMessage(1,"El Rubro no puede ingresarse vacia o contener menos de 5 caracteres.", "Rubro no valido", "modalCreateNewRubro");
 }
 
 function keyPressProduct(keyPress, value, size){
@@ -328,7 +337,7 @@ function keyPressProduct(keyPress, value, size){
 }
 
 $('#inputCost').keyup(function(){
-	keyUpProductValues();
+	keyUpProductValues(); // SI QUIERO CAMBIAR EL PRECIO FINAL (AGREGAR ALGO PARA CONFIGRURAR ESO... UN CHECK O ALGO ASI QUE MODIFIQUE EL PRECIO FINAL O EL COEFICIENTE SEGUN SI ESTA CHECK O NO)
 });
 
 $('#inputDiscount').keyup(function(){
@@ -340,7 +349,7 @@ $('#inputCoefficient').keyup(function(){
 });
 
 $('#inputPriceFinal').keyup(function(){
-	//keyUpProductValues2();
+	keyUpFromFinalPrice()
 });
 
 
@@ -348,40 +357,106 @@ $('#selectIVA').change(function(){
 	keyUpProductValues();
 });
 
-function keyUpProductValues(inputSelect){
+function keyUpProductValues(){
 	let cost = parseFloat($('#inputCost').val() || 0);
-	let discount = parseFloat($('#inputDiscount').val() || 0);
-	let coefficient = parseFloat($('#inputCoefficient').val() || 0);
-	let subTotal = parseFloat($('#inputPriceNoIVA').val() || 0);
-	let total = parseFloat($('#inputPriceFinal').val() || 0);
+	let rawDiscount = $('#inputDiscount').val() || '0';
+	let discount = parseFloat(rawDiscount);
 	let iva = parseFloat($('#selectIVA option:selected').attr('name'));
+	let raw = $('#inputCoefficient').val() || '';
 
+	// Corregir límites
+	if (discount < 0) discount = 0;
+	if (discount > 100) discount = 100;
 
-	if(discountPercentage == "SI"){
-		discount = ((cost + coefficient) * discount)/100;
+	// Solo permitir números y un punto (decimal)
+	// let numericString = raw.replace(/[^0-9.]/g, '');
+	let isNegative = raw.startsWith('-');
+	let numericString = raw.replace(/[^0-9.]/g, '');
+
+	// Asegurarse de que haya **solo un punto decimal** (por si el usuario puso más)
+	numericString = numericString.split('.').reduce((acc, part, index) => {
+	return index === 0 ? part : acc + '.' + part;
+	}, '');
+	// Reañadir el signo menos si era negativo
+	if (isNegative) {
+		numericString = '-' + numericString;
+		//VISUAL
+		if($('#inputCoefficient').val() < 0)
+			$('#inputCoefficient').removeClass().addClass('form-control form-control-sm text-center shadow-sm text-center shadow-sm alert-danger')
+		else
+			$('#inputCoefficient').removeClass('alert-danger')
 	}
 
-	let valueIVA = (((cost + coefficient) - discount) * iva) /100;
-	let priceNOIVA = parseFloat((cost + coefficient) - discount).toFixed(2);
-	let priceFinal = parseFloat(((cost + coefficient) - discount) + valueIVA).toFixed(2);
+	let coefficient = parseFloat(numericString) || 0;
+
+	// Transformar a porcentaje + 1
+	let multiplier = 1 + (coefficient / 100);
+
+	let costWithCoeff = cost * multiplier;
+	console.log(costWithCoeff)
+
+	if(discountPercentage == "SI"){
+		discount = ((costWithCoeff) * discount)/100;
+	}
+
+	let valueIVA = (((costWithCoeff) - discount) * iva) /100;
+	let priceNOIVA = parseFloat((costWithCoeff) - discount).toFixed(2);
+	let priceFinal = parseFloat(((costWithCoeff) - discount) + valueIVA).toFixed(2);
 
 	$('#inputPriceNoIVA').val(priceNOIVA);
 	$('#inputPriceFinal').val(priceFinal);
 }
 
-function keyUpProductValues2(){
-	let price = parseFloat($('#inputPriceFinal').val() || 0);
+function keyUpFromFinalPrice() {
+	// Obtener los valores actuales
 	let cost = parseFloat($('#inputCost').val() || 0);
-	let discount = parseFloat($('#inputDiscount').val() || 0);
-	let coefficient = parseFloat($('#inputCoefficient').val() || 0);
+	let rawDiscount = $('#inputDiscount').val() || '0';
+	let discount = parseFloat(rawDiscount);
 	let iva = parseFloat($('#selectIVA option:selected').attr('name'));
+	let priceFinal = parseFloat($('#inputPriceFinal').val() || 0);
 
-	valueIVA = price / ((iva / 100) + 1);
+	// Verificar si el costo es diferente de 0 (condición principal)
+	if (cost === 0) {
+		return; // No calcular el coeficiente si no hay costo
+	}
 
-	let priceNOIVA = parseFloat(price / ((iva / 100) + 1)).toFixed(2);
-	let coeff = parseFloat((price / ((iva / 100) + 1)) - cost).toFixed(2);
-	$('#inputPriceNoIVA').val(priceNOIVA);
-	$('#inputCoefficient').val(coeff);
+	// Corregir límites del descuento
+	if (discount < 0) discount = 0;
+	if (discount > 100) discount = 100;
+
+	// Calcular el precio sin IVA primero
+	let priceNoIVA = priceFinal / (1 + (iva / 100));
+
+	// Establecer el valor del precio sin IVA
+	$('#inputPriceNoIVA').val(parseFloat(priceNoIVA).toFixed(2));
+
+	// Ahora calculamos el coeficiente según si hay descuento o no
+	let costWithCoeff;
+
+	if (discount === 0) {
+		// Sin descuento, el cálculo es directo
+		costWithCoeff = priceNoIVA;
+	} else {
+		// Con descuento
+		if (discountPercentage === "SI") {
+		// Si el descuento es porcentual
+		costWithCoeff = priceNoIVA / (1 - (discount / 100));
+		} else {
+		// Si el descuento es un valor fijo
+		costWithCoeff = priceNoIVA + discount;
+		}
+	}
+
+	// Finalmente calculamos el coeficiente
+	let coefficient = ((costWithCoeff / cost) - 1) * 100;
+
+	// Formatear y establecer el coeficiente
+	$('#inputCoefficient').val(parseFloat(coefficient).toFixed(2));
+	if($('#inputCoefficient').val() < 0)
+		$('#inputCoefficient').removeClass().addClass('form-control form-control-sm text-center shadow-sm text-center shadow-sm alert-danger')
+	else
+		$('#inputCoefficient').removeClass('alert-danger')
+
 }
 
 function openModalDeleteProduct(buttonDelete){
@@ -446,7 +521,7 @@ function createNewProduct(stockManagement){
 		showReplyMessage(response.result, response.message, "Nuevo artículo", "modalCreateModifyProduct");
 
 		$('#selectHeadingPriceList').trigger('change')
-	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido");
+	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido", "modalCreateModifyProduct");
 
 }
 
@@ -498,4 +573,235 @@ function updateProduct(stockManagement, idProduct){
 		$('#selectHeadingPriceList').trigger('change')
 
 	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido");
+}
+
+// Manejar cambio en los radio buttons
+$('#radioDBF').change(function() {
+	if($(this).is(':checked')) {
+		$('#dbfSection').show();
+		$('#xlsxSection').hide();
+	}
+});
+
+$('#radioXLSX').change(function() {
+	if($(this).is(':checked')) {
+		$('#xlsxSection').show();
+		$('#dbfSection').hide();
+	}
+});
+
+// Mostrar el nombre del archivo seleccionado
+$('.custom-file-input').on('change', function() {
+	var fileName = $(this).val().split('\\').pop();
+	fileNameAux = fileName != "" ? fileName : $(this).attr('originalLabel');
+	$(this).prev('.custom-file-label').html(fileNameAux);
+});
+
+// Lógica para los botones de subir archivo
+$('#btnUploadDBF').click(function() {
+	// Aquí iría la lógica para procesar el archivo DBF
+	if ($('#dbfFileInput').val()) {
+		console.log('Subiendo archivo DBF');
+		// Implementar lógica de subida
+	} else {
+		alert('Por favor seleccione un archivo DBF primero');
+	}
+});
+
+$('#btnUploadXLSX').click(function() {
+	// Aquí iría la lógica para procesar el archivo XLSX
+	if ($('#xlsxFileInput').val()) {
+		console.log('Subiendo archivo XLSX');
+		// Implementar lógica de subida
+	} else {
+		alert('Por favor seleccione un archivo XLSX primero');
+	}
+});
+
+// Botón de confirmar en el footer
+$('#btnConfirmImportArticles').click(function() {
+	// Lógica para confirmar la importación
+	var selectedType = $('input[name="importType"]:checked').attr('id');
+	
+	var myFile = null;
+
+	if (selectedType === 'radioDBF' && !$('#dbfFileInput').val()) {
+		alert('Por favor seleccione un archivo DBF primero');
+		return;
+	}
+	
+	if (selectedType === 'radioXLSX' && !$('#xlsxFileInput').val()) {
+		alert('Por favor seleccione un archivo XLSX primero');
+		return;
+	}
+	
+	if (selectedType === 'radioDBF') {
+		myFile = $('#dbfFileInput')[0].files[0];
+	} else if (selectedType === 'radioXLSX') {
+		myFile = $('#xlsxFileInput')[0].files[0];
+	}
+
+	console.log('Confirmando importación de ' + (selectedType === 'radioDBF' ? 'DBF' : 'XLSX'));
+	// Implementar lógica de importación
+	console.log('Archivo cargado en el input');
+	console.log(myFile);
+	// Create a FormData object and append the File object to it
+	var formData = new FormData();
+	formData.append('file', myFile);
+	
+	$("#modalImportArticles").modal("hide");
+
+	importProductsWithProgress(myFile);
+
+	// mostrarLoader(true)
+	// sendFetch("importProducts", formData )
+	// .then((response)=>{
+	// 	console.log(response)
+	// 	mostrarLoader(false)
+	// 	if(response.result == 2){
+	// 		showReplyMessage(response.result, response.message, "Detalle de importacion");
+	// 	} else showReplyMessage(response.result, response.message, "Detalle de importacion");
+	// })
+	// .catch((error) => {
+	// 	mostrarLoader(false)
+	// 	console.error(error);
+	// });
+	// Cerrar el modal después de la confirmación
+	// $('#modalImportArticles').modal('hide');
+});
+
+async function importProductsWithProgress(file) {
+	let isImportCancelled = false; // Variable para controlar la cancelación
+
+    const progressDiv = document.createElement('div');
+	progressDiv.style = `position:absolute; background-color: #000000c4; height: -webkit-fill-available; width: -webkit-fill-available; z-index: 999;display: flex; justify-content: center; flex-wrap: nowrap; align-items: center;`
+    progressDiv.innerHTML = `
+        <div style="margin: 20px; width: 80%;">
+            <div style="margin-bottom: 10px;">
+                <strong style="color: white;">Importando productos...</strong>
+                <span style="color: white;" id="progressText">0%</span>
+            </div>
+            <div style="width: 100%; background-color: #f0f0f0; border-radius: 5px; border: solid 2px #FFFFFF;">
+                <div id="progressBar" style="width: 0%; height: 20px; background-color: #37A398; border-radius: 5px; transition: width 0.3s;"></div>
+            </div>
+            <div id="progressStatus" style="margin-top: 10px;color: white;">Procesando...</div>
+			<button id="cancelImportButton" style="margin-top: 20px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                Detener Importación
+            </button>
+        </div>
+    `;
+    
+    // Agregar el div de progreso al DOM
+    document.body.appendChild(progressDiv);
+
+	// Event listener botón de cancelar
+    // document.getElementById('cancelImportButton').addEventListener('click', function() {
+    //     isImportCancelled = true;
+    //     document.getElementById('progressStatus').textContent = 'Cancelando importación...';
+    //     this.disabled = true; // Deshabilitar el botón para evitar múltiples clicks
+    //     this.style.backgroundColor = '#9e9e9e';
+    //     this.textContent = 'Cancelando...';
+    // });
+	document.getElementById('cancelImportButton').addEventListener('click', function() {
+		if (confirm('¿Estás seguro de que deseas detener la importación? Los productos ya procesados permanecerán en el sistema.')) {
+			isImportCancelled = true;
+			document.getElementById('progressStatus').textContent = 'Cancelando importación...';
+			this.disabled = true;
+			this.style.backgroundColor = '#9e9e9e';
+			this.textContent = 'Cancelando...';
+		}
+	});
+    
+    let offset = 0;
+    let limit = 500; // Procesar 500 productos por lote
+    let allResponse = null;
+    
+    while (true) {
+		// Verificar si la importación fue cancelada
+        if (isImportCancelled) {
+            progressDiv.remove();
+            showReplyMessage(1, `Importación cancelada. Se procesaron ${totalProcessed} productos antes de detener.`, "Importación Cancelada");
+            return;
+        }
+
+        const formData = new FormData();
+        if (offset === 0) {
+            formData.append('file', file);
+        }
+        formData.append('offset', offset);
+        formData.append('limit', limit);
+        
+        try {
+            // Tomar el tiempo antes de procesar el lote
+            const batchStartTime = Date.now();
+            
+            const response = await sendFetch("importProducts", formData);
+            
+            // Calcular el tiempo que tomó este lote
+            const batchTime = Date.now() - batchStartTime;
+            
+            console.log(`Lote procesado - Offset: ${offset}, Productos: ${response.products.length}`);
+            
+            if (response.result === 2) {
+                offset = response.offset;
+                totalProcessed = response.processed;
+                
+                // Actualizar progreso
+                const progress = (response.processed / response.total) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressText').textContent = Math.round(progress) + '%';
+                
+                // Calcular tiempo estimado basado en el último lote
+                const productsInBatch = response.products.length;
+                const remainingProducts = response.total - response.processed;
+                
+                if (productsInBatch > 0 && remainingProducts > 0) {
+                    const timePerProduct = batchTime / productsInBatch;
+                    const estimatedTimeRemaining = remainingProducts * timePerProduct;
+                    
+					const timeString = formatTimeRemaining(estimatedTimeRemaining);
+					document.getElementById('progressStatus').innerHTML = 
+						`Procesados ${response.processed} de ${response.total} productos<br>
+						<span style="color: #37A398;">Tiempo estimado: ${timeString}</span>`;
+                } else {
+                    document.getElementById('progressStatus').textContent = 
+                        `Procesados ${response.processed} de ${response.total} productos`;
+                }
+                
+                if (response.isComplete) {
+                    allResponse = response;
+                    break;
+                }
+            } else {
+                throw new Error(response.message || 'Error en la importación');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showReplyMessage(1, 'Error durante la importación: ' + error.message, "Error de importación");
+            progressDiv.remove();
+            return;
+        }
+    }
+    
+    // Limpiar el progreso
+    progressDiv.remove();
+    
+    // Mostrar resultado final
+    showReplyMessage(2, `Importación completada. ${allResponse.total} productos procesados.`, "Detalle de importación");
+}
+
+// Para mostrar el tiempo de forma más amigable
+function formatTimeRemaining(milliseconds) {
+    if (milliseconds < 60000) { // Menos de 1 minuto
+        const seconds = Math.ceil(milliseconds / 1000);
+        return `${seconds} segundos`;
+    } else if (milliseconds < 3600000) { // Menos de 1 hora
+        const minutes = Math.floor(milliseconds / 60000);
+        const seconds = Math.floor((milliseconds % 60000) / 1000);
+        return `${minutes}m ${seconds}s`;
+    } else { // Más de 1 hora
+        const hours = Math.floor(milliseconds / 3600000);
+        const minutes = Math.floor((milliseconds % 3600000) / 60000);
+        return `${hours}h ${minutes}m`;
+    }
 }

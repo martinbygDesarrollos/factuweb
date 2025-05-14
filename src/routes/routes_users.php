@@ -104,7 +104,12 @@ return function (App $app){
 			$responseGetFormatTicket = $userController->getVariableConfiguration('FORMATO_TICKET', $responseCurrentSession->currentSession);
 			if($responseGetFormatTicket->result == 2)
 				$args['formatTicket'] = $responseGetFormatTicket->configValue;
-			$responseGetAdenda = $userController->getVariableConfiguration('ADENDA', $responseCurrentSession->currentSession);
+
+			$responseGetFastSaleMeedioPago = $userController->getVariableConfiguration('SUPERFAST_SALE_MEDIOPAGO', $responseCurrentSession->currentSession);
+			if($responseGetFastSaleMeedioPago->result == 2)
+				$args['SUPERFAST_SALE_MEDIOPAGO'] = $responseGetFastSaleMeedioPago->configValue;
+			
+				$responseGetAdenda = $userController->getVariableConfiguration('ADENDA', $responseCurrentSession->currentSession);
 			if($responseGetAdenda->result == 2)
 				$args['adenda'] = $responseGetAdenda->configValue;
 			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;

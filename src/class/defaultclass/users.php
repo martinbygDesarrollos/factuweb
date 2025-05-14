@@ -292,6 +292,11 @@ class users{
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SUPERFAST_SALE", "NO");
 		}
 
+		$responseGetBranchCompany = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE_MEDIOPAGO");
+    	if($responseGetBranchCompany->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "VALUE", "SUPERFAST_SALE_MEDIOPAGO", "Efectivo");
+    	}
+
     }
 
     public function getListConfigurationsWithBusiness($idBusiness){
