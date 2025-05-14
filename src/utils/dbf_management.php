@@ -41,10 +41,28 @@ class dbf_management{
                 $buf = fread($fdbf,32);
                 if (substr($buf,0,1)==chr(13)) {
                     $goon=false;
-                }else {
+                // }else {
+                //     $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
+                //     $unpackString.="A$field[fieldlen]$field[fieldname]/";
+                //     array_push($fields, $field);
+                // }
+                } else {
                     $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
-                    $unpackString.="A$field[fieldlen]$field[fieldname]/";
+                    
+                    // IMPORTANTE: Limpiar el nombre del campo correctamente
+                    $fieldName = rtrim($field['fieldname'], "\0"); // Eliminar caracteres nulos
+                    $fieldName = trim($fieldName); // Eliminar espacios
+                    
+                    // Guardar mapeo de nombres de campos
+                    $fieldNames[] = $fieldName;
+                    
+                    // Usar una clave simple para el unpack
+                    $unpackString.="A$field[fieldlen]field_$fieldName/";
+                    
                     array_push($fields, $field);
+                    
+                    // Log para debug
+                    error_log("Campo encontrado: '$fieldName' (longitud: " . $field['fieldlen'] . ")");
                 }
             }
             $_SESSION['import_tracking']['unpackString'] = $unpackString;
