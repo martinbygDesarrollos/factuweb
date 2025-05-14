@@ -3,15 +3,154 @@ require_once 'handle_date_time.php';
 
 class dbf_management{
 
+    // public function importProductsBatch($currentSession, $isLiteralE, $uploadedFilePath, $offset = 0, $limit = 500){
+    //     set_time_limit(60); // 1 minuto por lote
+        
+    //     $products = array();
+    //     $response = new \stdClass();
+    //     $db = $uploadedFilePath;
+        
+    //     // Recuperar o inicializar datos de tracking
+    //     // session_start();
+    //     if ($offset == 0) {
+    //         $_SESSION['import_tracking'] = [
+    //             'processedBarcodes' => [],
+    //             'processedDescriptions' => []
+    //         ];
+    //     }
+        
+    //     $processedBarcodes = &$_SESSION['import_tracking']['processedBarcodes'];
+    //     $processedDescriptions = &$_SESSION['import_tracking']['processedDescriptions'];
+        
+    //     $fdbf = fopen($db,'r');
+    //     if (!$fdbf) {
+    //         $response->result = 1;
+    //         $response->message = "Error al abrir el archivo";
+    //         return $response;
+    //     }
+        
+    //     $fields = array();
+    //     $buf = fread($fdbf,32);
+    //     $header=unpack( "VRecordCount/vFirstRecord/vRecordLength", substr($buf,4,8));
+        
+    //     // Si es la primera vez, leer la estructura
+    //     if ($offset == 0) {
+    //         $goon = true;
+    //         $unpackString='';
+    //         while ($goon && !feof($fdbf)) {
+    //             $buf = fread($fdbf,32);
+    //             if (substr($buf,0,1)==chr(13)) {
+    //                 $goon=false;
+    //             // }else {
+    //             //     $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
+    //             //     $unpackString.="A$field[fieldlen]$field[fieldname]/";
+    //             //     array_push($fields, $field);
+    //             // }
+    //             } else {
+    //                 $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
+                    
+    //                 // IMPORTANTE: Limpiar el nombre del campo correctamente
+    //                 $fieldName = rtrim($field['fieldname'], "\0"); // Eliminar caracteres nulos
+    //                 $fieldName = trim($fieldName); // Eliminar espacios
+                    
+    //                 // Guardar mapeo de nombres de campos
+    //                 $fieldNames[] = $fieldName;
+                    
+    //                 // Usar una clave simple para el unpack
+    //                 $unpackString.="A$field[fieldlen]field_$fieldName/";
+                    
+    //                 array_push($fields, $field);
+                    
+    //                 // Log para debug
+    //                 error_log("Campo encontrado: '$fieldName' (longitud: " . $field['fieldlen'] . ")");
+    //             }
+    //         }
+    //         $_SESSION['import_tracking']['unpackString'] = $unpackString;
+    //     } else {
+    //         $unpackString = $_SESSION['import_tracking']['unpackString'];
+    //     }
+        
+    //     // Calcular posiciones
+    //     $startPos = $header['FirstRecord'] + ($offset * $header['RecordLength']);
+    //     $endPos = min($offset + $limit, $header['RecordCount']);
+        
+    //     fseek($fdbf, $startPos);
+        
+    //     for ($i = $offset + 1; $i <= $endPos; $i++) {
+    //         $buf = fread($fdbf, $header['RecordLength']);
+            
+    //         $deletedRow = substr($buf, 0, 1);
+    //         $buf = substr($buf, 1);
+    //         $row = unpack($unpackString, $buf);
+            
+    //         // Verificar si el registro está eliminado
+    //         if ($deletedRow != chr(0x2A)) {
+    //             $codebar = trim($row['CODEBAR']);
+    //             $description = mb_convert_encoding(trim($row['DESC']), 'UTF-8', 'CP850');
+                
+    //             // Verificar duplicados
+    //             if (!in_array($codebar, $processedBarcodes) && !in_array($description, $processedDescriptions)) {
+    //                 // Verificar EAN
+    //                 if ($this->isValidEAN($codebar)) {
+    //                     $processedBarcodes[] = $codebar;
+    //                     $processedDescriptions[] = $description;
+                        
+    //                     $product = new \stdClass();
+    //                     $product->idIva = $this->getIva(trim($row['IVA']), $isLiteralE);
+    //                     $product->percentageIva = floatval(trim($row['IVA']));
+    //                     $product->costo = floatval(trim($row['COSTO']));
+    //                     $product->coeficiente = floatval(trim($row['COEF']));
+    //                     $product->descripcion = $description;
+    //                     $product->marca = mb_convert_encoding(trim($row['MARCA']), 'UTF-8', 'CP850');
+    //                     $product->codigoBarra = $codebar;
+    //                     $product->detalle = mb_convert_encoding(trim($row['OBS']), 'UTF-8', 'CP850');
+    //                     $product->moneda = "UYU";
+    //                     $product->descuento = 0.00;
+                        
+    //                     // CALCULO EL IMPORTE
+    //                     $multiplier = 1 + (abs($product->coeficiente) / 100);
+    //                     if ($product->coeficiente < 0) {
+    //                         $multiplier = 1 - (abs($product->coeficiente) / 100);
+    //                     }
+                        
+    //                     $costWithCoeff = $product->costo * $multiplier;
+    //                     $importe = round(($costWithCoeff * (1 + $product->percentageIva / 100)), 2);
+    //                     $product->importe = $importe;
+                        
+    //                     $products[] = $product;
+    //                 }
+    //             }
+    //         }
+    //     }
+        
+    //     fclose($fdbf);
+        
+    //     $response->products = $products;
+    //     $response->result = 2;
+    //     $response->offset = $endPos;
+    //     $response->total = $header['RecordCount'];
+    //     $response->processed = $endPos;
+    //     $response->isComplete = ($endPos >= $header['RecordCount']);
+        
+    //     // Limpiar tracking si se completó
+    //     if ($response->isComplete) {
+    //         unset($_SESSION['import_tracking']);
+    //     }
+        
+    //     return $response;
+    // }
+
     public function importProductsBatch($currentSession, $isLiteralE, $uploadedFilePath, $offset = 0, $limit = 500){
-        set_time_limit(60); // 1 minuto por lote
+        set_time_limit(60);
         
         $products = array();
         $response = new \stdClass();
         $db = $uploadedFilePath;
         
-        // Recuperar o inicializar datos de tracking
-        // session_start();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         if ($offset == 0) {
             $_SESSION['import_tracking'] = [
                 'processedBarcodes' => [],
@@ -37,15 +176,12 @@ class dbf_management{
         if ($offset == 0) {
             $goon = true;
             $unpackString='';
+            $fieldNames = array(); // Array para guardar los nombres de campos
+            
             while ($goon && !feof($fdbf)) {
                 $buf = fread($fdbf,32);
                 if (substr($buf,0,1)==chr(13)) {
                     $goon=false;
-                // }else {
-                //     $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
-                //     $unpackString.="A$field[fieldlen]$field[fieldname]/";
-                //     array_push($fields, $field);
-                // }
                 } else {
                     $field=unpack( "a11fieldname/A1fieldtype/Voffset/Cfieldlen/Cfielddec", substr($buf,0,18));
                     
@@ -66,8 +202,10 @@ class dbf_management{
                 }
             }
             $_SESSION['import_tracking']['unpackString'] = $unpackString;
+            $_SESSION['import_tracking']['fieldNames'] = $fieldNames;
         } else {
             $unpackString = $_SESSION['import_tracking']['unpackString'];
+            $fieldNames = $_SESSION['import_tracking']['fieldNames'];
         }
         
         // Calcular posiciones
@@ -83,27 +221,50 @@ class dbf_management{
             $buf = substr($buf, 1);
             $row = unpack($unpackString, $buf);
             
+            // Crear array con nombres de campos correctos
+            $cleanRow = array();
+            foreach ($fieldNames as $fieldName) {
+                $key = "field_" . $fieldName;
+                if (isset($row[$key])) {
+                    $cleanRow[$fieldName] = $row[$key];
+                }
+            }
+            
+            // Debug en la primera iteración
+            if ($i == $offset + 1) {
+                error_log("Claves disponibles en cleanRow: " . json_encode(array_keys($cleanRow)));
+            }
+            
             // Verificar si el registro está eliminado
             if ($deletedRow != chr(0x2A)) {
-                $codebar = trim($row['CODEBAR']);
-                $description = mb_convert_encoding(trim($row['DESC']), 'UTF-8', 'CP850');
+                // Ahora usar cleanRow en lugar de row
+                $codebar = isset($cleanRow['CODEBAR']) ? trim($cleanRow['CODEBAR']) : '';
+                $description = isset($cleanRow['DESC']) ? mb_convert_encoding(trim($cleanRow['DESC']), 'UTF-8', 'CP850') : '';
+                
+                // Log para debug
+                if (empty($codebar) || empty($description)) {
+                    error_log("Registro $i - CODEBAR: '$codebar', DESC: '$description'");
+                }
                 
                 // Verificar duplicados
-                if (!in_array($codebar, $processedBarcodes) && !in_array($description, $processedDescriptions)) {
+                if (!empty($codebar) && !empty($description) && 
+                    !in_array($codebar, $processedBarcodes) && 
+                    !in_array($description, $processedDescriptions)) {
+                    
                     // Verificar EAN
                     if ($this->isValidEAN($codebar)) {
                         $processedBarcodes[] = $codebar;
                         $processedDescriptions[] = $description;
                         
                         $product = new \stdClass();
-                        $product->idIva = $this->getIva(trim($row['IVA']), $isLiteralE);
-                        $product->percentageIva = floatval(trim($row['IVA']));
-                        $product->costo = floatval(trim($row['COSTO']));
-                        $product->coeficiente = floatval(trim($row['COEF']));
+                        $product->idIva = $this->getIva(isset($cleanRow['IVA']) ? trim($cleanRow['IVA']) : '00.00', $isLiteralE);
+                        $product->percentageIva = floatval(isset($cleanRow['IVA']) ? trim($cleanRow['IVA']) : '0');
+                        $product->costo = floatval(isset($cleanRow['COSTO']) ? trim($cleanRow['COSTO']) : '0');
+                        $product->coeficiente = floatval(isset($cleanRow['COEF']) ? trim($cleanRow['COEF']) : '0');
                         $product->descripcion = $description;
-                        $product->marca = mb_convert_encoding(trim($row['MARCA']), 'UTF-8', 'CP850');
+                        $product->marca = isset($cleanRow['MARCA']) ? mb_convert_encoding(trim($cleanRow['MARCA']), 'UTF-8', 'CP850') : '';
                         $product->codigoBarra = $codebar;
-                        $product->detalle = mb_convert_encoding(trim($row['OBS']), 'UTF-8', 'CP850');
+                        $product->detalle = isset($cleanRow['OBS']) ? mb_convert_encoding(trim($cleanRow['OBS']), 'UTF-8', 'CP850') : '';
                         $product->moneda = "UYU";
                         $product->descuento = 0.00;
                         
@@ -132,7 +293,6 @@ class dbf_management{
         $response->processed = $endPos;
         $response->isComplete = ($endPos >= $header['RecordCount']);
         
-        // Limpiar tracking si se completó
         if ($response->isComplete) {
             unset($_SESSION['import_tracking']);
         }
