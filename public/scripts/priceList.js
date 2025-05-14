@@ -100,10 +100,22 @@ function loadPriceListFromId($lastId){
 // 	}
 // }
 
+function cleanSearchBar(){
+	console.log("clean")
+	$('#searchBarCleaner').addClass('d-none')
+	$('#inputToSearch').val('').trigger('change').focus()
+	// $('#inputToSearch').trigger('change')
+}
+
 function searchProduct(event) {
-    let textTemp = $('#inputToSearch').val();
+	console.log("searchProduct")
+
+    let textTemp = $('#inputToSearch').val() || null;
     
     if (textTemp != null) {
+		console.log("algo para buscar")
+
+		$('#searchBarCleaner').removeClass('d-none')
         // Verificar si todos los caracteres son números
         let isAllNumbers = /^\d+$/.test(textTemp);
         
