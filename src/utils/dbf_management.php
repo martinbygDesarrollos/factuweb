@@ -11,7 +11,7 @@ class dbf_management{
         $db = $uploadedFilePath;
         
         // Recuperar o inicializar datos de tracking
-        session_start();
+        // session_start();
         if ($offset == 0) {
             $_SESSION['import_tracking'] = [
                 'processedBarcodes' => [],

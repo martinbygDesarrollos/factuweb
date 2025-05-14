@@ -41,36 +41,12 @@ function sendAsyncPost(nombreFuncion, parametros){
 	});
 }
 
-// function sendFetch(nombreFuncion, formData) {
-//     return new Promise(function (resolve, reject) {
-//         fetch(getSiteURL() + nombreFuncion, {
-// 			async: true,
-//             method: "POST",
-//             body: formData
-//         })
-//         .then(response => {
-//             if (response.ok) {
-//                 return response.json();
-//             } else {
-//                 throw new Error("Error uploading file");
-//             }
-//         })
-//         .then(data => {
-//             resolve(data);
-//         })
-//         .catch(error => {
-//             reject(error);
-//         });
-//     });
-// }
-
 function sendFetch(nombreFuncion, formData) {
     return new Promise(function (resolve, reject) {
         fetch(getSiteURL() + nombreFuncion, {
+			async: true,
             method: "POST",
             body: formData
-            // NO pongas headers cuando uses FormData
-            // El navegador automáticamente pondrá el Content-Type correcto con boundary
         })
         .then(response => {
             if (response.ok) {

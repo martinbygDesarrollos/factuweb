@@ -269,17 +269,6 @@ return function (App $app){
 	$app->post('/importProducts', function(Request $request, Response $response) use ($userController, $productController, $productsClass, $dbfManagement){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2 && $responseCurrentSession->currentSession->superUser == "SI"){
-			// En tu archivo de configuración o al inicio del endpoint
-			error_log("PATH_IMPORTS: " . PATH_IMPORTS);
-			error_log("¿Directorio existe?: " . (is_dir(PATH_IMPORTS) ? "Sí" : "No"));
-			error_log("¿Directorio escribible?: " . (is_writable(PATH_IMPORTS) ? "Sí" : "No"));
-			error_log("Permisos del directorio: " . decoct(fileperms(PATH_IMPORTS) & 0777));
-
-			error_log("upload_max_filesize: " . ini_get('upload_max_filesize'));
-			error_log("post_max_size: " . ini_get('post_max_size'));
-			error_log("max_file_uploads: " . ini_get('max_file_uploads'));
-
-
 			$uploadedFilePath = null;
 			$data = $request->getParsedBody();
 			$uploadedFiles = $request->getUploadedFiles();
@@ -297,21 +286,20 @@ return function (App $app){
 						$uploadedFilePath = PATH_IMPORTS . $file->getClientFilename();
 						$file->moveTo($uploadedFilePath);
 
-						error_log(PATH_IMPORTS . $file->getClientFilename());
+						error_log('FILE: ' . PATH_IMPORTS . $file->getClientFilename());
 						
 						// Guardar la ruta en sesión para las siguientes llamadas
-						session_start();
+						// session_start();
 						$_SESSION['current_import_file'] = $uploadedFilePath;
 					} else {
 						// Recuperar la ruta del archivo de la sesión
-						session_start();
+						// session_start();
 						$uploadedFilePath = $_SESSION['current_import_file'];
 					}
 				}
-				error_log(PATH_IMPORTS);
 			} else if ($offset > 0) {
 				// Si no hay archivo pero hay offset, recuperar de sesión
-				session_start();
+				// session_start();
 				$uploadedFilePath = $_SESSION['current_import_file'];
 			}
 			
