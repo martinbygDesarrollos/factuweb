@@ -297,6 +297,7 @@ return function (App $app){
 						$uploadedFilePath = $_SESSION['current_import_file'];
 					}
 				}
+				error_log(PATH_IMPORTS);
 			} else if ($offset > 0) {
 				// Si no hay archivo pero hay offset, recuperar de sesión
 				session_start();
