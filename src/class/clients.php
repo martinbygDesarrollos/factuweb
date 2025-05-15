@@ -123,7 +123,7 @@ class clients{
 		}
 
 		$sqlToSend .= " AND Cli.id < ? ORDER BY Cli.id DESC LIMIT 20";
-
+		error_log("SQL: " . $sqlToSend);
 		$responseQuery = $dbClass->sendQuery($sqlToSend, array('ii', $myBusiness, $lastId), "LIST");
 
 		if($responseQuery->result == 2) {

@@ -298,3 +298,62 @@ tr.isStockBelowMinimum {
 .custom-file-label::after {
   content: "Seleccionar" !important;
 }
+
+#mobileNumbersContainer {
+  height: auto;
+
+}
+
+.mobile-number-item, .email-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .2rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.mobile-number-item:hover, .email-item:hover {
+  background-color: #f0f0f0;
+}
+
+.number-text, .email-text {
+  flex: 1;
+}
+
+.delete-btn {
+  display: none;
+  color: #dc3545;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.mobile-number-item:hover .delete-btn, .email-item:hover .delete-btn{
+  display: block;
+}
+
+.copy-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  z-index: 1000;
+  animation: fadeOut 2s forwards;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.scrollSelect {
+  min-height: 150px;
+  overflow-y: auto;
+}

@@ -3,6 +3,12 @@ var textToSearch = null;
 var headingValue = null;
 var discountPercentage = null;
 
+// Variable para almacenar el timestamp de la última ejecución
+let lastExecutionTimeNewProduct = 0;
+let lastExecutionTimeEditProduct = 0;
+const MIN_EXECUTION_INTERVAL = 3000;
+
+
 var defaultIva = null;
 
 $('#modalCreateModifyProduct').on('shown.bs.modal', function () {
@@ -527,6 +533,19 @@ function deleteProduct(idProduct){
 }
 
 function createNewProduct(stockManagement){
+
+	// Obtener el tiempo actual
+    const currentTime = Date.now();
+
+	// Verificar si ha pasado suficiente tiempo desde la última ejecución
+    if (currentTime - lastExecutionTimeNewProduct < MIN_EXECUTION_INTERVAL) {
+        console.log("Demasiado rápido, espera un momento...");
+        return; // Salir de la función sin hacer nada
+    }
+    
+    // Actualizar el timestamp de la última ejecución
+    lastExecutionTimeNewProduct = currentTime;
+	
 	console.log("createNewProduct")
 	let description = $('#inputDescription').val() || null;
 	let brand = $('#inputBrand').val() || null;
@@ -577,6 +596,19 @@ function createNewProduct(stockManagement){
 }
 
 function updateProduct(stockManagement, idProduct){
+
+	// Obtener el tiempo actual
+    const currentTime = Date.now();
+
+	// Verificar si ha pasado suficiente tiempo desde la última ejecución
+    if (currentTime - lastExecutionTimeEditProduct < MIN_EXECUTION_INTERVAL) {
+        console.log("Demasiado rápido, espera un momento...");
+        return; // Salir de la función sin hacer nada
+    }
+    
+    // Actualizar el timestamp de la última ejecución
+    lastExecutionTimeEditProduct = currentTime;
+
 	console.log("updateProduct pricelist");
 	let description = $('#inputDescription').val() || null;
 	let brand = $('#inputBrand').val() || null;

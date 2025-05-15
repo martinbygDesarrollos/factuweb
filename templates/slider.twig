@@ -1,11 +1,14 @@
 <div class="vertical-nav bg-light" id="sidebar">
     <div class="py-4 px-3 mb-3 background-template-color">
         <div class="media d-flex justify-content-center ">
-            <img src="{{path_for('Start')}}img/LogoHeader.png" alt="..." width="150">
+            {# <img src="{{path_for('Start')}}img/LogoHeader.png" alt="..." width="150"> #}
+            <img src="{{path_for('Start')}}img/logo_new.png" alt="..." width="200">
         </div>
-        <h4 class="text-template-background text-center font-italic ml-1">Efactura</h4>
+        {# <h4 class="text-template-background text-center font-italic ml-1">Efactura</h4> #}
         {% if systemSession %}
-        <span class="text-template-background text-center font-italic ml-1 m-0">{{ systemSession.empresa }}</span>
+        <hr style="margin:.5rem !important;">
+        <span style="color: white;" class="text-center font-italic m-0">{{ systemSession.empresa }}</span><br>
+        <span style="color: white; font-size: small;" class="text-center font-italic m-0">{{ systemSession.rut }}</span>
         {% endif %}
     </div>
 

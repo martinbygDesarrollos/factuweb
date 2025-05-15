@@ -1,0 +1,60 @@
+<div class="modal fade" id="modalNewClient" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title  text-template-color">Nuevo Cliente</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="input-group mb-3 shadow-sm">
+					<input type="text" list="listClient" id="inputTextToSearchClientModal" title="Ingrese nombre, RUT o CI para buscar cliente" onchange="searchCompleteData(this.value, event)" onkeyup="searchClient(this, event)" class="form-control form-control-sm text-center" onkeypress="return keyPressAddClient(event, this.value, 100)" autocomplete="off">
+					<datalist id="listClient" ></datalist>
+				</div>
+				<div class="d-flex">
+					<div class="form-group w-75">
+						<label for="inputNameClient" class="col-form-label col-form-label-sm">Nombre</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputNameClient" onkeypress="return keyPressAddClient(event, this.value, 50)">
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group col">
+						<label for="inputDocumentClient" class="col-form-label col-form-label-sm">Documento</label>
+						<input type="number" class="form-control form-control-sm shadow-sm" id="inputDocumentClient" onkeypress="return keyPressAddClient(event, this.value, 12)">
+					</div>
+					<div class="form-group col">
+						<label for="inputPhoneClient" class="col-form-label col-form-label-sm">Celular/Teléfono</label>
+						<input type="number" class="form-control form-control-sm shadow-sm" id="inputPhoneClient" onkeypress="return keyPressAddClient(event, this.value, 12)">
+					</div>
+				</div>
+				<div class="d-flex">
+					<div class="form-group w-75">
+						<label for="inputEmailClient" class="col-form-label col-form-label-sm">Email</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputEmailClient" onkeypress="return keyPressAddClient(event, this.value, 280)">
+					</div>
+				</div>
+				<div class="d-flex">
+					<div class="form-group w-75">
+						<label for="inputAddressClient" class="col-form-label col-form-label-sm">Dirección</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputAddressClient" onkeypress="return keyPressAddClient(event, this.value, 280)">
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group col">
+						<label for="inputCityClient" class="col-form-label col-form-label-sm">Ciudad</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputCityClient" onkeypress="return keyPressAddClient(event, this.value, 50)">
+					</div>
+					<div class="form-group col">
+						<label for="inputDepartmentClient" class="col-form-label col-form-label-sm">Departamento</label>
+						<input type="text" class="form-control form-control-sm shadow-sm" id="inputDepartmentClient" onkeypress="return keyPressAddClient(event, this.value, 50)">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="btnConfirmSetClient" onclick="insertClient()" type="button" class="btn btn-success shadow-sm" onkeypress="return keyPressAddClient(event, null, null)">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>

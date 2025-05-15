@@ -17,7 +17,7 @@ var btnAddDetailClickNumber = 0;
 
 // Variable para almacenar el timestamp de la última ejecución
 let lastExecutionTime = 0;
-const MIN_EXECUTION_INTERVAL = 3000;
+const MIN_EXECUTION_INTERVAL = 1500;
 
 var config_value = null;
 var headingval = null;

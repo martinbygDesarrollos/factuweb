@@ -11,17 +11,16 @@
 			</div>
 		</div>
 		<div class="card-body">
-			<div class="row mb-2 ml-0">
-				<div class="input-group ml-0" style="min-width: 100px; max-width: 250px;">
-					<input id="inputToSearch" type="text" class="form-control form-control-sm shadow-sm" onchange="searchClient(this)" onkeyup="this.onchange()" placeholder="Buscar cliente...">
+			<div class="d-flex justify-content-between mb-1">
+				<div class="input-group w-50 ml-0 mb-1">
+					<input id="inputToSearch" type="text" class="form-control form-control-sm shadow-sm" onchange="searchClientFromSearchBar(this)" onkeyup="this.onchange()" placeholder="Buscar cliente...">
+					<div class="form-check m-1 pl-0" style="min-width: 100px; max-width: 200px; display: flex; align-items: center;">
+						<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" {% if paramCwb != "unchecked" %} checked {% endif %} style="margin: .25rem; position: static;">
+						<label class="form-check-label ml-1" for="checkboxClientWithBalance" style="cursor: pointer;">Clientes con saldo</label>
+					</div>
 				</div>
-				<div class="form-check m-1 pl-0" style="min-width: 100px; max-width: 200px; display: flex; align-items: center;">
-					{% if paramCwb == "unchecked" %}
-					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" style="margin: .25rem; position: static;">
-					{% else %}
-					<input class="form-check-input" id="checkboxClientWithBalance" type="checkbox" onclick="clientsWithBalance(this)" checked style="margin: .25rem; position: static;">
-					{% endif %}
-					<label class="form-check-label ml-1" for="checkboxClientWithBalance" style="cursor: pointer;">Clientes con saldo</label>
+				<div>
+					<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" title="Agregar nuevo cliente" type="button" onclick="openModalNewClient()" style="min-width: 90px "><i class="fas fa-plus-circle"></i> Nuevo</button>
 				</div>
 			</div>
 			<div id="containerTable" style="max-height: 75vh;">
@@ -177,6 +176,7 @@
 				</div>
 				<div class="form-row">
 					<div class="col-md-6">
+						<label for="numberMobileUpdateClient">Celulares</label>
 						<div class="form-row">
 							<div class="form-group col">
 								<input type="number" class="form-control form-control-sm shadow-sm" id="numberMobileUpdateClient" pattern="/^-?\d+\.?\d*$/" placeholder="Nuevo celular..." onkeypress="return keyPressModalClient(event, this, 9)">
@@ -186,10 +186,13 @@
 							</div>
 						</div>
 						<div id="textErrorNumberMobile" style="display: none;" class="alert alert-danger mb-2 text-center"></div>
-						<select multiple class="form-control shadow-sm scrollSelect" onclick="actionSelectNumberMobile()"  id="numberMobileListUpdateClient">
-						</select>
+						{# <select multiple class="form-control shadow-sm scrollSelect" onclick="actionSelectNumberMobile()"  id="numberMobileListUpdateClient"> #}
+						{# </select> #}
+						<div id="mobileNumbersContainer" class="form-control shadow-sm scrollSelect">
+						</div>
 					</div>
 					<div class="col-md-6">
+						<label for="emailUpdateClient">Correos electrónicos</label>
 						<div class="form-row">
 							<div class="form-group col">
 								<input id="emailUpdateClient" type="text" class="form-control form-control-sm shadow-sm" placeholder="Nuevo correo..." onkeypress="return keyPressModalClient(event, this, 80)">
@@ -199,8 +202,10 @@
 							</div>
 						</div>
 						<div id="textErrorEmail" style="display: none;" class="alert alert-danger mb-2 text-center"></div>
-						<select multiple class="form-control shadow-sm scrollSelect" onclick="actionSelectEmails()" id="emailListUpdateClient">
-						</select>
+						{# <select multiple class="form-control shadow-sm scrollSelect" onclick="actionSelectEmails()" id="emailListUpdateClient"> #}
+						{# </select> #}
+						<div id="emailListContainer" class="form-control shadow-sm scrollSelect">
+						</div>
 					</div>
 				</div>
 			</div>
@@ -253,6 +258,7 @@
 
 {# {% include("buttonUp.twig") %} #}
 {% include("progressBar.twig") %}
+{% include("modalNewClient.twig") %}
 
 {%block script%}
 <script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
