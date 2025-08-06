@@ -176,12 +176,16 @@ class ctr_products{
 		return $response;
 	}
 
-	public function updateStockProduct($detalle, $typeCFE, $currentSession){
+	public function updateStockProduct($detalle, $typeCFE, $currentSession){ // AVERIGUAR PORQUE VIENE 2 VECES POR ESTA FUNCION CUANDO ANULO // HERE HERE HERE HERE VER EVR ver veR
 		$response = new \stdClass();
 		$productsClass = new products();
 		$productsController = new ctr_products();
 		$handleDateTimeClass = new handleDateTime();
-		$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->description, $currentSession->idEmpresa);
+		// $responseGetProductByDescription = $productsClass->getProductByDescription($detalle->description, $currentSession->idEmpresa);
+		$detalle->description = isset($detalle->description) ? $detalle->description : $detalle->nomItem;
+		$detalle->quantity = isset($detalle->quantity) ? $detalle->quantity : $detalle->cantidad;
+		$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->description, $currentSession->idEmpresa);	
+
 		if($responseGetProductByDescription->result == 2){
 			if(!isset($responseGetProductByDescription->objectResult->idInventario)){// Si no tiene inventario creo uno
 				$idNewInventory = null;
