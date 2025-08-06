@@ -89,8 +89,9 @@ return function (App $app){
 			$minInventory = $data['minInventory'];
 			$discount = $data['discount'];
 			$amount = $data['amount'];//importe
+			$unidadVenta = $data['unidadVenta'];
 
-			return json_encode($productController->insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $responseCurrentSession->currentSession->idEmpresa));
+			return json_encode($productController->insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $unidadVenta, $responseCurrentSession->currentSession->idEmpresa));
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -111,10 +112,12 @@ return function (App $app){
 			$amount = $data['amount'];
 			$barcode = $data['barcode'];
 			$discount = $data['discount'];
+			$unidadVenta = $data['unidadVenta'];
+
 			$inventory = (!isset($data['inventory']) || $data['inventory'] === "") ? null : $data['inventory'];
 			$minInventory = (!isset($data['minInventory']) || $data['minInventory'] === "") ? null : $data['minInventory'];
 
-			return json_encode($productController->updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $responseCurrentSession->currentSession));
+			return json_encode($productController->updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $unidadVenta, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
 
@@ -327,7 +330,7 @@ return function (App $app){
 						$productController->insertProduct(
 							null, $prod->idIva, $prod->descripcion, $prod->detalle, 
 							$prod->marca, $prod->moneda, $prod->costo, $prod->coeficiente, 
-							$prod->descuento, $prod->codigoBarra, 1, 0, $prod->importe, 
+							$prod->descuento, $prod->codigoBarra, 1, 0, $prod->importe,  $prod->unidadVenta,
 							$responseCurrentSession->currentSession->idEmpresa
 						);
 					}

@@ -127,6 +127,12 @@ class ctr_users{
 		$othersClass = new others();
 		return $othersClass->getListIva();
 	}
+	//NEW
+	public function getAllUsersfromCompany($idEmpresa){
+		$usersClass = new users();
+		$responseGetUsers = $usersClass->getAllUsersfromCompany($idEmpresa);
+		return $responseGetUsers;
+	}
 	// NEW
 	public function getCaes($currentSession){
 		$response = new \stdClass();
@@ -777,6 +783,74 @@ class ctr_users{
 		}
 		return $response;
 	}
+	// NEW
+	public function getCart(){
+		$response = new \stdClass();
+		if( isset($_SESSION['systemSession']) ){ //verifico si un usuario tiene una sesion iniciada
+			// var_dump($_SESSION['systemSession']->cart);
+			$response->data = $_SESSION['systemSession']->cart;
+			$response->result = 2;
+		}
+		else{
+			$response->data = [];
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+		return $response;
+	}
+	// NEW
+	public function updateArticleInCart($article, $index){
+		$response = new \stdClass();
+		if( isset($_SESSION['systemSession']) ){
+			// var_dump($_SESSION['systemSession']->cart);
+			$_SESSION["systemSession"]->cart[$index] = $article;
+			$response->data = $_SESSION['systemSession']->cart;
+			$response->result = 2;
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+		return $response;
+	}
+	// NEW
+	public function deleteCart(){
+		$response = new \stdClass();
+		if( isset($_SESSION['systemSession']) ){
+			$_SESSION["systemSession"]->cart = [];
+			$response->data = $_SESSION['systemSession']->cart;
+			$response->result = 2;
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+		return $response;
+	}
+
+	// NEW
+	public function deleteArticleFromCart($index){
+		$response = new \stdClass();
+		if( isset($_SESSION['systemSession']) ){
+			// Verificar que el índice existe
+			if(isset($_SESSION["systemSession"]->cart[$index])){
+				// Eliminar el elemento en el índice específico y reagrupar
+				array_splice($_SESSION["systemSession"]->cart, $index, 1);
+				
+				$response->data = $_SESSION['systemSession']->cart;
+				$response->result = 2;
+				$response->message = "Artículo eliminado correctamente.";
+			} else {
+				$response->result = 0;
+				$response->message = "El índice especificado no existe en el carrito.";
+			}
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actualmente no hay una sesión activa en el sistema.";
+		}
+		return $response;
+	}
 
 	public function updateProductsDataSession($index1, $index2, $newData){
 
@@ -784,6 +858,23 @@ class ctr_users{
 
 		if( isset($_SESSION['systemSession']) ){
 			$_SESSION["arrayProductsSales"][$index1][$index2] = $newData;
+			//var_dump($_SESSION["arrayProductsSales"][$index1]);
+			$response->result = 2;
+		}
+		else{
+			$response->result = 0;
+			$response->message = "Actulamente no hay una sesión activa en el sistema.";
+		}
+
+		return $response;
+	}
+
+	public function setNewDataSession($cart){
+
+		$response = new \stdClass();
+
+		if( isset($_SESSION['systemSession']) ){
+			$_SESSION["arrayProductsSales"] = $cart;
 			//var_dump($_SESSION["arrayProductsSales"][$index1]);
 			$response->result = 2;
 		}

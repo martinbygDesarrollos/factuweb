@@ -76,14 +76,14 @@ class ctr_products{
 
 		return $response;
 	}
-	//UPDATED
-	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $idEmpresa){ // $idHeading si es NULL va a VARIOS
+	//UPDATED 
+	public function insertProduct($idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $barcode, $inventory, $minInventory, $amount, $unidadVenta, $idEmpresa){ // $idHeading si es NULL va a VARIOS
 		$response = new \stdClass();
 		$productsController = new ctr_products();
 		$productsClass = new products();
 		$othersClass = new others();
 		$handleDateTimeClass = new handleDateTime();
-		error_log("INSERTAR PRODUCTO: RUBRO: $idHeading, IVA: $idIva, DESCRIPCION: $description, DETALLES: $detail, MARCA: $brand, MONEDA: $typeCoin, COSTO: $cost, COEFICIENTE: $coefficient, DESCUENTO: $discount, CODIGO DE BARRAS: $barcode, INVENTARIO: $inventory, INVENTARIO MINIMO: $minInventory, IMPORTE: $amount, EMPRESA: $idEmpresa.");
+		error_log("INSERTAR PRODUCTO: RUBRO: $idHeading, IVA: $idIva, DESCRIPCION: $description, DETALLES: $detail, MARCA: $brand, MONEDA: $typeCoin, COSTO: $cost, COEFICIENTE: $coefficient, DESCUENTO: $discount, CODIGO DE BARRAS: $barcode, INVENTARIO: $inventory, INVENTARIO MINIMO: $minInventory, IMPORTE: $amount, UNIDAD_VENTA: $unidadVenta, EMPRESA: $idEmpresa.");
 		
 		if(is_null($idHeading)){ // SIGNIFICA QUE VA A VARIOS
 			$responseGetHeading = $productsClass->insertDefaultRubro($idEmpresa);
@@ -109,7 +109,7 @@ class ctr_products{
 						$idNewInventory = $responseInsertInventory->id;
 					else return $responseInsertInventory;
 					// }
-					$responseInsertProduct = $productsClass->insertProduct($idHeading, $idIva, $idNewInventory, $idEmpresa, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode);
+					$responseInsertProduct = $productsClass->insertProduct($idHeading, $idIva, $idNewInventory, $idEmpresa, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode, $unidadVenta);
 					if($responseInsertProduct->result == 2){
 						$response->result = 2;
 						$response->message = "El artículo fue ingresado correctamente.";
@@ -127,7 +127,7 @@ class ctr_products{
 		return $response;
 	}
 
-	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $currentSession){
+	public function updateProduct($idProduct, $idHeading, $idIva, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $inventory, $minInventory, $unidadVenta,  $currentSession){
 		$response = new \stdClass();
 		$productsController = new ctr_products();
 		$productsClass = new products();
@@ -159,7 +159,7 @@ class ctr_products{
 								error_log("INVENTARIO ACTUALIZADO CON EXITO DATOS( Inventario: $inventory, min Inventario: $minInventory, fecha Inventario: $dateInventory");
 						}
 
-						$responseUpdateProduct = $productsClass->updateProduct($idHeading, $idIva, $responseGetProduct->objectResult->idInventario, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $currentSession->idEmpresa);
+						$responseUpdateProduct = $productsClass->updateProduct($idHeading, $idIva, $responseGetProduct->objectResult->idInventario, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $unidadVenta, $idProduct, $currentSession->idEmpresa);
 						if($responseUpdateProduct->result == 2){
 							$response->result = 2;
 							$response->message = "El producto fue actualizado correctamente.";
@@ -179,14 +179,15 @@ class ctr_products{
 	public function updateStockProduct($detalle, $typeCFE, $currentSession){
 		$response = new \stdClass();
 		$productsClass = new products();
+		$productsController = new ctr_products();
 		$handleDateTimeClass = new handleDateTime();
-		$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->nomItem, $currentSession->idEmpresa);
+		$responseGetProductByDescription = $productsClass->getProductByDescription($detalle->description, $currentSession->idEmpresa);
 		if($responseGetProductByDescription->result == 2){
 			if(!isset($responseGetProductByDescription->objectResult->idInventario)){// Si no tiene inventario creo uno
 				$idNewInventory = null;
 				$dateInventory = $handleDateTimeClass->getCurrentDateTimeInt();
-				error_log("PRODUCTO SIN INVENTARIO. CREO UNO( Inventario: $detalle->cantidad, min Inventario: 0, fecha Inventario: $dateInventory");
-				$responseInsertInventory = $productsClass->insertInventory($detalle->cantidad, 0, $dateInventory, $currentSession->idEmpresa);
+				error_log("PRODUCTO SIN INVENTARIO. CREO UNO( Inventario: $detalle->quantity, min Inventario: 0, fecha Inventario: $dateInventory");
+				$responseInsertInventory = $productsClass->insertInventory($detalle->quantity, 0, $dateInventory, $currentSession->idEmpresa);
 				if($responseInsertInventory->result == 2){
 					$idNewInventory = $responseInsertInventory->id;
 					$productsClass->setInventoryToProduct($responseGetProductByDescription->objectResult->idArticulo, $idNewInventory, $currentSession->idEmpresa);
@@ -195,18 +196,28 @@ class ctr_products{
 			}
 			$responseUpdateStock = null;
 			if($typeCFE == 101 || $typeCFE == 111 || $typeCFE == 103 || $typeCFE == 113){
-				$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+				$responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->quantity);
 			} else if ($typeCFE == 102 || $typeCFE == 112){
-				$responseUpdateStock = $productsClass->increaseStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
+				$responseUpdateStock = $productsClass->increaseStock($responseGetProductByDescription->objectResult->idInventario, $detalle->quantity);
 			}
 			// $responseUpdateStock = $productsClass->substractStock($responseGetProductByDescription->objectResult->idInventario, $detalle->cantidad);
 			if($responseUpdateStock->result == 2){
 				$response->result = 2;
 				$response->message = "El stock fue actualizado correctamente.";
 			}else return $responseUpdateStock;
-		}else{
+		}else{ // SI EL PRODUCTO NO SE ENCUENTRA ENTONCES LO CREO
+			if($typeCFE == 102 || $typeCFE == 112){	// LO CREO SOLO SI NO ES UNA ANULACION
+				$response->result = 2;
+				$response->message = "OK.";
+				return $response;
+			}
+			if($detalle->unidad_venta == "LIT")
+					$detalle->unidad_venta = "Litro";
+			$productsController->insertProduct(null, $detalle->idIva, $detalle->description, $detalle->detail, $detalle->brand, $detalle->coin, $detalle->cost, $detalle->coefficient, $detalle->discount, $detalle->barcode, $detalle->idInventory, null, $detalle->import, $detalle->unidad_venta, $currentSession->idEmpresa);
 			$response->result = 0;
 			$response->message = "Producto no encontrado.";
+			if($productsController->result == 2)
+				$response->message .= "  Pero ingresado con éxito!";
 		}
 		return $response;
 	}
@@ -346,7 +357,7 @@ class ctr_products{
 					$itemDetail->nomItem = strtolower($itemDetail->nomItem);
 					$responseGetProductByDescription = $productsClass->getProductByDescription($itemDetail->nomItem, $idBusiness);
 					if($responseGetProductByDescription->result != 2){
-						$responseInsertDetail = $productsClass->insertProduct($idHeading, $itemDetail->indFact, null, $idBusiness, $itemDetail->nomItem, $itemDetail->descripcion, null, $jsonPrintFormat->tipoMoneda, $cost, 0, $itemDetail->precio, $discount, null);
+						$responseInsertDetail = $productsClass->insertProduct($idHeading, $itemDetail->indFact, null, $idBusiness, $itemDetail->nomItem, $itemDetail->descripcion, null, $jsonPrintFormat->tipoMoneda, $cost, 0, $itemDetail->precio, $discount, null, "Unidad");
 						if($responseInsertDetail->result == 2)
 							$inserted++;
 					}

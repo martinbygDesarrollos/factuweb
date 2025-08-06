@@ -19,8 +19,10 @@
 					<a class="btn background-template-color2 text-template-background shadow-sm mb-2" id="v-pills-branchCompany-tab" data-toggle="pill" href="#bCompanyContainer" onclick="loadBranchCompany()" role="tab" aria-controls="v-pills-branchCompany-tab" aria-selected="false">Sucursales</a><!-- href="#bCompanyContainer" -->
 					{% if systemSession.superUser == 'SI' %}
 					<a class="btn background-template-color2 text-template-background mb-2" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true">Administrador</a>
-					<a class="btn background-template-color2 text-template-background mb-2" id="cashRegisterContainer-tab" data-toggle="pill" href="#cashRegisterContainer" role="tab" aria-controls="cashRegisterContainer" aria-selected="true">Caja</a>
 					{% endif %}
+					{% if systemSession.permission.CAJA == 'SI' %}
+						<a class="btn background-template-color2 text-template-background mb-2" id="cashRegisterContainer-tab" data-toggle="pill" href="#cashRegisterContainer" role="tab" aria-controls="cashRegisterContainer" aria-selected="true">Caja</a>
+					{% endif %}	
 				</div>
 				<div class="tab-content col ml-1">
 					<!-- INICIO -->
@@ -489,60 +491,178 @@
 							<button class="btn btn-success btn-sm shadow-sm" onclick="updateEnabledSections()">Confirmar</button>
 						</div>
 					</div>
-					{# CAJA #}
-					<div class="tab-pane fade border-template shadow p-2" id="cashRegisterContainer" role="tabpanel" aria-labelledby="cashRegisterContainer-tab">
-						<p class="text-center text-template-background font-italic h5 mt-1">Caja</p>
-						{# <div class="d-flex flex-row">
-							<button class="btn btn-link btn-sm" onclick="loadDataFirstLogin();"><i id="iconButtonUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
-							<p class="pt-2 pl-2">Obtener comprobantes por primera vez.</p>
-						</div>
-						<div class="d-flex flex-row">
-							<button class="btn btn-link btn-sm" onclick="updateSuperVouchers();"><i id="iconBtnUpdateSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
-							<p class="pt-2 pl-2">Analizar y cargar comprobantes emitidos no encontrados.</p>
-						</div>
-						<div class="d-flex flex-row">
-							<button class="btn btn-link btn-sm" onclick="loadProductsFromDetails();"><i id="iconButtonGetDetailSUPER" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
-							<p class="pt-2 pl-2">Cargar artículos por comprobantes emitidos.</p>
-						</div>
-						<div class="d-flex flex-row">
-							<button class="btn btn-link btn-sm" onclick="loadCustomers();" title="Se crean los clientes que se hayan encontrado en Sigecom y no en EFactura."><i id="iconBtnLoadCustomersEfactura" class="fas fa-sync-alt text-mycolor h5 mt-2"></i></button>
-							<p class="pt-2 pl-2">Cargar clientes en EFactura.</p>
-						</div>
-						<hr>
-						<p class="text-left text-template-background font-italic h6 mt-1">Respaldos</p>
-						<div class="row d-flex justify-content-center m-1">
-							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="openSelectFile()"><i class="fas fa-file-archive"></i>&nbsp;Importar archivo de respaldo (.zip)</button>
-							<button class="btn background-template-color text-template-color shadow-sm ml-2 mt-2" onclick="exportBackUp()"><i class="fas fa-file-archive"></i>&nbsp;Exportar archivo de respaldo (.zip)</button>
-						</div>
-						<input type="file" id="inputSelectFileImport" onchange="importBackUp()" style="visibility: hidden;">
-						<hr>
-						<p class="text-left text-template-background font-italic h6 mt-1">Secciones</p>
-						<table class="table table-sm table-bordered">
-							<thead class="background-template-color text-template-color">
-								<tr>
-									<th class="text-center">Sección</th>
-									<th class="text-center" scope="col">Acción</th>
-								</tr>
-							</thead>
-							<tbody id="tbodyEnabledSections">
-								{% for s in section %}
-								<tr>
-									<td class="text-center">{{ s.seccion }}</td >
-									<td class="text-center w-25">
-										{% if s.permiso == 'SI' %}
-										<input id="checkEnable{{ s.id }}" type="checkbox" checked>
-										{% else %}
-										<input id="checkEnable{{ s.id }}" type="checkbox">
-										{% endif %}
-									</td>
-								</tr>
+						{% if systemSession.permission.CAJA == 'SI' %} {# ESTA ES LA VISTA DE CAJA PERO DEL SUPER USUARIO #}
+							{# CAJA SUPERUSER #}
+							{# {{ dump(cajas) }}
+							{{ dump(users) }}
+							{{ dump(listPOS) }} #}
+							<div class="tab-pane fade border-template shadow p-2" id="cashRegisterContainer" role="tabpanel" aria-labelledby="cashRegisterContainer-tab">
+								<div class="d-flex w-100 justify-content-center"> 
+									<p class="text-center text-template-background font-italic h5 mt-1" >Configuración de cajas</p> 
+								</div>
+								
+								<div class="row col form-group mb-2">
+									<label class="col-4 m-auto" for="CAJA_SELECT">Caja</label>
+									<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="CAJA_SELECT" onchange="changeCajaSelected(this)">
+										<option value="0" >Seleccione una Caja</option>
+										{% for caja in cajas %}
+											<option value="{{ caja.id }}">{{ caja.nombre }} [ {{ caja.moneda }} ]</option>
+										{% endfor %}
+									</select>
+								</div>
+
+								{% for caja in cajas %}
+									<div id="caja_{{ caja.id }}" class="caja_data d-none">
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="NOMBRE_CAJA_{{ caja.id }}">Nombre</label>
+											<input type="text" class="form-control form-control-sm text-start col shadow-sm" id="NOMBRE_CAJA_{{ caja.id }}" value="{{ caja.nombre }}">
+										</div>
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="MONEDA_CAJA_{{ caja.id }}">Moneda</label>
+											<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="MONEDA_CAJA_{{ caja.id }}">
+												<option value="UYU" {% if caja.moneda == "UYU" %} selected {% endif %}> Pesos Uruguayos </option>
+												<option value="USD" {% if caja.moneda == "USD" %} selected {% endif %}> Dólares </option>
+											</select>
+										</div>
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="OBS_CAJA_{{ caja.id }}">Observaciones</label>
+											<textarea type="text" rows="3" class="form-control form-control-sm text-start col shadow-sm" id="OBS_CAJA_{{ caja.id }}">{{ caja.obs}}</textarea>
+										</div>
+
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="POS_CAJA_{{ caja.id }}">POS</label>
+											<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="POS_CAJA_{{ caja.id }}">
+												<option value="0"> Ninguno </option>
+												{% for pos in listPOS %}
+													<option value="{{ pos.id }}" {% if caja.pos == pos.id %} selected {% endif %} >{{ pos.marca }} [ {{ pos.terminal }} ]</option>
+												{% endfor %}
+											</select>
+										</div>
+
+										<div class="row col form-group mb-2 d-flex flex-row-reverse">
+											<button class="btn btn-success btn-sm shadow-sm" onclick="saveCajaData_superUser('{{ caja.id }}')">Guardar</button>
+										</div>
+									</div>
 								{% endfor %}
-							</tbody>
-						</table>
-						<div class="d-flex flex-row-reverse">
-							<button class="btn btn-success btn-sm shadow-sm" onclick="updateEnabledSections()">Confirmar</button>
-						</div> #}
-					</div>
+								<hr>
+								
+								<div class="d-flex w-100 justify-content-center"> 
+									<p class="text-center text-template-background font-italic h5 mt-1" >Configuraciones POS</p> 
+								</div>
+								<div class="row col form-group mb-2">
+									<label class="col-4 m-auto" for="LIST_POS_SECTION">POS</label>
+									<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="LIST_POS_SECTION" onchange="changePOSSelected(this)">
+										<option value="0"> Seleccione un POS </option>
+										{% for pos in listPOS %}
+											<option value="{{ pos.id }}" >{{ pos.marca }} [ {{ pos.terminal }} ]</option>
+										{% endfor %}
+									</select>
+								</div>
+								{% for pos in listPOS %}
+									<div id="pos_{{ pos.id }}" class="pos_data d-none">
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="MARCA_POS_{{ pos.id }}">Marca</label>
+											<input type="text" class="form-control form-control-sm text-start col shadow-sm" id="MARCA_POS_{{ pos.id }}" value="{{ pos.marca }}">
+										</div>
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="EMPCOD_POS_{{ pos.id }}">Código Empresa</label>
+											<input type="text" class="form-control form-control-sm text-start col shadow-sm" id="EMPCOD_POS_{{ pos.id }}" value="{{ pos.codigo }}">
+										</div>
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="TERMINAL_POS_{{ pos.id }}">Terminal</label>
+											<input type="text" class="form-control form-control-sm text-start col shadow-sm" id="TERMINAL_POS_{{ pos.id }}" value="{{ pos.terminal }}">
+										</div>
+										<div class="row col form-group mb-2">
+											<label class="col-4 m-auto" for="HASH_POS_{{ pos.id }}">Hash Empresa</label>
+											<input type="text" class="form-control form-control-sm text-start col shadow-sm" id="HASH_POS_{{ pos.id }}" value="{{ pos.hash }}">
+										</div>
+										<div class="row col form-group mb-2 d-flex flex-row-reverse">
+											<button class="btn btn-success btn-sm shadow-sm" onclick="savePosData_superUser('{{ pos.id }}')">Guardar</button>
+										</div>
+									</div>
+								{% endfor %}
+								<hr>
+								
+								<div class="d-flex w-100 justify-content-center"> 
+									<p class="text-center text-template-background font-italic h5 mt-1" >Asignación de cajas</p> 
+								</div>
+
+								<div class="row">
+									<div class="col-6 d-flex w-100 justify-content-center"> 
+										<p class="text-center text-template-background font-italic h5 mt-1" >Usuario</p> 
+									</div>
+									<div class="col-6 d-flex w-100 justify-content-center"> 
+										<p class="text-center text-template-background font-italic h5 mt-1" >Caja</p> 
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-6">
+										<div class="form-group mb-2">
+											<label class="m-auto" for="USER_LIST">Usuario</label>
+											<select type="text"  class="form-control form-control-sm text-center shadow-sm" id="USER_LIST" onchange="changeUserSelected(this)">
+												<option value="0" >Seleccione un Usuario</option>
+												{% for user in users %}
+													<option value="{{ user.id }}_{{ user.caja }}">{{ user.nombre }}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</div>
+									<div class="col-6">
+										<label class="m-auto" for="CAJA_SELECT_2">Caja</label>
+										<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="CAJA_SELECT_2" onchange="">
+											<option value="0" ></option>
+											{% for caja in cajas %}
+												<option value="{{ caja.id }}">{{ caja.nombre }} [ {{ caja.moneda }} ]</option>
+											{% endfor %}
+										</select>
+									</div>
+								</div>
+								<div class="d-flex flex-row-reverse">
+									<button class="btn btn-success btn-sm shadow-sm" onclick="saveCaja_user_superUser()">Guardar</button>
+								</div>
+								
+							</div>
+						{% endif %}
+					{% endif %}
+
+					{% if systemSession.permission.CAJA == 'SI' %} {# ESTA ES LA VISTA DE CAJA PERO USUARIO NORMAL #}
+						{# CAJA USER #}
+						<div class="tab-pane fade border-template shadow p-2" id="cashRegisterContainer" role="tabpanel" aria-labelledby="cashRegisterContainer-tab">
+							<div class="d-flex w-100 justify-content-center"> 
+								<p class="text-center text-template-background font-italic h5 mt-1" >Caja</p> 
+							</div>
+							<div class="row">
+								<div class="row col form-group mb-2">
+									<label class="col m-auto pr-1" style="max-width: 100px; min-width: 100px;" for="MONEDA_CAJA">Moneda</label>
+									<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="MONEDA_CAJA" {#onchange="()"#}>
+										<option value="UYU" {% if caja.moneda == "UYU" %} selected {% endif %}>Pesos Uruguayos</option>
+										<option value="USD" {% if caja.moneda == "USD" %} selected {% endif %}>Dólares</option>
+									</select>
+								</div>
+								<div class="row col form-group mb-2">
+									<label class="col m-auto pr-1" style="max-width: 100px; min-width: 100px;" for="NOMBRE_CAJA">Nombre</label>
+									<input type="text" class="form-control form-control-sm text-center mr-3 col shadow-sm" value="{{ caja.nombre }}" id="NOMBRE_CAJA" {#onchange="()"#}>
+								</div>
+							</div>
+							<label for="OBS_CAJA">Observaciones</label>
+							<textarea id="OBS_CAJA" class="form-control shadow-sm rounded-0 mb-2" maxlength="200" rows="2">{{caja.observaciones}}</textarea>
+							<div class="row">
+								<div class="row col form-group mb-2 pr-0">
+									<label class="col m-auto pr-1" style="max-width: 70px; min-width: 70px;" for="POS_SELECT">POS</label>
+									<select type="text" class="form-control form-control-sm text-center col shadow-sm" id="POS_SELECT" {#onchange="()"#}>
+										<option value="0">No</option>
+										{% for pos in listPOS %}
+											<option value="{{ pos.id }}" {% if caja.POS == pos.id %} selected {% endif %}>{{ pos.marca }} - {{ pos.terminal }} </option>
+										{% endfor %}
+									</select>
+								</div>
+							</div>
+							<div class="d-flex flex-row-reverse">
+								<button class="btn btn-success btn-sm shadow-sm" onclick="updateCaja('{{caja.id}}')">Guardar</button>
+							</div>
+							<hr>
+						</div>
 					{% endif %}
 				</div>
 			</div>

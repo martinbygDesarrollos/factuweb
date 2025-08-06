@@ -1,0 +1,216 @@
+<div class="modal fade" id="modalSetTypeVoucher" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title  text-template-color">Tipo de comprobante</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body" style="min-height: 400px;">
+
+                <div class="border rounded shadow-sm p-2" style="height: 100%;">
+                    <div class="form-group col-md">
+                        <label class="form-label-sm" for="inputDateVoucher">Fecha comprobante</label>
+                        <input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateVoucher">
+                    </div>
+                    <div id="divComprobante" class="form-group col-md">
+                        <label for="selectTypeVoucher">Comprobante</label>
+                        <select class="custom-select custom-select-sm shadow-sm text-center" id="selectTypeVoucher" size="2" onchange="onChangeTypeVoucher(this)" onkeydown="keyPressSetTypeVoucher(event)" tabindex="6">
+                            <option value="101_contado">ETicket Contado</option>
+                            <option value="101_credito">ETicket Crédito</option>
+                            <option value="111_contado">EFactura Contado</option>
+                            <option value="111_credito">EFactura Crédito</option>
+                        </select>
+                    </div>
+                    <div id="containerInfoCredito" class="d-none">
+                        <div class="form-group col-md">
+                            <label class="form-label-sm" for="inputDateExpirationVoucher">Fecha Vencimiento</label>
+                            <input type="date" class="form-control form-control-sm shadow-sm text-center" id="inputDateExpirationVoucher">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="inputNotUseExpirationDate" onchange="switchExpirationDate(this)">
+                                <label class="form-check-label" for="inputNotUseExpirationDate">
+                                    Sin vencimiento (espacio)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button  id="btnCancelTypeVoucher" onclick="cancelTypeVoucher()" type="button" class="btn btn-danger shadow-sm" data-dismiss="modal"style="float:right;"><span class="maintext"> Cancelar </span> <span class="shortcut"> (Esc) </span></button>
+				<button id="btnConfirmTypeVoucher" onclick="confirmTypeVoucher('modalSetTypeVoucher')" type="button" class="btn btn-success shadow-sm" onkeypress="return keyPressSetTypeVoucher(event, null, null)">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalConfigMethodPayment" tabindex="-1" role="dialog" data-method="" data-amount="">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="modalConfigMethodPayment-title">Titulo</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body" style="min-height: 400px;">
+                <div class="border rounded shadow-sm p-2" style="height: 100%;">
+                    <div id="configMethod-banco" class="form-group col-md">
+                        <label class="form-label-sm" for="input-configMethod-banco">Banco</label>
+                        <input type="text" class="form-control form-control-sm shadow-sm" id="input-configMethod-banco" onkeypress="return keyPressConfigMethodPayment(event, null, null)">
+                    </div>
+                    <div id="configMethod-fecha" class="form-group col-md">
+                        <label class="form-label-sm" for="input-configMethod-fecha">Fecha</label>
+                        <input type="date" class="form-control form-control-sm shadow-sm text-center" id="input-configMethod-fecha" onkeypress="return keyPressConfigMethodPayment(event, null, null)">
+                    </div>
+                    <div id="configMethod-fechaDiferido" class="form-group col-md">
+                        <label class="form-label-sm" for="input-configMethod-fechaDiferido">Fecha Diferido</label>
+                        <input type="date" class="form-control form-control-sm shadow-sm text-center" id="input-configMethod-fechaDiferido" onkeypress="return keyPressConfigMethodPayment(event, null, null)">
+                    </div>
+                    <div id="configMethod-titular" class="form-group col-md">
+                        <label class="form-label-sm" for="input-configMethod-titular">Titular</label>
+                        <input type="text" class="form-control form-control-sm shadow-sm" id="input-configMethod-titular" onkeypress="return keyPressConfigMethodPayment(event, null, null)">
+                    </div>
+                    <div id="configMethod-observaciones" class="form-group col-md">
+                        <label class="form-label-sm" for="input-configMethod-observaciones">Observaciones</label>
+                        <textarea type="text" class="form-control form-control-sm shadow-sm" row="3" id="input-configMethod-observaciones" onkeypress="return keyPressConfigMethodPayment(event, null, null)"> </textarea>
+                    </div>
+                </div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button id="btnCancelConfigMethodPayment" onclick="cancelInsertPaymentMethod()" type="button" class="btn btn-danger shadow-sm" style="float:right;"><span class="maintext"> Cancelar </span> <span class="shortcut"> (Esc) </span></button>
+				<button id="btnConfirmConfigMethodPayment" onclick="confirmInsertPaymentMethod($('#modalConfigMethodPayment').data('method'), $('#modalConfigMethodPayment').data('amount'), true)" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalPOSPayment" tabindex="-1" role="dialog" data-method="" data-amount="">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="modalPOSPayment-title"> <i class="fas fa-credit-card mr-2"></i>Pago con POS</span>
+				{# <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button> #}
+			</div>
+			<div class="modal-body" style="min-height: 400px;">
+                <div class="border rounded shadow-sm p-2" style="height: 100%;">
+                    <div class="payment-container" id="paymentStatus">
+                        <!-- Estado inicial: Esperando -->
+                        <i class="fas fa-credit-card fa-5x card-pulse text-primary" id="cardIcon"></i>
+                        <p class="status-text text-processing" id="statusText">Esperando conexión con POS...</p>
+                        <p class="" id="logText"></p>
+                        <div class="mt-3">
+                            <small class="text-muted">Monto: <span id="paymentAmount">150.00</span></small>
+                        </div>
+                    </div>
+                </div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<div style="display: flex ;flex-direction: row-reverse; align-items: center; flex-wrap: nowrap;">
+                    {# <span id="CancelPOSPaymentLoader">A</span> #}
+                    <div id="CancelPOSPaymentLoader" class="CancelPOSPaymentLoader d-none"></div>
+                    <button id="btnCancelPOSPayment" onclick="cancelInsertPaymentMethod('CANCEL')" type="button" class="btn btn-danger shadow-sm" style="float:right;">
+                        <span class="maintext"> Cancelar </span> 
+                        <span class="shortcut"> (Esc) </span>
+                    </button>
+                </div>
+
+				<button id="btnConfirmPOSPayment" onclick="confirmPOSPayment()" type="button" class="btn btn-success shadow-sm"style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Enter) </span></button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modalPOSDEV" tabindex="-1" role="dialog" data-method="" data-amount="">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header background-template-color">
+				<span class="modal-title text-template-color" id="modalPOSDEV-title"> <i class="fas fa-credit-card mr-2"></i>Devolución POS</span>
+				{# <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button> #}
+			</div>
+			<div class="modal-body" style="min-height: 400px;">
+                <div class="border rounded shadow-sm p-2" style="height: 100%;">
+                    <div class="payment-container" id="POSDEV-paymentStatus">
+                        <!-- Estado inicial: Esperando -->
+                        <i class="fas fa-credit-card fa-5x card-pulse text-primary" id="POSDEV-cardIcon"></i>
+                        <p class="status-text text-processing" id="POSDEV-statusText">Esperando conexión con POS...</p>
+                        <p class="" id="POSDEV-logText"></p>
+                        <div class="mt-3">
+                            <small class="text-muted">Monto: <span id="POSDEV-amount">150.00</span></small>
+                        </div>
+                    </div>
+                </div>
+			</div>
+			<div class="modal-footer justify-content-between">
+				<button id="btnCancelPOSDEV" onclick="cancelPOSDEV('CANCEL')" type="button" class="btn btn-danger shadow-sm" style="float:right;"><span class="maintext"> Cancelar </span> <span class="shortcut"> (Esc) </span></button>
+				<button id="btnConfirmPOSDEV" onclick="confirmPOSDEV()" type="button" class="btn btn-success shadow-sm"style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Enter) </span></button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal POS Payment -->
+{# <div class="modal fade" id="modalPOSPayment" tabindex="-1" role="dialog" aria-labelledby="modalPOSPaymentLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalPOSPaymentLabel">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Pago con Tarjeta POS
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <!-- Monto a pagar -->
+                <div class="mb-4">
+                    <h4 class="text-muted">Monto a pagar:</h4>
+                    <h2 class="text-success font-weight-bold" id="paymentAmount">$0.00</h2>
+                </div>
+                
+                <!-- Icono de estado -->
+                <div class="mb-4">
+                    <i id="cardIcon" class="fas fa-credit-card fa-5x text-primary"></i>
+                </div>
+                
+                <!-- Texto de estado -->
+                <div class="mb-4">
+                    <h5 id="statusText" class="status-text text-primary">Iniciando conexión...</h5>
+                </div>
+                
+                <!-- Log de estado detallado -->
+                <div class="mb-3">
+                    <small id="logText" class="text-muted"></small>
+                </div>
+                
+                <!-- Barra de progreso (opcional) -->
+                <div class="progress mb-4" style="height: 6px; display: none;" id="progressBar">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                
+                <!-- Instrucciones adicionales -->
+                <div class="alert alert-info" id="instructionsAlert" style="display: none;">
+                    <small>
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <span id="instructionsText">Siga las instrucciones en el dispositivo POS</span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <!-- Botón de cancelar (visible durante el proceso) -->
+                <button type="button" class="btn btn-outline-secondary" id="btnCancelPOSPayment">
+                    <i class="fas fa-times mr-1"></i>
+                    Cancelar
+                </button>
+                
+                <!-- Botón principal (procesar/cerrar) -->
+                <button type="button" class="btn btn-primary" id="btnConfirmPOSPayment" disabled>
+                    <span class="maintext">Procesando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div> #}

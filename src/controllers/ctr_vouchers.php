@@ -5,6 +5,7 @@ require_once 'ctr_clients.php';
 require_once 'ctr_providers.php';
 require_once 'rest/ctr_rest.php';
 require_once 'ctr_products.php';
+require_once 'ctr_caja.php';
 require_once 'ctr_vouchers_emitted.php';
 require_once 'ctr_vouchers_received.php';
 
@@ -154,6 +155,337 @@ class ctr_vouchers{
 
 		return $response;
 	}
+
+	//NEW
+	public function createNewVoucherNew($objClient, $tipoCFE, $formaPago, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $currentSession){
+		$response = new \stdClass();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$userController = new ctr_users();
+		$voucherController = new ctr_vouchers();
+		$productsController = new ctr_products();
+		$cajaController = new ctr_caja();
+		$voucherEmittedController = new ctr_vouchers_emitted();
+		$handleDateTimeClass = new handleDateTime();
+
+		// RECEPTOR (CLIENTE)
+		$receiver = null;
+		if(count($objClient) != 0){
+			$responseIsValid = $clientController->isValidForEmit($tipoCFE, $objClient[0]['document']); // SI EL TIPO DE COMPROBANTE SE AJUSTA AL CLIENTE (PERSONA ES TICKET Y EMPRESA ES FACTURA)
+			if($responseIsValid->result == 2){
+				$arrayReceptor = array(
+					"documento" => $objClient[0]['document'] ?? "",
+					"nombre" => $objClient[0]['name'] ?? "",
+					"direccion" => $objClient[0]['address'] ?? "",
+					"ciudad" => $objClient[0]['city'] ?? "",
+					"departamento" => $objClient[0]["department"] ?? "",
+					"pais" => "Uruguay"
+				);
+				$receiver = $arrayReceptor;
+			}else return $responseIsValid;
+		}
+		// ----------------------
+
+		// DETALLES (ARTICULOS)
+		$arrayDetail = array();
+		$arrayDetail = $voucherController->fixCartArray($listDetail, $discountTipo);
+		
+		$grossAmount = null; // ANALIZAR ESTO (SI VA EN 1 PARECE QUE LOS PRECIOS ESTAN CON IVA INC EN LA LISTA DE ARTICULOS | esto cambia el modo del descuento? si)
+		$responseGetGrossAmount = $userController->getVariableConfiguration("IVA_INCLUIDO", $currentSession);
+		if($responseGetGrossAmount->result == 2){
+			if($responseGetGrossAmount->configValue == "SI")
+				$grossAmount = 1;
+			else
+				$grossAmount = 0;
+		}
+
+		$branchCompany = null;
+		$responseGetSucursal = $userController->getVariableConfiguration("SUCURSAL_IS_PRINCIPAL", $currentSession);
+		if ($responseGetSucursal->result == 2){
+			$branchCompany = $responseGetSucursal->configValue;
+		}
+		
+		if(!$branchCompany){
+			$response->result = 0;
+			$response->message = "Error interno del servidor (SUCURSAL).";
+			$response->voucher = new \stdClass();
+		}
+		// ----------------------
+
+		// MEDIOS DE PAGO
+		$arrayMediosPago = array(); // ESTE ES EL QUE SE USARA PARA EL CFE
+		$arrayMediosPago = $voucherController->fixMediosPagoArray($mediosPago);
+		// ----------------------
+
+		// OTHERS
+		$exchangeRate = null;
+		if(strcmp($typeCoin, "UYU") != 0){
+			$responseExchange = $voucherController->getQuote($typeCoin, $dateVoucher);
+			if($responseExchange->result == 2)
+				$exchangeRate = $responseExchange->currentQuote;
+			else return $responseExchange;
+		}
+		if(!isset($formaPago)) $formaPago = 1; // 1 contado | 2 credito
+		$serieCFE = null;
+		$numeroCFE = null;
+		if(isset($CFE_reservado)){
+			$serieCFE = $CFE_reservado['serieCFE'];
+			$numeroCFE = $CFE_reservado['numeroCFE'];
+		}
+		// ----------------------
+
+		$data = array(
+			"rut" => $currentSession->rut ?? null,
+			"tipoCFE" => intval($tipoCFE) ?? null,
+			"serieCFE" => $serieCFE ?? null,
+			"numeroCFE" => $numeroCFE ?? null,
+			"dateVoucher" => $dateVoucher ?? null,
+			"dateExpiration" => $dateExpiration ?? null,
+			"grossAmount" => $grossAmount ?? null,
+			"formaPago" => $formaPago ?? null,
+			"typeCoin" => $typeCoin ?? null,
+			"exchangeRate" => $exchangeRate ?? null,
+			"arrayDetail" => $arrayDetail ?? null,
+			"receiver" => $receiver ?? null,
+			"IndCobranzaPropia" => $IndCobranzaPropia ?? null,
+			"referencias" => $referencias ?? null,
+			"adenda" => $adenda ?? null,
+			"sucursal" => $branchCompany ?? null,
+			"idEnvio" => $idEnvio ?? null,
+			"mediosPago" => $arrayMediosPago ?? null,
+			"ticketFormat" => $currentSession->ticketFormat ?? null
+		);
+		// LOGS
+		// {
+		// 	echo "RECEPTOR: <br>";
+		// 	var_dump($receiver);
+		// 	echo "<br>";
+		// 	echo "DETALLES: <br>";
+		// 	var_dump($arrayDetail);
+		// 	echo "<br>";
+		// 	echo "MONTO BRUTO: <br>";
+		// 	var_dump($grossAmount);
+		// 	echo "<br>";
+		// 	echo "SUCURSAL: <br>";
+		// 	var_dump($branchCompany);
+		// 	echo "<br>";
+		// 	echo "MEDIOS DE PAGO: <br>";
+		// 	var_dump($arrayMediosPago);
+		// 	echo "<br>";
+		// 	echo "tipoCFE: ";
+		// 	var_dump($tipoCFE);
+		// 	echo "<br>";
+		// 	echo "serieCFE: ";
+		// 	var_dump($serieCFE);
+		// 	echo "<br>";
+		// 	echo "numeroCFE: ";
+		// 	var_dump($numeroCFE);
+		// 	echo "<br>";
+		// 	echo "DATA: ";
+		// 	var_dump($data);
+		// 	echo "<br>";
+		// 	// exit;
+		// }
+		// ----------------------
+
+		$resultNuevoCFE = $restController->nuevoCFENew($data, $currentSession->tokenRest);
+
+		
+		if($resultNuevoCFE->result == 2){ // EL CFE SE EMITIÓ CORRECTAMENTE
+			$stocks = array();
+			$responseGetLocalVoucher = null;
+			// echo "<br>";
+			// echo "<br>";
+			// echo "<br>";
+			// echo "resultNuevoCFE: ";
+			// var_dump($resultNuevoCFE);
+			// echo "<br>";
+			// echo "<br>";
+			// echo "<br>";
+
+			// GUARDAR CFE LOCAL
+			$responseUpdateVouchers = $voucherEmittedController->updateDataVoucherEmitted($currentSession);
+			if($responseUpdateVouchers->result == 2){ // Tengo los datos si se necesitan: $responseUpdateVouchers->vouchersEmittedInserted | $responseUpdateVouchers->vouchersEmitted
+				$responseGetLocalVoucher = $voucherEmittedController->getVoucherEmittedByTipoSerieNumero($resultNuevoCFE->cfe->tipoCFE, $resultNuevoCFE->cfe->serieCFE, $resultNuevoCFE->cfe->numeroCFE, $currentSession->idEmpresa);
+			}
+			// SI FUNCIONA ME QUEDO CON EL ID/INDICE
+			$idCFE = $responseGetLocalVoucher->voucher->id ?? null;
+			
+			// ---------
+			// STOCK
+				$articulos = array_map(function ($item) { // HERE HERE HERE
+					// Limpiar y convertir cada atributo
+					foreach ($item as $key => $value) {
+						if ($value === "") {
+							$item[$key] = null;
+						} elseif (is_string($value) && is_numeric($value)) {
+							// Si es un número entero
+							if (strpos($value, '.') === false && strpos($value, ',') === false) {
+								$item[$key] = (int) $value;
+							} else {
+								// Si es un número decimal
+								$item[$key] = (float) $value;
+							}
+						}
+					}
+					return (object) $item;
+				}, $listDetail);
+							
+				// var_dump($articulos); exit;
+				foreach ($articulos as $articulo) {
+					// var_dump($articulo);
+					$stocks[] = $productsController->updateStockProduct($articulo, intval($tipoCFE), $currentSession); // VERIFICAR SI FUNCIONO
+				}
+
+			// ---------
+			// MOVIMIENTO CAJA
+			$movimientos = array();
+			foreach ($arrayMediosPago as $key => $value) {
+				$movement = array(
+					"tipo" => "ingreso",
+					"medio" => $value['glosa'],
+					"importe" => $value['valor'],
+					"referencia" => $idCFE,
+					"fecha" => $value['fecha'],
+					"fecha_hora" => $handleDateTimeClass->getCurrentDateTimeInt(),
+					
+					"banco" => $value['banco'],
+					"fecha_diferido" => $value['fecha_diferido'],
+					"titular" => $value['titular'],
+					"observaciones" => $value['obs'],
+					
+					"moneda" => $typeCoin,
+					"isAnulado" => 0,
+
+					"snap" => null ,// Este es el numero de caja que lo 'cierra'... cuando se hace arqueo de caja se le setea a este un numero de caja_snap
+					"caja" => $currentSession->caja,
+					"usuario" => $currentSession->idUser
+				);
+				$movimientos[] = $movement;
+			}
+
+			$resultInsertMovement = $cajaController->insertMultipleMovements($movimientos, $currentSession);
+			if($resultInsertMovement->result == 2){
+				// var_dump($resultInsertMovement);
+			} else { // Falló la creacion del movimiento de caja
+				
+			}
+
+			{ // LOGS
+				// echo "<br>";
+				// echo "<br>";
+				// echo "<br>";
+				// echo "responseUpdateVouchers: ";
+				// var_dump($responseUpdateVouchers);
+				// echo "<br>";
+				// echo "responseGetLocalVoucher: ";
+				// var_dump($responseGetLocalVoucher);
+				// echo "<br>";
+				// echo "resultInsertMovement: ";
+				// var_dump($resultInsertMovement);
+				// echo "<br>";
+				// echo "stocks: ";
+				// var_dump(	);
+				// exit;
+			}
+
+			$response->result = 2;
+			$response->message = "CFE emitido con éxito";
+			$response->info = array(
+					"TIPO" => $resultNuevoCFE->cfe->tipoCFE,
+					"SERIE" => $resultNuevoCFE->cfe->serieCFE,
+					"NUMERO" => $resultNuevoCFE->cfe->numeroCFE,
+					"INDICE" => $responseGetLocalVoucher->voucher->indice, 
+					"ID" => $responseGetLocalVoucher->voucher->id,
+					"STOCKS" => $stocks[0]->result == 2 ? "OK" : "ERROR",
+					"MOVIMIENTOS DE CAJA EXITOSOS" => $resultInsertMovement->exitos,
+					"MOVIMIENTOS DE CAJA FALLIDOS" => $resultInsertMovement->errores,
+				);
+			// $response->voucher = new \stdClass();
+		} else {
+			return $resultNuevoCFE;
+		}
+		return $response;
+	}
+
+	// NEW
+	public function fixCartArray($listDetail, $discountTipo){ // Corrige todo lo que tiene que ver con el carrito antes de enviarlo al CFE
+		$arrayDetail = array();
+		$unidadesMap = [
+			'Unidad' => 'UNI',
+			'Peso' => 'PESO',
+			'Litro' => 'LIT'
+		];
+		foreach ($listDetail as $key => $detail){
+			$precio = null;
+			$precio = round(floatval($detail['import']), 2);
+			
+			$detailItem = array(
+				"indFact" => intval($detail['idIva']),
+				"nomItem" => $detail['description'] ?? "",
+				"cantidad" => floatval($detail['quantity']) ?? 1,
+				"precio" => $precio,
+				"uniMedida" => $unidadesMap[$detail['unidad_venta']] ?? "UNID"
+			);
+			// Agregar descuento si existe
+			if (!empty($detail['discount'])) {
+				$detailItem["descRecItem"] = -$detail['discount'];
+				$detailItem["descRecItemTipo"] = intval($discountTipo);
+			}
+			// Agregar este item al array principal
+			$arrayDetail[] = $detailItem;
+		}
+		return $arrayDetail;
+	}
+
+	// NEW
+	public function fixMediosPagoArray($mediosPago){ // Corrige todo lo que tiene que ver con el carrito antes de enviarlo al CFE
+		$handleDateTimeClass = new handleDateTime();
+		$arrayMediosPago = array();
+		foreach ($mediosPago as $key => $medioPago){
+			$medioPagoItem = array(
+				"codigo" => intval($medioPago['codigo']),
+				"glosa" => isset($medioPago['glosa']) ? $medioPago['glosa'] : null,
+				"valor" => round(floatval($medioPago['valor']), 2),
+				"fecha" => isset($medioPago['fecha']) ? $handleDateTimeClass->getCurrentDateFormatDB($medioPago['fecha']) : $handleDateTimeClass->getCurrentDateInt(),
+				"obs" => isset($medioPago['obs']) ? $medioPago['obs'] : null,
+				"banco" => isset($medioPago['banco']) ? $medioPago['banco'] : null,
+				"fecha_diferido" => isset($medioPago['fecha_diferido']) ? $handleDateTimeClass->getCurrentDateFormatDB($medioPago['fecha_diferido']) : null,
+				"titular" => isset($medioPago['titular']) ? $medioPago['titular'] : null
+			);
+			$arrayMediosPago[] = $medioPagoItem;
+		}
+    return $arrayMediosPago;
+}
+
+	//NEW
+	// public function createNewCFENew($typeCFE, $dateVoucher, $grossAmount, $typePay, $dateExpiration, $typeCoin, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $CFE_reservado, $currentSession, $mediosPago = null){
+	// 	// $response = new \stdClass();
+	// 	$restController = new ctr_rest();
+	// 	$voucherController = new ctr_vouchers();
+	// 	$handleDateTimeClass = new handleDateTime();
+	// 	$productsController = new ctr_products();
+
+	// 	$exchangeRate = null;
+	// 	if(strcmp($typeCoin, "UYU") != 0){
+	// 		$responseExchange = $voucherController->getQuote($typeCoin, $dateVoucher);
+	// 		if($responseExchange->result == 2)
+	// 			$exchangeRate = $responseExchange->currentQuote;
+	// 		else return $responseExchange;
+	// 	}
+	// 	// TEST TEST
+	// 	// $dateVoucherINT = $handleDateTimeClass->getDateInt($dateVoucher);
+	// 	$dateVoucherINT = $dateVoucher;
+	// 	if(!is_null($dateExpiration)){
+	// 		// $dateExpiration = $handleDateTimeClass->getDateInt($dateExpiration);
+	// 		$dateExpiration = $dateExpiration;
+	// 	}
+	// 	// TEST TEST
+
+	// 	$resultNuevoCFE = $restController->nuevoCFE($currentSession->rut, $typeCFE, $dateVoucherINT, $grossAmount, $typePay, $dateExpiration, $typeCoin, $exchangeRate, $detail, $receiver, $indCollection, $reference, $appendix, $branchCompany, $idBuy, $mediosPago, $currentSession->ticketFormat, $currentSession->tokenRest);
+		
+	// 	return $resultNuevoCFE;
+	// }
 
 	//carga todos los articulos facturados en comprobantes emitidos como articulos para la lista de precios y para sugerencia en venta.
 	//UPDATED

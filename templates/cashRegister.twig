@@ -1,0 +1,814 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div id="cashRegisterSeccion" class="d-flex justify-content-center">
+	<div class="card shadow mt-4 mb-2" style="min-width: 780px;">
+		<div class="card-header d-flex justify-content-between background-template-color text-template-color font-italic p-3">
+			<h5 class="mb-0">Caja registradora [{{ caja.nombre }}] Moneda [{{ caja.moneda }}]</h5>
+			<div>
+				<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalArqueoCaja()" style="min-width: 90px " title="Arqueo de caja"><i class="fas fa-file-invoice-dollar"></i> Arqueo</button>
+				<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalCerrarCaja()" style="min-width: 90px " title="Cerrar caja"><i class="fas fa-archive"></i> Cerrar</button>
+			</div>
+		</div>
+		<div class="card-body pt-2">
+			<div class="d-flex justify-content-between mb-1">
+				<div class="input-group w-50 ml-0 mb-1">
+					<input id="inputToSearch" type="text" class="form-control form-control-sm shadow-sm" 
+						onchange="searchMovement(event)" 
+						onkeyup="searchMovement(event)" 
+						placeholder="Buscar movimiento...">
+					<button id="searchBarCleaner" title="Borrar búsqueda" 
+							class="ml-2 btn background-template-color2 btn-sm shadow-sm d-none" 
+							onclick="cleanSearchBar()"> 
+						<i class="fas fa-backspace"></i> 
+					</button>
+
+					<div class="form-check m-1 pl-0" style="min-width: 100px; max-width: 200px; display: flex; align-items: center;" title="Movimientos de efectivo y cheques / todos">
+						<input class="form-check-input" id="checkboxShowOnlyRelevants" type="checkbox" onclick="showHideRelevants(this)" style="margin: .25rem; position: static;">
+						<label class="form-check-label ml-1 no-select" for="checkboxShowOnlyRelevants" style="cursor: pointer;">Todos</label>
+					</div>
+				</div>
+				<div class="d-flex">
+					<select id="filterCoin" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm mr-1" onchange="filterByCoin(this)" style="min-width: 100px; max-width: 250px; cursor: pointer;" title="Filtrar por moneda">
+						<option value="NOTHING" selected>Moneda</option>
+						<option value="UYU">UYU</option>
+						<option value="USD">U$D</option>
+					</select>
+					<select id="filterTipo" class="custom-select custom-select-sm background-template-color2 text-template-background shadow-sm mr-1" onchange="filterByTipo(this)" style="min-width: 100px; max-width: 250px; cursor: pointer;" title="Filtrar por Egreso/Ingreso">
+						<option value="NOTHING" selected>Tipo</option>
+						<option value="ingreso">Ingresos</option>
+						<option value="egreso">Egresos</option>
+					</select>
+					<button class="btn btn-sm background-template-color2 text-template-background shadow-sm mb-1" type="button" onclick="openModalNewMovement()" style="min-width: 90px " title="Nuevo movimiento de caja"><i class="fas fa-plus-circle"></i> Nuevo</button>
+				</div>
+			</div>
+			<div id="containerTable" style="max-height: 65vh;">
+				<table class="table table-striped m-0 table-hover">
+					<thead class="background-template-color text-template-color" style="">
+						<tr>
+							<th class="text-left" scope="col" id="CashRegisterTableColTipo" >Tipo</th>
+							<th class="text-left" scope="col" id="CashRegisterTableColMovimiento" >Medio de pago</th>
+							<th class="text-left" scope="col" id="CashRegisterTableColFecha" >Fecha</th>
+							<th class="text-left" scope="col" id="CashRegisterTableColHora" >Hora</th>
+							<th class="text-right" scope="col" id="CashRegisterTableColImporte" >Importe</th>
+							<th class="text-right" scope="col" id="CashRegisterTableColUser" >Usuario</th>
+							<th class="text-right" style="min-width: 7em;" scope="col" id="CashRegisterTableColReferencia">Referencia</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyProducts">
+						{% for movement in movements %}
+							{% if movement.tipo == 'snap' %}
+								<tr id="{{ movement.id }}" onclick="showSnapDetails(event, {{ movement.id }})" data-UYU="{{ movement.UYU }}" data-USD="{{ movement.USD }}" class="pointerToHover movement-{{ movement.tipo }}">
+									<td class="text-left" colspan="7"> 
+										<div class="d-flex justify-content-between"> 
+											<div> <b> Cierre {{ movement.fecha }} a las {{ movement.hora }} </b> </div>  
+											<div> <b> $ {{ movement.UYU }} U$D {{ movement.USD }} </b> </div>
+											<div> <b> Usuario: {{ movement.user_name }} </b> </div> 
+										</div>
+									</td>
+								</tr>
+							{% else %}
+								<tr id="{{ movement.id }}" 
+									onclick="showMovementModal(event, {{ movement.id }})" 
+									data-importe="{{ movement.importe }}" 
+									data-medio="{{ movement.medio_pago }}" 
+									data-moneda="{{movement.coin}}" 
+									data-obs="{{ movement.obs }}" 
+									class="pointerToHover movement-{{ movement.tipo }} coin_{{movement.coin}} {% if movement.medio_pago == 'Efectivo' or movement.medio_pago == 'Cheque' %} relevant-to-cash {% else %} not-relevant-to-cash d-none {% endif %} "
+									>
+									<td class="text-left" > {% if movement.tipo == 'ingreso' %} <i class="fas fa-level-up-alt"></i> {% else %} <i class="fas fa-level-down-alt"></i> {% endif %}  {{ movement.tipo|capitalize }}</td>
+									<td class="text-left" >{{ movement.medio_pago }}</td>
+									<td class="text-left" >{{ movement.fecha }}</td>
+									<td class="text-left" >{{ movement.hora }}</td>
+									<td class="text-right" > {% if movement.coin == "UYU" %} $ {% elseif movement.coin == "USD" %} U$D {% endif %} {{ movement.importe }}</td>
+									<td class="text-right" >{{ movement.user_name }}</td>
+									<td class="text-right" {% if movement.ref != NULL %} onclick="showVoucherByRef('{{ movement.ref }}'); event.stopPropagation();"> {{ movement.ref_view}} <i class="fas fa-eye text-mycolor"></i> {% else %} > N/A {% endif %} </td>
+								</tr>
+							{% endif %}
+						{% endfor %}
+					</tbody>
+					<tfoot class="background-template-color text-template-color" style="
+						position: sticky;
+						bottom: 0;
+						z-index: 11;
+						height: 50px;
+						font-weight: bold;
+					">
+						<tr>
+							<td colspan="7" class="">
+								<div class="d-flex w-100 align-items-center justify-content-between">
+									<span >Totales en caja</span>
+									<div>
+										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button" onclick="showCheques()"> <span> Cheques {{ cheques|length }}</span> </button>
+										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>U$D {{ totales.USD }}</span> </button>
+										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>$ {{ totales.UYU }}</span> </button>
+										{# {{ dump(cheques) }} #}
+									</div>
+								</div>
+							</td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		</div>
+
+		{# MODALES #}
+		{# MODAL NEW MOVEMENT #}
+		<div class="modal fade show" id="modalNewMovement" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Nuevo movimiento</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div class="row mb-2">
+							<div class="col">
+								<div class="form-control">
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="radio" name="type" id="inputIngreso" value="option1" style="cursor: pointer;" onchange="updateInputClass(this)">
+										<label class="form-check-label no-select" for="inputIngreso" style="cursor: pointer;"> <i class="fas fa-level-up-alt"></i> Ingreso </label>
+									</div>
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="radio" name="type" id="inputEgreso" value="option2" style="cursor: pointer;" onchange="updateInputClass(this)">
+										<label class="form-check-label no-select" for="inputEgreso" style="cursor: pointer;"> <i class="fas fa-level-down-alt"></i> Egreso </label>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div id="egresoTypeSection" class="row mb-2 d-none">
+							<div class="col">
+								<div class="form-control">
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="radio" name="type2" id="inputEfectivo" value="option11" style="cursor: pointer;" onchange="updateEgresoType(this)">
+										<label class="form-check-label no-select" for="inputEfectivo" style="cursor: pointer;"> <i class="fas fa-money-bill"></i> Efectivo </label>
+									</div>
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="radio" name="type2" id="inputCheque" value="option22" style="cursor: pointer;" onchange="updateEgresoType(this)">
+										<label class="form-check-label no-select" for="inputCheque" style="cursor: pointer;"> <i class="fas fa-money-check-alt"></i></i> Cheque </label>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div id="efectivoSection" class="mb-2 d-none">
+							<div class="row mb-2">
+								<div class="col ">
+									<label for="inputImporte" class="col-form-label col-form-label">Importe</label>
+									<input class="form-control form-control shadow-sm" autocomplete="off" type="number" name="type" id="inputImporte" onkeypress="return keyPressNewMovement(event, this.value, null)">
+								</div>
+							</div>
+							<div class="row mb-2">
+								<div class="col">
+									<label for="inputObservacion" class="col-form-label col-form-label">Observaciones</label>
+									<input class="form-control form-control shadow-sm" autocomplete="off" type="text" name="type" id="inputObservacion" onkeypress="return keyPressNewMovement(event, this.value, null)">
+								</div>
+							</div>
+						</div>
+						<div id="chequeSection" class="row mb-2 justify-content-center d-none">
+							<div class="col">
+								<label for="" class="col-form-label col-form-label">Cheques en caja</label>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+						<button id="btnConfirmModalNewMovement" onclick="confirmMovement()" class="btn btn-success text-white shadow-sm" >Confirmar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# MODAL SHOW CHEQUES #}
+		<div class="modal fade show" id="modalShowCheques" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Cheques en caja</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div class="row mb-2 justify-content-center" id="modalShowChequesBody">
+						</div>
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button data-dismiss="modal" class="btn btn-success text-white shadow-sm" >Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# MODAL SHOW MOVEMENT #}
+		<div class="modal fade show" id="modalShowMovement" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Detalle de Movimiento</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<!-- Información Principal -->
+						<div class="row mb-2">
+							<div class="col-md-8">
+								<div class="d-flex align-items-center mb-2">
+									<span class="tipo-badge ingreso mr-2" id="tipoBadge">INGRESO</span>
+									<span class="medio-badge mr-2" id="medioBadge"></span>
+								</div>
+							</div>
+						</div>
+						<!-- Importe -->
+						<div class="importe-card ingreso" id="importeCard">
+							<div class="importe-valor ingreso" id="importeValor">
+								<i class="fas fa-arrow-up mr-2"></i>
+								
+							</div>
+							<small class="text-muted">Importe del movimiento</small>
+						</div>
+						<!-- Detalles del Movimiento -->
+						<div class="section-title">
+							<i class="fas fa-info-circle mr-2"></i>
+							Información del Movimiento
+						</div>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-calendar-alt text-primary"></i>
+									</div>
+									<strong>Fecha:</strong><br>
+									<span id="fechaMovimiento"></span>
+								</div>
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-coins text-warning"></i>
+									</div>
+									<strong>Moneda:</strong><br>
+									<span id="monedaMovimiento">UYU - Pesos Uruguayos</span>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-clock text-info"></i>
+									</div>
+									<strong>Hora:</strong><br>
+									<span id="horaMovimiento"></span>
+								</div>
+							</div>
+						</div>
+						<!-- Información Adicional -->
+						<div class="section-title mt-2">
+							<i class="fas fa-clipboard-list mr-2"></i>
+							Información Adicional
+						</div>
+						<div class="row d-none" id="sectionCheque">
+							<div class="col-md-6">
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-university text-primary"></i>
+									</div>
+									<strong id="bancoTitle">Banco:</strong><br>
+									<span id="bancoMovimiento"></span>
+								</div>
+								<div id="sectionFechaDif" class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-calendar-check text-warning"></i>
+									</div>
+									<strong>Fecha Diferido:</strong><br>
+									<span id="fechaDiferido"></span>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-calendar-check text-warning"></i>
+									</div>
+									<strong>Fecha:</strong><br>
+									<span id="fechaCheque"></span>
+								</div>
+								<div id="sectionTitular" class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-user text-success"></i>
+									</div>
+									<strong>Titular:</strong><br>
+									<span id="titularMovimiento"></span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-12">
+								<div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-sticky-note text-secondary"></i>
+									</div>
+									<strong>Observaciones:</strong><br>
+									<span id="observacionesMovimiento"></span>
+								</div>
+								{# <div class="info-row">
+									<div class="icon-container">
+										<i class="fas fa-barcode text-info"></i>
+									</div>
+									<strong>Referencia:</strong><br>
+									<span class="referencia-code" id="referenciaMovimiento"></span>
+								</div> #}
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button data-dismiss="modal" class="btn btn-success text-white shadow-sm" >Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# MODAL SHOW SNAP #}
+		<div class="modal fade show" id="modalShowSnap" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Cierre de caja</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<!-- Información General -->
+						<div class="row mb-2">
+							<div class="col-md-6">
+								<div class="info-row mb-0">
+									<strong>Fecha y Hora:</strong><br>
+									<span id="fechaHora"></span>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="info-row mb-0">
+									<strong>Usuario:</strong><br>
+									<span id="usuario"></span>
+								</div>
+							</div>
+						</div>
+						<!-- Saldos -->
+						<div class="section-title mb-1">Saldos Totales</div>
+						<div class="row mb-2">
+							<div class="col-md-6">
+								<div class="saldo-card text-center mb-0">
+									<h4 class="text-success mb-1">$U <span id="saldoUYU"></span></h4>
+									<small class="text-muted">Pesos Uruguayos</small>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="saldo-card text-center mb-0">
+									<h4 class="text-primary mb-1">US$ <span id="saldoUSD"></span></h4>
+									<small class="text-muted">Dólares</small>
+								</div>
+							</div>
+						</div>
+						<!-- Detalle de Efectivo -->
+						<div class="section-title">Detalle de Efectivo</div>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="currency-section mb-0">
+									<h6 class="font-weight-bold text-success mb-2">Pesos Uruguayos ($U)</h6>
+									<div id="denominacionesUYU">
+										<div class="denomination-row">
+											<span class="denomination-value">$U 2000</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 1000</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 500</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 200</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 100</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 50</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 20</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 10</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 5</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 2</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">$U 1</span>
+											<span class="denomination-count"></span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="currency-section mb-0">
+									<h6 class="font-weight-bold text-primary mb-2">Dólares (US$)</h6>
+									<div id="denominacionesUSD">
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 100</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 50</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 20</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 10</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 5</span>
+											<span class="denomination-count"></span>
+										</div>
+										<div class="denomination-row">
+											<span class="denomination-value">US$ 1</span>
+											<span class="denomination-count"></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Cheques -->
+						<div class="section-title mt-2 mb-1">Cheques</div>
+						<div class="currency-section mb-0">
+							<div id="chequesList" class="text-center text-muted">
+								<em>No hay cheques registrados</em>
+							</div>
+						</div>
+
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button data-dismiss="modal" class="btn btn-success text-white shadow-sm" >Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# MODAL NEW SNAP #}
+		<div class="modal fade show" id="modalNewSnap" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Cerrar caja</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<!-- Saldos -->
+						<div class="section-title mb-1">Saldos</div>
+						<div class="row mb-0">
+							<div class="col-md-6">
+								<div class="section-title mb-1">Iniciales</div>
+							</div>
+							<div class="col-md-6">
+								<div class="section-title mb-1">Actuales</div>
+							</div>
+						</div>
+						<div class="row mb-2">
+							<div class="col-md-3 ">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-success mb-1">$U 1.000,00<span id="saldoInicialUYU_cierreCaja"></span></h4>
+									<small class="text-muted">Pesos Uruguayos</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-primary mb-1">US$ 500,00<span id="saldoInicialUSD_cierreCaja"></span></h4>
+									<small class="text-muted">Dólares</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-success mb-1">$U <span id="saldoActualUYU_display">3.392,00</span> <span id="saldoUYU_cierreCaja"></span></h4>
+									<small class="text-muted">Pesos Uruguayos</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-primary mb-1">US$ <span id="saldoActualUSD_display">500,00</span><span id="saldoUSD_cierreCaja"></span></h4>
+									<small class="text-muted">Dólares</small>
+								</div>
+							</div>
+						</div>
+						<!-- Detalle de Efectivo -->
+						<div class="section-title">Detalle de Efectivo</div>
+						<div class="row">
+							<div class="col-md-6 pr-1">
+								<div class="currency-section mb-0">
+									<div class="row justify-content-between mr-1 ml-1">
+										<h6 class="font-weight-bold text-success mb-2">Pesos Uruguayos ($U)</h6>
+										<h6 id="diferenciaUYU_cierreCaja" class="font-weight-bold text-right text-muted mb-2">Diferencia: 0,00</h6>
+									</div>
+									<div id="denominacionesUYU_cierreCaja">
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 2000</span>
+											<input type="number" min="0" data-val="UYU_2000" data-valor="2000" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 1000</span>
+											<input type="number" min="0" data-val="UYU_1000" data-valor="1000" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 500</span>
+											<input type="number" min="0" data-val="UYU_500" data-valor="500" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 200</span>
+											<input type="number" min="0" data-val="UYU_200" data-valor="200" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 100</span>
+											<input type="number" min="0" data-val="UYU_100" data-valor="100" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 50</span>
+											<input type="number" min="0" data-val="UYU_50" data-valor="50" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 20</span>
+											<input type="number" min="0" data-val="UYU_20" data-valor="20" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 10</span>
+											<input type="number" min="0" data-val="UYU_10" data-valor="10" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 5</span>
+											<input type="number" min="0" data-val="UYU_5" data-valor="5" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 2</span>
+											<input type="number" min="0" data-val="UYU_2" data-valor="2" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 1</span>
+											<input type="number" min="0" data-val="UYU_1" data-valor="1" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6 pl-1">
+								<div class="currency-section mb-0">
+									<div class="row justify-content-between mr-1 ml-1">
+										<h6 class="font-weight-bold text-success mb-2">Dólares (US$)</h6>
+										<h6 id="diferenciaUSD_cierreCaja" class="font-weight-bold text-right text-muted mb-2">Diferencia: 0,00</h6>
+									</div>
+									<div id="denominacionesUSD_cierreCaja">
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 100</span>
+											<input type="number" min="0" data-val="USD_100" data-valor="100" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 50</span>
+											<input type="number" min="0" data-val="USD_50" data-valor="50" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 20</span>
+											<input type="number" min="0" data-val="USD_20" data-valor="20" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 10</span>
+											<input type="number" min="0" data-val="USD_10" data-valor="10" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 5</span>
+											<input type="number" min="0" data-val="USD_5" data-valor="5" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 1</span>
+											<input type="number" min="0" data-val="USD_1" data-valor="1" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewSnap')" onkeyup="handleBillInput('modalNewSnap', event, this)">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Cheques -->
+						<div class="section-title mt-2 mb-1">Cheques</div>
+						<div class="currency-section mb-0">
+							<div id="chequesList_cierreCaja" class="text-center text-muted">
+								<em>No hay cheques registrados</em>
+							</div>
+						</div>
+
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+						<button id="btnConfirmModalNewSnap" onclick="confirmNewSnap()" class="btn btn-success text-white shadow-sm">Confirmar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# MODAL ARQUEO CAJA #}
+		<div class="modal fade show" id="modalNewArqueo" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+				<div class="modal-content">
+					<div class="modal-header background-template-color">
+						<span class="modal-title text-template-color">Arqueo de caja</span>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true"></span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<!-- Saldos -->
+						<div class="section-title mb-1">Saldos</div>
+						<div class="row mb-0">
+							<div class="col-md-6">
+								<div class="section-title mb-1">Iniciales</div>
+							</div>
+							<div class="col-md-6">
+								<div class="section-title mb-1">Actuales</div>
+							</div>
+						</div>
+						<div class="row mb-2">
+							<div class="col-md-3 ">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-success mb-1">$U 1.000,00<span id="saldoInicialUYU_arqueoCaja"></span></h4>
+									<small class="text-muted">Pesos Uruguayos</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-primary mb-1">US$ 500,00<span id="saldoInicialUSD_arqueoCaja"></span></h4>
+									<small class="text-muted">Dólares</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-success mb-1">$U <span id="saldoActualUYUArq_display">3.392,00</span> <span id="saldoUYU_arqueoCaja"></span></h4>
+									<small class="text-muted">Pesos Uruguayos</small>
+								</div>
+							</div>
+							<div class="col-md-3">
+								<div class="saldo-card text-center mb-0 p-1">
+									<h4 class="text-primary mb-1">US$ <span id="saldoActualUSDArq_display">500,00</span><span id="saldoUSD_arqueoCaja"></span></h4>
+									<small class="text-muted">Dólares</small>
+								</div>
+							</div>
+						</div>
+						<!-- Detalle de Efectivo -->
+						<div class="section-title">Detalle de Efectivo</div>
+						<div class="row">
+							<div class="col-md-6 pr-1">
+								<div class="currency-section mb-0">
+									<div class="row justify-content-between mr-1 ml-1">
+										<h6 class="font-weight-bold text-success mb-2">Pesos Uruguayos ($U)</h6>
+										<h6 id="diferenciaUYU_arqueoCaja" class="font-weight-bold text-right text-muted mb-2">Diferencia: 0,00</h6>
+									</div>
+									<div id="denominacionesUYU_arqueoCaja">
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 2000</span>
+											<input type="number" min="0" data-val="UYU_2000" data-valor="2000" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 1000</span>
+											<input type="number" min="0" data-val="UYU_1000" data-valor="1000" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 500</span>
+											<input type="number" min="0" data-val="UYU_500" data-valor="500" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 200</span>
+											<input type="number" min="0" data-val="UYU_200" data-valor="200" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 100</span>
+											<input type="number" min="0" data-val="UYU_100" data-valor="100" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 50</span>
+											<input type="number" min="0" data-val="UYU_50" data-valor="50" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 20</span>
+											<input type="number" min="0" data-val="UYU_20" data-valor="20" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 10</span>
+											<input type="number" min="0" data-val="UYU_10" data-valor="10" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 5</span>
+											<input type="number" min="0" data-val="UYU_5" data-valor="5" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 2</span>
+											<input type="number" min="0" data-val="UYU_2" data-valor="2" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">$U 1</span>
+											<input type="number" min="0" data-val="UYU_1" data-valor="1" data-moneda="UYU" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6 pl-1">
+								<div class="currency-section mb-0">
+									<div class="row justify-content-between mr-1 ml-1">
+										<h6 class="font-weight-bold text-success mb-2">Dólares (US$)</h6>
+										<h6 id="diferenciaUSD_arqueoCaja" class="font-weight-bold text-right text-muted mb-2">Diferencia: 0,00</h6>
+									</div>
+									<div id="denominacionesUSD_arqueoCaja">
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 100</span>
+											<input type="number" min="0" data-val="USD_100" data-valor="100" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 50</span>
+											<input type="number" min="0" data-val="USD_50" data-valor="50" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 20</span>
+											<input type="number" min="0" data-val="USD_20" data-valor="20" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 10</span>
+											<input type="number" min="0" data-val="USD_10" data-valor="10" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 5</span>
+											<input type="number" min="0" data-val="USD_5" data-valor="5" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+										<div class="denomination-row p-0">
+											<span class="denomination-value">US$ 1</span>
+											<input type="number" min="0" data-val="USD_1" data-valor="1" data-moneda="USD" class="text-right denomination-count form-control form-control-sm shadow-sm" style="max-width: 120px;" onchange="calculateDifferences('modalNewArqueo')" onkeyup="handleBillInput('modalNewArqueo', event, this)">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Cheques -->
+						<div class="section-title mt-2 mb-1">Cheques</div>
+						<div class="currency-section mb-0">
+							<div id="chequesList_arqueoCaja" class="text-center text-muted">
+								<em>No hay cheques registrados</em>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer justify-content-between">
+						<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">
+							Cerrar
+						</button>
+						<div>
+							<button id="btnCleanModalArqueo" onclick="cleanArqueo()" class="btn btn-danger text-white shadow-sm">
+								Borrar
+							</button>
+							<button id="btnConfirmModalArqueo" onclick="confirmArqueo()" class="btn btn-success text-white shadow-sm">
+								Guardar
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{# ------------------- #}
+
+	</div>
+</div>
+{% include("modalSeeVoucher.twig") %}
+
+{% block script %}
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/index.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils/showReplyMessage.js{{ versionerp }}"></script>
+
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/accountState.js{{ versionerp }}"></script> {# PARA TRAER COSAS PARA VER LOS COMPROBANTES#}
+
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/caja.js{{ versionerp }}"></script>
+<script type="text/javascript">
+	$(document).ready( function(){
+		applyFilters();
+
+		$('#modalNewMovement').off('shown.bs.modal').on('shown.bs.modal', function () {
+			$('#inputIngreso').click();
+		});
+
+	});
+</script>
+{% endblock %}
+{% endblock %}

@@ -129,9 +129,23 @@
 						<input type="text" class="form-control form-control-sm shadow-sm" id="inputBarcode" onkeypress="return keyPressProduct(event, this.value, 20)" tabindex=5>
 					</div>
 				</div>
-				<div class="form-group">
-					<label for="textAreaDetail">Detalle</label>
-					<textarea class="form-control shadow-sm" id="textAreaDetail" style="resize: none;" rows="2" maxlength="80" onkeypress="return keyPressProduct(event, this.value, 80)" tabindex=6></textarea>
+				<div class="form-row">
+					<div class="form-group col-md-8">
+						<div class="form-group">
+							<label for="textAreaDetail">Detalle</label>
+							<textarea class="form-control shadow-sm" id="textAreaDetail" style="resize: none; height: 70px;" rows="2" maxlength="80" onkeypress="return keyPressProduct(event, this.value, 80)" tabindex=6></textarea>
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label for="inputUnidadVenta" class="col-form-label col-form-label-sm" title="Define si el producto se venderá por unidad, peso o litros. Esto afecta cómo se ingresa la cantidad.">Unidad de venta</label>
+							<select class="custom-select custom-select-sm shadow-sm text-center" id="inputUnidadVenta" size="3" onkeypress="keyPressProduct(event)" tabindex=6>
+								<option value="Unidad">Unidad</option>
+								<option value="Peso">Peso (kg)</option>
+								<option value="Litro">Volumen (litro)</option>
+							</select>
+						</div>
+					</div>
 				</div>
 				<div class="d-flex justify-content-center mt-2">
 					<div class="form-check form-check-inline">

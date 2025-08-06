@@ -180,6 +180,18 @@ class ctr_vouchers_received{
 		else return $responseMyBusiness;
 	}
 
+	//NEW
+	public function getVoucherReceivedById($idVoucher, $idEmpresa){
+		$response = new \stdClass();
+		$vouchersReceivedClass = new vouchersReceived();
+		$responseGetVoucher = $vouchersReceivedClass->getVoucherReceived($idVoucher, $idEmpresa);
+		if($responseGetVoucher->result == 2){
+			$response->result = 2;
+			$response->voucher = $responseGetVoucher->objectResult;
+		}else return $responseGetVoucher;
+		return $response;
+	}
+
 	//se cargan los comprobantes recibidos en el primer inicio de sesion
 	//UPDATED
 	public function getVouchersReceivedFirstLogin($rut, $pageSize, $lastId, $currentSession){

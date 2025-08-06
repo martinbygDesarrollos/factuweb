@@ -13,6 +13,7 @@ return function (App $app) {
     $routesServices = require_once __DIR__ . "/../src/routes/routes_services.php";
     $routesProduct = require_once __DIR__ . "/../src/routes/routes_products.php";
     $routesAccounting = require_once __DIR__ . "/../src/routes/routes_accounting.php";
+    $routesPayment = require_once __DIR__ . "/../src/routes/routes_payment.php";
     $container = $app->getContainer();
 
     $routesVouchers($app);
@@ -22,6 +23,7 @@ return function (App $app) {
     $routesServices($app);
     $routesProduct($app);
     $routesAccounting($app);
+    $routesPayment($app);
 
     $userController = new ctr_users();
 

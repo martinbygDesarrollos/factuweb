@@ -9,17 +9,21 @@ require_once '../src/controllers/ctr_providers.php';
 require_once '../src/backup/ctr_backup.php';
 require_once '../src/controllers/ctr_products.php';
 require_once '../src/controllers/ctr_clients.php';
+require_once '../src/controllers/ctr_caja.php';
+require_once '../src/utils/handle_date_time.php';
 
 
 return function (App $app){
 	$container = $app->getContainer();
 	$userController = new ctr_users();
+	$cajaController = new ctr_caja();
 	$usersClass = new users();
 	$voucherController = new ctr_vouchers();
 	$providerController = new ctr_providers();
 	$spreadsheetClass = new managment_spreadsheet();
 	$productController = new ctr_products();
 	$clientController = new ctr_clients();
+	$handleDateTimeClass = new handleDateTime();
 
 	//UPDATED
 	$app->get('/ver-clientes', function($request, $response, $args)use ($container, $userController){
@@ -88,7 +92,7 @@ return function (App $app){
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName('Providers');
 	//UPDATED
-	$app->get('/configuraciones', function ($request, $response, $args) use ($container, $userController, $usersClass) {
+	$app->get('/configuraciones', function ($request, $response, $args) use ($container, $userController, $usersClass, $cajaController) {
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$args['systemSession'] = $responseCurrentSession->currentSession;
@@ -104,6 +108,28 @@ return function (App $app){
 			$responseGetFormatTicket = $userController->getVariableConfiguration('FORMATO_TICKET', $responseCurrentSession->currentSession);
 			if($responseGetFormatTicket->result == 2)
 				$args['formatTicket'] = $responseGetFormatTicket->configValue;
+			
+			if($responseCurrentSession->currentSession->superUser == "SI"){ // HACER
+				$responseGetAllUsers = $userController->getAllUsersfromCompany($responseCurrentSession->currentSession->idEmpresa);
+				if($responseGetAllUsers->result == 2)
+					$args['users'] = $responseGetAllUsers->listResult;
+				$responseGetAllCajas = $cajaController->getAllCajasFromCompany($responseCurrentSession->currentSession->idEmpresa);
+				if($responseGetAllCajas->result == 2)
+					$args['cajas'] = $responseGetAllCajas->listResult;
+				$responseGetPOS = $cajaController->getAllPOSFromCompany($responseCurrentSession->currentSession->idEmpresa);
+				if($responseGetPOS->result == 2)
+					$args['listPOS'] = $responseGetPOS->listPOS;
+
+				// var_dump($args['cajas']);
+				// var_dump($args['users']);
+			} else {
+				$responseGetCaja = $cajaController->getUserCaja($responseCurrentSession->currentSession);
+				if($responseGetCaja->result == 2)
+					$args['caja'] = $responseGetCaja->caja;
+				$responseGetPOS = $cajaController->getAllPOSFromCompany($responseCurrentSession->currentSession->idEmpresa);
+				if($responseGetPOS->result == 2)
+					$args['listPOS'] = $responseGetPOS->listPOS;
+			}
 
 			$responseGetFastSaleMeedioPago = $userController->getVariableConfiguration('SUPERFAST_SALE_MEDIOPAGO', $responseCurrentSession->currentSession);
 			if($responseGetFastSaleMeedioPago->result == 2)
@@ -116,6 +142,30 @@ return function (App $app){
 			return $this->view->render($response, "settings.twig", $args);
 		}else return $response->withRedirect($request->getUri()->getBaseUrl());
 	})->setName("Settings");
+	// NEW
+	$app->get('/caja', function ($request, $response, $args) use ($container, $userController, $cajaController) {
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$args['systemSession'] = $responseCurrentSession->currentSession;
+				
+				$responseGetCaja = $cajaController->getUserCaja($responseCurrentSession->currentSession);
+				if($responseGetCaja->result == 2){
+					$args['caja'] = $responseGetCaja->caja;
+				}
+				
+				$responseGetMovements = $cajaController->getMovementsWithoutSnap($responseCurrentSession->currentSession);
+				if($responseGetMovements->result == 2){
+					$args['movements'] = $responseGetMovements->movimientos;
+					$args['totales'] = $responseGetMovements->totales;
+					$args['cheques'] = $responseGetMovements->cheques;
+				}
+				$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+				return $this->view->render($response, "cashRegister.twig", $args);
+			} else return json_encode($responsePermissions);
+		}else return $response->withRedirect($request->getUri()->getBaseUrl());
+	})->setName("CashRegister");
 	// NEW
 	$app->get('/caes', function ($request, $response, $args) use ($container, $userController) {
 		$responseCurrentSession = $userController->validateCurrentSession();
@@ -278,6 +328,174 @@ return function (App $app){
 			return json_encode($clientController->getListClientsView($lastId, $textToSearch, $withBalance, $responseCurrentSession->currentSession));
 		}else return json_encode($responseCurrentSession);
 	});
+	// NEW
+	$app->post('/getAllChequesInCash', function(Request $request, Response $response) use ($userController, $clientController, $cajaController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responseGetMovements = $cajaController->getChequesWithoutSnap($responseCurrentSession->currentSession);
+			return json_encode($responseGetMovements);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/newMovement', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$data['tipo'] = (isset($data['tipo']) && $data['tipo'] != "") ? $data['tipo'] : null;
+				$data['subtipo'] = (isset($data['subtipo']) && $data['subtipo'] != "") ? $data['subtipo'] : null;
+				$data['importe'] = (isset($data['importe']) && $data['importe'] != "") ? $data['importe'] : null;
+				$data['observacion'] = (isset($data['observacion']) && $data['observacion'] != "") ? $data['observacion'] : null;
+				$data['cheques'] =  isset($data['cheques']) ? json_decode($data['cheques'], true) : array();
+				// var_dump($data);
+				// exit;
+				$caja = null;
+
+				$responseGetCaja = $cajaController->getUserCaja($responseCurrentSession->currentSession);
+				if($responseGetCaja->result == 2){
+					$caja = $responseGetCaja->caja;
+				}
+				$fecha = $handleDateTimeClass->getCurrentDateTimeInt();
+				$movement = array(
+					"tipo" => $data['tipo'],
+					"medio" => $data['subtipo'],
+					"importe" => $data['importe'],
+					"fecha" => substr($fecha, 0, 8),
+					"fecha_hora" => $fecha,
+					"moneda" => $caja->moneda,
+					"referencia" => null,
+					"banco" => null,
+					"titular" => null,
+					"fecha_diferido" => null,
+					"isAnulado" => 0,
+					"observaciones" => $data['observacion'],
+					"snap" => null,
+					"caja" => $responseCurrentSession->currentSession->caja,
+					"usuario" => $responseCurrentSession->currentSession->idUser,
+					"cheques" => $data['cheques']
+				);
+				return json_encode($cajaController->insertMovement($movement, $responseCurrentSession->currentSession));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/getMovement', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$id = $data['id'];
+				return json_encode($cajaController->getMovementById($id, $responseCurrentSession->currentSession));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/getSnap', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$id = $data['id'];
+				return json_encode($cajaController->getSnapById($id, $responseCurrentSession->currentSession));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/newSnap', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				// echo "<br><br> MOVIMIENTOS <br><br>";
+				// var_dump($data['movimientos']);
+				// echo "<br><br> CHEQUES <br><br>";
+				// var_dump($data['cheques']);
+				// echo "<br><br> EFECTIVO UYU <br><br>";
+				// var_dump($data['efectivo']['UYU']);
+				// echo "<br><br> EFECTIVO USD <br><br>";
+				// var_dump($data['efectivo']['USD']);
+				// echo "<br><br><br><br>";
+				// exit;
+				// $id = $data['id'];
+				return json_encode($cajaController->newSnap($data['movimientos'], $data['cheques'], $data['efectivo']['UYU'], $data['efectivo']['USD'], $data['saldos']['UYU'], $data['saldos']['USD'], $responseCurrentSession->currentSession));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/saveArqueo', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$arqueo = (isset($data['data']) ) ? $data['data'] : null;
+				// var_dump($arqueo);
+				// exit;
+				return json_encode($cajaController->updateArqueo($arqueo));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/getArqueo', function(Request $request, Response $response) use ($userController, $clientController, $cajaController, $handleDateTimeClass){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				// var_dump($arqueo);
+				// exit;
+				return json_encode($cajaController->getArqueo());
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+
+	// NEW SUPER USER o USER NORMAL A SU PROPIA CAJA
+	$app->post('/updateCaja', function(Request $request, Response $response) use ($userController, $cajaController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$data = $request->getParams();
+			$data['POS'] = (isset($data['POS']) && $data['POS'] != "") ? intval($data['POS']) : null;
+			$data['id'] = (isset($data['id']) && $data['id'] != "") ? intval($data['id']) : null;
+			if($responseCurrentSession->currentSession->superUser == "SI"){
+				return json_encode($cajaController->updateCaja($data, $data['id']));
+			} else if($data['id'] == $responseCurrentSession->currentSession->caja){
+				return json_encode($cajaController->updateCaja($data, $data['id']));
+			} else return json_encode(['result' => 0, 'message' => 'Exclusivo para usuarios administradores']);
+		}else return json_encode($responseCurrentSession);
+	});
+	
+	// NEW SUPER USER
+	$app->post('/updatePOS', function(Request $request, Response $response) use ($userController, $cajaController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$data = $request->getParams();
+			$data['id'] = (isset($data['id']) && $data['id'] != "") ? intval($data['id']) : null;
+			$data['marca'] = (isset($data['marca']) && $data['marca'] != "") ? $data['marca'] : null;
+			$data['codigo'] = (isset($data['codigo']) && $data['codigo'] != "") ? $data['codigo'] : null;
+			$data['hash'] = (isset($data['hash']) && $data['hash'] != "") ? $data['hash'] : null;
+			$data['terminal'] = (isset($data['terminal']) && $data['terminal'] != "") ? $data['terminal'] : null;
+			if($responseCurrentSession->currentSession->superUser == "SI"){
+				return json_encode($cajaController->updatePOS($data, $data['id']));
+			} else return json_encode(['result' => 0, 'message' => 'Exclusivo para usuarios administradores']);
+		}else return json_encode($responseCurrentSession);
+	});
+
+	// NEW
+	$app->post('/setCajaToUser', function(Request $request, Response $response) use ($userController, $cajaController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			if($responseCurrentSession->currentSession->superUser == "SI"){
+				$data = $request->getParams();
+				$user = (isset($data['user']) && $data['user'] != "") ? intval($data['user']) : null;
+				$caja = (isset($data['caja']) && $data['caja'] != "") ? intval($data['caja']) : null;
+				return json_encode($cajaController->setCajaToUser($user, $caja));
+			} else return json_encode(['result' => 0, 'message' => 'Exclusivo para usuarios administradores']);
+		}else return json_encode($responseCurrentSession);
+	});
 	//UPDATED
 	$app->post('/updateClient', function(Request $request, Response $response) use ($userController, $clientController){
 		$responseCurrentSession = $userController->validateCurrentSession();
@@ -299,8 +517,6 @@ return function (App $app){
 
 	//si el documento no está lo crea sino modifica el cliente
 	$app->post('/createModifyClient', function(Request $request, Response $response) use ($userController, $clientController){
-		// $responseCurrentSession = ctr_users::validateCurrentSession('CLIENT');
-		// if($responseCurrentSession->result == 2){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('CLIENT', $responseCurrentSession->currentSession->idEmpresa);
@@ -313,8 +529,8 @@ return function (App $app){
 				$locality = $data['locality'];
 				$department = $data['department'];
 				$email = $data['email'];
-				//echo "ruta";exit;
-				return json_encode($clientController->createModifyClient($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+				// return json_encode($clientController->createModifyClient($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+				return json_encode($clientController->createModifyClientJustLocal($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
 			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
@@ -429,6 +645,17 @@ return function (App $app){
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//funciones para manejar datos de la configuracion del usuario
 
+	//NEW
+	$app->post('/getUserCaja', function(Request $request, Response $response) use ($userController, $cajaController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$data = $request->getParams();
+			// if($responseCurrentSession->currentSession->permission->CAJA == "SI")
+			return json_encode($cajaController->getUserCaja($responseCurrentSession->currentSession));
+			// else
+			// return json_encode(['result' => 0, 'message' => 'Empresa sin permisos']);
+		}else return json_encode($responseCurrentSession);
+	});
 	//UPDATED
 	$app->post('/getConfiguration', function(Request $request, Response $response) use ($userController){
 		$responseCurrentSession = $userController->validateCurrentSession();
@@ -486,27 +713,56 @@ return function (App $app){
 			return json_encode($productController->saveProductsInSession($product));
 		}else return json_encode($responseCurrentSession);
 	});
-	//UPDATED
-	$app->post('/getDataSession', function($request, $response) use ($userController){
+	// NEW
+	$app->post('/getCart', function($request, $response) use ($userController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
-			$data = $request->getParams();
-			$index = $data['indexToSearch'];
-			return json_encode($userController->getDataSession($index));
+			return json_encode($userController->getCart());
 		}else return json_encode($responseCurrentSession);
 	});
-	//UPDATED
-	$app->post('/updateDataSession', function($request, $response) use ($userController){
+	// NEW
+	$app->post('/deleteCart', function($request, $response) use ($userController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			return json_encode($userController->deleteCart());
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/updateArticleInCart', function($request, $response) use ($userController){
 		// $responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
 			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
-				$index1 = $data['index0'];
-				$index2 = $data['index1'];
-				$newData = $data['newData'];
-				return json_encode($userController->updateProductsDataSession($index1, $index2, $newData));
+				$article = $data['article'];
+				$index = $data['index'];
+				return json_encode($userController->updateArticleInCart($article, $index));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	// NEW
+	$app->post('/deleteArticleFromCart', function($request, $response) use ($userController){
+		// $responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$index = $data['index'];
+				return json_encode($userController->deleteArticleFromCart($index));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	$app->post('/setNewDataSession', function($request, $response) use ($userController){
+		// $responseCurrentSession = ctr_users::validateCurrentSession('VENTAS');
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$cart = $data['cart'];
+				return json_encode($userController->setNewDataSession($cart));
 			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});

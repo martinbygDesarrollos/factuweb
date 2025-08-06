@@ -24,7 +24,9 @@ class ctr_vouchers_emitted{
 		$voucherController = new ctr_vouchers();
 		$voucherEmittedController = new ctr_vouchers_emitted();
 
-
+		$cajaController = new ctr_caja();
+		$productsController = new ctr_products();
+		// $cajaClass = new caja();
 
 
 		// $responseGetBusiness = ctr_users::getBusinesSession();
@@ -50,6 +52,7 @@ class ctr_vouchers_emitted{
 
 
 						$jsonPrintFormat = json_decode($responseRestGetCFE->cfe->representacionImpresa);
+						error_log(json_encode($jsonPrintFormat, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 						$arrayDetails = array();
 						if( $responseGetVoucher->objectResult->isCobranza  == 1){
 							if($responseGetVoucher->objectResult->tipoCFE == 101 || $responseGetVoucher->objectResult->tipoCFE == 111){
@@ -65,6 +68,8 @@ class ctr_vouchers_emitted{
 								if ($responseCreateVoucherCancel2->result == 2){
 									$response->result = 2;
 									$response->message = "Se emitió correctamente la cancelación del comprobante seleccionado.";
+									// BORRAR MOVIMIENTO DE LA CAJA SI ALGUN MOVIMIENTO HACE REFERENCIA A EL (USA columna IsAnulado => 1)
+									$response->movimientos = $cajaController->anularMovementByRef($idVoucher, $currentSession);
 									return $response;
 								}else return $responseCreateVoucherCancel2;
 							}else{
@@ -72,8 +77,10 @@ class ctr_vouchers_emitted{
 									$arrayDetails[] = $restController->prepareDetalleToSend($itemDetail->indFact, $itemDetail->nomItem, $itemDetail->codItem, $itemDetail->descripcion, $itemDetail->cantidad, $itemDetail->uniMedida, $itemDetail->precio, $itemDetail->descRecItemTipo, +$itemDetail->descRecItem);
 							}
 						}else{
-							foreach ($jsonPrintFormat->detalles as $key => $itemDetail)
+							foreach ($jsonPrintFormat->detalles as $key => $itemDetail){
+								error_log("indFact: '$itemDetail->indFact', nomItem: '$itemDetail->nomItem', codItem: '$itemDetail->codItem', descripcion: '$itemDetail->descripcion', cantidad: '$itemDetail->cantidad', uniMedida: '$itemDetail->uniMedida', precio: '$itemDetail->precio', descRecItemTipo: '$itemDetail->descRecItemTipo', descRecItem: '$itemDetail->descRecItem'");	
 								$arrayDetails[] = $restController->prepareDetalleToSend($itemDetail->indFact, $itemDetail->nomItem, $itemDetail->codItem, $itemDetail->descripcion, $itemDetail->cantidad, $itemDetail->uniMedida, $itemDetail->precio, $itemDetail->descRecItemTipo, +$itemDetail->descRecItem);
+							}
 						}
 
 
@@ -91,6 +98,29 @@ class ctr_vouchers_emitted{
 							$voucherEmittedController->updateDataVoucherEmitted($currentSession);
 							$response->result = 2;
 							$response->message = "Se emitió correctamente la cancelación del comprobante seleccionado.";
+							// BORRAR MOVIMIENTO DE LA CAJA SI ALGUN MOVIMIENTO HACE REFERENCIA A EL (USA columna IsAnulado => 1)
+							$response->movimientos = $cajaController->anularMovementByRef($idVoucher, $currentSession);
+							// REPONER STOCK
+							$stocks = [];
+							foreach ($jsonPrintFormat->detalles as $key => $detail){
+								$stockItem = (object) [
+									'description' => $detail->nomItem,
+									'detail' => $detail->descripcion,
+									'quantity' => $detail->cantidad,
+									'idIva' => $detail->indFact,
+									'brand' => null,
+									'coin' => $jsonPrintFormat->tipoMoneda,
+									'cost' => 0.00,
+									'coefficient' => 0.00,
+									'discount' => 0.00,
+									'barcode' => null,
+									'idInventory' => null,
+									'import' => $detail->precio,
+									'unidad_venta' => $detail->uniMedida
+								];
+								$stocks[] = $productsController->updateStockProduct($stockItem, $responseGetType->type, $currentSession);
+							}
+							$response->stocks = $stocks;
 						}else return $responseCreateVoucherCancel;
 
 
@@ -420,6 +450,29 @@ class ctr_vouchers_emitted{
 			$response->vouchersEmittedInserted = $responseSendRest->counterInserted;
 		}else return $responseGetLastId;
 		// }else return $responseGetBusiness;
+		return $response;
+	}
+
+	//NEW
+	public function getVoucherEmittedByTipoSerieNumero($tipoCFE, $serieCFE, $numeroCFE, $idEmpresa){
+		$response = new \stdClass();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$responseGetVoucher = $vouchersEmittedClass->getVoucherEmittedByTipoSerieNumero($tipoCFE, $serieCFE, $numeroCFE, $idEmpresa);
+		if($responseGetVoucher->result == 2){
+			$response->result = 2;
+			$response->voucher = $responseGetVoucher->objectResult;
+		}else return $responseGetVoucher;
+		return $response;
+	}
+	//NEW
+	public function getVoucherEmittedById($idVoucher, $idEmpresa){
+		$response = new \stdClass();
+		$vouchersEmittedClass = new vouchersEmitted();
+		$responseGetVoucher = $vouchersEmittedClass->getVoucherEmitted($idVoucher, $idEmpresa);
+		if($responseGetVoucher->result == 2){
+			$response->result = 2;
+			$response->voucher = $responseGetVoucher->objectResult;
+		}else return $responseGetVoucher;
 		return $response;
 	}
 

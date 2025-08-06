@@ -214,6 +214,17 @@ class vouchersEmitted{
 		return $responseQuery;
 	}
 
+	//NEW
+	public function getVoucherEmittedByTipoSerieNumero($tipoCFE, $serieCFE, $numeroCFE, $idEmpresa){
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM comprobantes WHERE tipoCFE = ? AND serieCFE = ? AND numeroCFE = ? AND idEmisor = ?", array('isii', $tipoCFE, $serieCFE, $numeroCFE, $idEmpresa), "OBJECT");
+		if($responseQuery->result == 2){
+		}else if($responseQuery->result == 1){
+			$responseQuery->message = "No se encontro un comprobante emitido.";
+		}
+		return $responseQuery;
+	}
+
 	//elimina un comprobante segun corresponda el valor que llega por parametro y el campo indice del comprobante
 	public function deleteManualReceipts($indexVoucher){
 		return DataBase::sendQuery("DELETE FROM comprobantes WHERE indice = ?", array('i', $indexVoucher), "BOOLE");

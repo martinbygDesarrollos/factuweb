@@ -380,6 +380,56 @@ class ctr_clients{
 		}
 		return $response;
 	}
+
+	// NEW TEST
+	public function createModifyClientJustLocal($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa, $rut, $token){
+		$clientClass = new clients();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$arrayErrors = array();
+		$response = new \stdClass();
+		$validateClass = new validate();
+
+		//si el dato es vacio lo paso a null
+		$locality = $locality == "" ? null : $locality;
+		$department = $department == "" ? null : $department;
+		$email = $email == "" ? null : $email;
+		$numberMobile = $numberMobile == "" ? null : $numberMobile;
+		$addressReceiver = $addressReceiver == "" ? null : $addressReceiver;
+
+		$objClient = $clientClass->getClient($documentReceiver, $idEmpresa);
+		if ( $objClient->result == 2 ){ //el cliente se encuentra en el sistema hay que modificar
+			$resultModify = $clientController->updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa, $rut, $token);
+			if ( $resultModify->result != 2 ){
+				array_push( $arrayErrors, $resultModify->message );
+				$response->result = $resultModify->result;
+				if ( $resultModify->result == 1 ) $response->result = 2; /*** si $resultModify es result 1 significa que en ormen no se modificó y localmente si*/
+			}else $response->result = 2;
+		}else{ //hay que crear el cliente
+			$resultNewClient = $clientClass->insertClient($documentReceiver, $nameReceiver, $addressReceiver, $locality, $department, $email, $numberMobile, $idEmpresa);
+			if ( $resultNewClient->result != 2 ){
+				array_push( $arrayErrors, $resultNewClient->message );
+			}else $response->result = 2;
+		}
+				$response->result = 2;
+				$response->message = "EL cliente fue creado correctamente.";
+		return $response;
+	}
+	//NEW TEST
+	public function updateClientByDocumentJustLocal($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa, $rut, $token){
+		$response = new \stdClass();
+		$clientClass = new clients();
+		$userController = new ctr_users();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$validateClass = new validate();
+		$resultUpdateClient = $clientClass->updateClientByDocument($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa);
+		if($resultUpdateClient->result == 2){
+			$response->result = 2;
+			$response->message = "EL cliente fue modificado correctamente.";
+		}else return $resultUpdateClient;
+		return $response;
+	}
 	//UPDATED
 	public function prepareContactToSend($emails, $numbers){
 		$restController = new ctr_rest();

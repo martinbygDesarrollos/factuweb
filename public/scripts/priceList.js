@@ -296,6 +296,7 @@ function setValuesToEdit(productObject){
 	$('#inputBrand').val(productObject.marca);
 	$('#selectRubro').val(productObject.idRubro);
 	$('#textAreaDetail').val(productObject.detalle);
+	$('#inputUnidadVenta').val(productObject.unidad_venta);
 	$('#inputBarcode').val(productObject.codigoBarra);
 	if(productObject.moneda == "UYU")
 		$('#typeCoinUYU').attr('checked',true).change();
@@ -348,46 +349,52 @@ function createNewRubro(){
 	}else showReplyMessage(1,"El Rubro no puede ingresarse vacia o contener menos de 5 caracteres.", "Rubro no valido", "modalCreateNewRubro");
 }
 
-function keyPressProduct(keyPress, value, size){
-	if(keyPress.keyCode == 13){
-		if(keyPress.srcElement.id == "inputDescription"){
+function keyPressProduct(event, value, size){
+	console.log(event)
+	if(event.keyCode == 13){
+		if(event.target.id == "inputDescription"){
 			$('#inputBrand').focus();
-		}else if(keyPress.srcElement.id =="inputBrand"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id =="inputBrand"){
+			if(event.shiftKey)
 				$('#inputDescription').focus();
 			else
 				$('#inputBarcode').focus();
-		}else if(keyPress.srcElement.id == "inputBarcode"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id == "inputBarcode"){
+			if(event.shiftKey)
 				$('#inputBrand').focus();
 			else
 				$('#textAreaDetail').focus();
-		}else if(keyPress.srcElement.id == "textAreaDetail"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id == "textAreaDetail"){
+			if(event.shiftKey)
 				$('#inputBarcode').focus();
 			else
-				$('#inputCost').focus();
-		}else if(keyPress.srcElement.id == "inputCost"){
-			if(keyPress.shiftKey)
+				$('#inputUnidadVenta').focus();
+		}else if(event.target.id == "inputUnidadVenta"){
+			if(event.shiftKey)
 				$('#textAreaDetail').focus();
 			else
+				$('#inputCost').focus();
+		}else if(event.target.id == "inputCost"){
+			if(event.shiftKey)
+				$('#inputUnidadVenta').focus();
+			else
 				$('#inputCoefficient').focus();
-		}else if(keyPress.srcElement.id == "inputCoefficient"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id == "inputCoefficient"){
+			if(event.shiftKey)
 				$('#inputCost').focus();
 			else
 				$('#inputDiscount').focus();
-		}else if(keyPress.srcElement.id == "inputDiscount"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id == "inputDiscount"){
+			if(event.shiftKey)
 				$('#inputCoefficient').focus();
 			else
 				$('#inputPriceFinal').focus();
-		}else if(keyPress.srcElement.id == "inputPriceFinal"){
-			if(keyPress.shiftKey)
+		}else if(event.target.id == "inputPriceFinal"){
+			if(event.shiftKey)
 				$('#inputDiscount').focus();
 			else
 				$('#btnConfirmProduct').click();
-		}else if(keyPress.srcElement.id == "inputRubro"){
+		}else if(event.target.id == "inputRubro"){
 			$('#btnConfirmNewRubro').click();
 		}
 	}else if(value != null && value.length == size) return false;
@@ -571,6 +578,10 @@ function createNewProduct(stockManagement){
 	if(!typeCoinUYU)
 		typeCoin = "USD";
 
+	if(parseFloat(priceFinal) == 0){
+		showReplyMessage(1, "El importe no puede ser 0.", "Precio no valido", "modalCreateModifyProduct")
+		return;
+	}
 	if(description && description.length > 4){
 		let data = {
 			idHeading: idHeading,
@@ -591,7 +602,7 @@ function createNewProduct(stockManagement){
 		showReplyMessage(response.result, response.message, "Nuevo artículo", "modalCreateModifyProduct");
 
 		$('#selectHeadingPriceList').trigger('change')
-	}else showReplyMessage(1,"La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido", "modalCreateModifyProduct");
+	}else showReplyMessage(1, "La descripción no puede ingresarse vacia o contener menos de 5 caracteres.", "Descripción no valido", "modalCreateModifyProduct");
 
 }
 
@@ -621,6 +632,7 @@ function updateProduct(stockManagement, idProduct){
 	let iva = $('#selectIVA').val();
 	let priceFinal = $('#inputPriceFinal').val() || 0;
 	let barcode = $('#inputBarcode').val() || null;
+	let unidadVenta = $('#inputUnidadVenta').val() || "Unidad";
 
 	let inventory = $('#inputInventory').val() || null;
 	let minInventory = $('#inputMinInventory').val() || null;
@@ -633,7 +645,11 @@ function updateProduct(stockManagement, idProduct){
 	let typeCoin = "UYU";
 	if(!typeCoinUYU)
 		typeCoin = "USD";
-
+	
+	if(parseFloat(priceFinal) == 0){
+		showReplyMessage(1, "El importe no puede ser 0.", "Precio no valido", "modalCreateModifyProduct")
+		return;
+	}
 	if(description && description.length > 4){
 		let data = {
 			idProduct: idProduct,
@@ -649,7 +665,8 @@ function updateProduct(stockManagement, idProduct){
 			barcode: barcode,
 			discount: discount,
 			inventory: inventory,
-			minInventory: minInventory
+			minInventory: minInventory,
+			unidadVenta: unidadVenta
 		}
 		let response = sendPost("updateProduct", data);
 		showReplyMessage(response.result, response.message, "Actualizar artículo", "modalCreateModifyProduct");

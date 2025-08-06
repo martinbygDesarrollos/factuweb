@@ -363,3 +363,168 @@ function saveAdendaDefault(){
 		}
 	})
 }
+
+function updateCaja(cajaId){
+	console.log('updateCaja')
+	let nombre = $('#NOMBRE_CAJA').val() || 'SIN NOMBRE';
+	let obs = $('#OBS_CAJA').val().trim() || null;
+	let moneda = $('#MONEDA_CAJA').val().trim() || 'UYU';
+	let posValue = $('#POS_SELECT').val();
+	let POS = (posValue == '0' || posValue == 0 || !posValue) ? null : posValue;
+
+	let data = {
+		id: cajaId,
+		nombre: nombre,
+		observacion: obs,
+		moneda: moneda,
+		POS: POS
+	};
+	console.log(data);
+
+	let response = sendPost("updateCaja", data);
+	if(response.result == 2){
+		showReplyMessage(response.result, "Su configuración fue modificada correctamente.", "Notificación", null);
+			$("#modalButtonResponse").click(function(){
+				window.location.reload();
+			});
+	} else {
+		showReplyMessage(response.result, response.message, "Notificación", null);
+	}
+}
+
+function changeCajaSelected(element){
+	console.log('changeCajaSelected')
+	console.log($(element).val())
+	$('.caja_data').addClass('d-none')
+	$('#caja_' + $(element).val()).removeClass('d-none')
+}
+
+function changePOSSelected(element){
+	console.log('changeCajaSelected')
+	console.log($(element).val())
+	$('.pos_data').addClass('d-none')
+	$('#pos_' + $(element).val()).removeClass('d-none')
+}
+
+function changeUserSelected(element){
+    console.log('changeUserSelected')
+    console.log($(element).val())
+    
+    // Dividir el valor por el guión bajo
+    let valores = $(element).val().split('_');
+    let userId = valores[0];  // 2
+    let cajaId = valores[1];  // 3
+    
+    console.log('User ID:', userId);
+    console.log('Caja ID:', cajaId);
+    
+    // Seleccionar el valor en el select de caja
+    $('#CAJA_SELECT_2').val(cajaId);
+    
+    // Si necesitas disparar el evento change del select de caja
+    $('#CAJA_SELECT_2').trigger('change');
+}
+
+function saveCajaData_superUser(cajaId){
+	console.log('saveCajaData_superUser - ' + cajaId)
+	let nombre = $('#NOMBRE_CAJA_' + cajaId).val() || 'SIN NOMBRE';
+	let obs = $('#OBS_CAJA_' + cajaId).val() || null;
+	let moneda = $('#MONEDA_CAJA_' + cajaId).val() || 'UYU';
+	let posValue = $('#POS_CAJA_' + cajaId).val();
+	let POS = (posValue == '0' || posValue == 0 || !posValue) ? null : posValue;
+
+	let data = {
+		id: cajaId,
+		nombre: nombre,
+		observacion: obs,
+		moneda: moneda,
+		POS: POS
+	};
+	console.log(data);
+	mostrarLoader(true)
+	sendAsyncPost("updateCaja", data)
+	.then(function(response){
+		console.log(response);
+		if(response.result == 2){
+			showReplyMessage(response.result, "Caja modificada correctamente.", "Notificación", null);
+			$("#modalButtonResponse").click(function(){
+				window.location.reload();
+			});
+		} else {
+			showReplyMessage(response.result, response.message, "Notificación", null);
+		}
+		mostrarLoader(false)
+		
+	})
+	.catch(function(response){
+		mostrarLoader(false)
+		showReplyMessage(0, "Error interno del servidor", "Notificación", null);
+	});
+}
+
+function saveCaja_user_superUser(){
+	let valores = $('#USER_LIST').val().split('_');
+	let userId = valores[0];
+	let cajaId = $('#CAJA_SELECT_2').val();
+	if(userId == 0)
+		return
+
+	mostrarLoader(true)
+	sendAsyncPost("setCajaToUser", {user: userId, caja: cajaId})
+	.then(function(response){
+		console.log(response);
+		if(response.result == 2){
+			showReplyMessage(response.result, "Caja modificada correctamente.", "Notificación", null);
+			$("#modalButtonResponse").click(function(){
+				window.location.reload();
+			});
+		} else {
+			showReplyMessage(response.result, response.message, "Notificación", null);
+		}
+		mostrarLoader(false)
+		
+	})
+	.catch(function(response){
+		mostrarLoader(false)
+		showReplyMessage(0, "Error interno del servidor", "Notificación", null);
+	});
+}
+
+function savePosData_superUser(posId){
+	console.log('savePosData_superUser - ' + posId)
+	let marca = $('#MARCA_POS_' + posId).val() || null;
+	let codigo = $('#EMPCOD_POS_' + posId).val() || null;
+	let hash = $('#HASH_POS_' + posId).val() || null;
+	let terminal = $('#TERMINAL_POS_' + posId).val();
+
+	let data = {
+		id: posId,
+		marca: marca,
+		codigo: codigo,
+		hash: hash,
+		terminal: terminal
+	};
+
+	if(posId == 0)
+		return
+
+	mostrarLoader(true)
+	sendAsyncPost("updatePOS", data)
+	.then(function(response){
+		console.log(response);
+		if(response.result == 2){
+			showReplyMessage(response.result, "POS modificado correctamente.", "Notificación", null);
+			$("#modalButtonResponse").click(function(){
+				window.location.reload();
+			});
+		} else {
+			showReplyMessage(response.result, response.message, "Notificación", null);
+		}
+		mostrarLoader(false)
+		
+	})
+	.catch(function(response){
+		mostrarLoader(false)
+		showReplyMessage(0, "Error interno del servidor", "Notificación", null);
+	});
+}

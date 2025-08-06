@@ -128,23 +128,27 @@ function openModalVoucher(button, prepareFor, view){
 }
 
 function cancelVoucher(idVoucher){
-	
+	$('#modalCancelVoucher').modal('hide')
+	mostrarLoader(true)
 	let dateCancelVoucher = $('#inputDateCancelVoucher').val() || null;
 	let appendix = $('#inputCancelAppendix').val() || null;
-	let response = sendPost("cancelVoucherEmitted", {idVoucher: idVoucher, dateCancelVoucher: dateCancelVoucher, appendix: appendix});
-	showReplyMessage(response.result, response.message, "Cancelar comprobante",  "modalCancelVoucher");
-	if(response.result == 2){
-		console.log(response)
-		// if ( response.message.includes('se encuentra anulado por DGI') ){
-		// 	setTimeout(function(){
-		// 		window.location.reload();
-		// 		$('#inputCancelAppendix').val("");
-		// 	}, 4000);
-		// }else{
-		// 	window.location.reload();
-		// 	$('#inputCancelAppendix').val("");
-		// }
-	}
+	sendAsyncPost("cancelVoucherEmitted", {idVoucher: idVoucher, dateCancelVoucher: dateCancelVoucher, appendix: appendix})
+		.then(( response )=>{
+				console.log(response)
+				mostrarLoader(false)
+				showReplyMessage(response.result, response.message, "Cancelar comprobante", null);
+			})
+		.catch(function(response){
+			mostrarLoader(false)
+			console.log("este es el catch", response);
+		});
+	// let dateCancelVoucher = $('#inputDateCancelVoucher').val() || null;
+	// let appendix = $('#inputCancelAppendix').val() || null;
+	// let response = sendPost("cancelVoucherEmitted", {idVoucher: idVoucher, dateCancelVoucher: dateCancelVoucher, appendix: appendix});
+	// showReplyMessage(response.result, response.message, "Cancelar comprobante",  "modalCancelVoucher");
+	// if(response.result == 2){
+	// 	console.log(response)
+	// }
 }
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 function downloadVoucher(idVoucher, prepareFor) {

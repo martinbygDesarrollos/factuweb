@@ -76,67 +76,68 @@ function showReplyMessage(codeResult, message, title, currentModal){
     }
 }
 
-// function showReplyMessage(codeResult, message, title, currentModal){
-//     console.log("showReplyMessage start", {codeResult, message, title, currentModal});
-    
-//     function showNewModal() {
-//         console.log("showNewModal start");
-        
-//         // Remove old handlers
-//         $('#modalResponse').off('shown.bs.modal');
-        
-//         // Setup modal shown event
-//         $('#modalResponse').on('shown.bs.modal', function () {
-//             console.log("Modal shown event triggered");
-//             $('#modalButtonResponse').trigger('focus');
-//             $(this).off('shown.bs.modal');
-//         });
+function showReplyMessageWithFunction(codeResult, message, title, currentModal, onButtonClick){
+	// console.log("showReplyMessage")
+    console.log("showReplyMessage start", {codeResult, message, title, currentModal});
 
-//         console.log("Setting up modal content");
-//         $('#modalColourResponse')
-//             .removeClass('alert-success alert-warning alert-danger')
-//             .addClass(getColorClass(codeResult));
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//         $('#modalTitleResponse').html(title);
-//         $('#modalMessageResponse').html(message);
-        
-//         console.log("About to show modal");
-//         $("#modalResponse").modal('show');
-//         console.log("Modal show called");
-//     }
+	if(currentModal) {
+        $('#' + currentModal).off('hidden.bs.modal').on('hidden.bs.modal', function() {
+            showNewModal();
+            $(this).off('hidden.bs.modal'); // Remove handler after use
+        }).modal('hide');
+    } else {
+        showNewModal();
+    }
 
-//     // Setup button click handler OUTSIDE showNewModal
-//     $('#modalButtonResponse').off('click').on('click', function() {
-//         console.log("Button clicked");
-//         if(currentModal && codeResult != 2) {
-//             $('#modalResponse').modal('hide');
-//             setTimeout(() => {
-//                 $('#' + currentModal).modal('show');
-//             }, 150); // small delay to ensure first modal is fully hidden
-//         } else {
-//             $('#modalResponse').modal('hide');
-//         }
-//     });
+    function showNewModal() {
+        // Setup modal shown event
+        $('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function () {
+            $('#modalButtonResponse').trigger('focus');
+            // $(this).off('shown.bs.modal'); // Remove handler after use
+        });
 
-//     if(currentModal) {
-//         console.log("Has current modal, setting up hide handler");
-//         $('#' + currentModal).on('hidden.bs.modal', function() {
-//             showNewModal();
-//             $(this).off('hidden.bs.modal');
-//         }).modal('hide');
-//     } else {
-//         showNewModal();
-//     }
+        // Remove any existing click handlers
+        $("#modalButtonResponse").off('click');
 
-//     function getColorClass(code) {
-//         switch(code) {
-//             case 0: return 'alert-danger';
-//             case 1: return 'alert-warning';
-//             case 2: return 'alert-success';
-//             default: return '';
-//         }
-//     }
-// }
+        // Reset and set modal color classes
+        $('#modalColourResponse')
+            .removeClass('alert-success alert-warning alert-danger')
+            .addClass(getColorClass(codeResult));
+
+        $('#modalTitleResponse').html(title);
+        $('#modalMessageResponse').html(message);
+
+        // Setup button click handler
+        $('#modalButtonResponse').off('click').on('click', function() {
+            // Ejecutar función personalizada si se proporciona
+            if(typeof onButtonClick === 'function') {
+                onButtonClick();
+            }
+            
+            $('#modalResponse').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+                if(currentModal && codeResult != 2) {
+                    $('#' + currentModal).modal('show');
+                }
+            }).modal('hide');
+        });
+
+        // Show the modal
+        $("#modalResponse").modal('show');
+    }
+
+    // Helper function to determine color class
+    function getColorClass(code) {
+        switch(code) {
+            case 0: return 'alert-danger';
+            case 1: return 'alert-warning';
+            case 2: return 'alert-success';
+            default: return '';
+        }
+    }
+}
 
 function openLoadModal(animation){
 	$('#progressBarRestoreFile').removeClass('loadProgressBar');

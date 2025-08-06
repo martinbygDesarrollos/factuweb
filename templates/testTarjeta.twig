@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransAct - Prueba de Pago</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0b5ed7;
+        }
+        .form-label {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+        }
+        .form-control:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .response-container {
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            min-height: 100px;
+        }
+        footer {
+            margin-top: 50px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader-content {
+            text-align: center;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <h5 class="mt-3">Procesando transacción...</h5>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">TransAct - Prueba de Pago con Tarjeta</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="paymentForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="empCod" class="form-label">Código de Empresa</label>
+                                        <input type="text" class="form-control" id="empCod" value="GESTC1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="termCod" class="form-label">Código de Terminal</label>
+                                        <input type="text" class="form-control" id="termCod" value="T00001" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="moneda" class="form-label">Moneda</label>
+                                <select class="form-select" id="moneda" required>
+                                    <option value="0858" selected>Pesos (UYU)</option>
+                                    <option value="0840">Dólares (USD)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="monto" class="form-label">Monto a cobrar</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="monto" min="1" step="0.01" value="100" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="facturaNro" class="form-label">Número de Factura</label>
+                                <input type="number" class="form-control" id="facturaNro" value="10001" required>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="consumidorFinal" checked>
+                                            <label class="form-check-label" for="consumidorFinal">
+                                                Consumidor Final
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">Procesar Pago</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Respuesta de la API</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="response-container" id="responseContainer">
+                            <p class="text-muted">La respuesta del procesamiento aparecerá aquí...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="text-center mt-5">
+            <p>Este formulario está diseñado para pruebas con la API TransAct v4.0.7</p>
+        </footer>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Incluir jsPDF para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Función para obtener la URL base del sitio
+        function getSiteURL(){
+            let url = window.location.href;
+            if(url.includes("localhost") || url.includes("intranet.gargano"))
+                return '/factuweb/public/';
+            else
+                return '/';
+        }
+        // Funciones de envío de datos al backend
+        function sendPost(nombreFuncion, parametros) {
+            var result = null;
+            $.ajax({
+                async: false,
+                url: getSiteURL() + nombreFuncion,
+                type: "POST",
+                data: parametros,
+                timeout: 120000, //miliseconds
+                success: function (response) {
+                    response = response.trim();
+                    var response = jQuery.parseJSON(response);
+                    result = response;
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var response = {result:0, message:errorThrown}
+                    result = response;
+                },
+            });
+
+            return result;
+        }
+        function sendAsyncPost(nombreFuncion, parametros) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    async: true,
+                    url: getSiteURL() + nombreFuncion,
+                    type: "POST",
+                    data: parametros,
+                    timeout: 120000, //miliseconds
+                    success: function (response) {
+                        response = response.trim();
+                        var response = jQuery.parseJSON(response);
+                        resolve(response);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        var response = {result:0, message:errorThrown}
+                        resolve(response);
+                    },
+                });
+            });
+        }
+        // Función para mostrar/ocultar el loader
+        function mostrarLoader(mostrar) {
+            if (mostrar) {
+                $("#loader").css("display", "flex");
+            } else {
+                $("#loader").css("display", "none");
+            }
+        }
+        // Función para mostrar mensajes
+        function showReplyMessage(result, message, title, callback) {
+            // Esta implementación solo muestra mensajes en el contenedor de respuestas
+            // En un entorno real, podrías mostrar un modal o una alerta
+            let alertClass = result == 2 ? "alert-success" : (result == 1 || result == 0 ? "alert-warning" : "alert-danger");
+            $("#responseContainer").html(`
+                <div class="alert ${alertClass}">
+                    <h5>${title}</h5>
+                    <p>${message}</p>
+                </div>
+            `);
+            
+            if (callback) callback();
+        }
+        // Función para renderizar el voucher en HTML
+        function renderizarVoucher(voucherLines) {
+            // Contenedor HTML para el voucher
+            let voucherHTML = `
+                <div class="voucher-container" style="font-family: monospace; width: 300px; border: 1px solid #ccc; padding: 10px; margin: 0 auto; background-color: white;">
+            `;
+            
+            // Procesar cada línea del voucher
+            voucherLines.forEach(line => {
+                // Quitar las etiquetas b:string
+                line = line.trim();
+                
+                // Procesar etiquetas especiales
+                if (line === "#BR#") {
+                    // Salto de página
+                    voucherHTML += `<hr style="border-top: 1px dashed #000; margin: 10px 0;">`;
+                } else if (line === "#CF#") {
+                    // Centrar texto
+                    voucherHTML += `<div style="text-align: center; height: 5px;"></div>`;
+                } else if (line === "#LOGO#") {
+                    // Logo (puedes reemplazar con tu propio logo)
+                    voucherHTML += `<div style="text-align: center; margin: 10px 0;">
+                        <img src="/img/logo.png" alt="Logo" style="max-width: 150px;">
+                    </div>`;
+                } else if (line.startsWith("/H")) {
+                    // Texto en negrita (Header)
+                    voucherHTML += `<div style="font-weight: bold; text-align: center;">${line.substring(2, line.indexOf("/N"))}</div>`;
+                } else if (line.startsWith("/I")) {
+                    // Texto en itálica
+                    voucherHTML += `<div style="font-style: italic; text-align: center;">${line.substring(2, line.indexOf("/N"))}</div>`;
+                } else if (line.trim() === "") {
+                    // Línea en blanco
+                    voucherHTML += `<div style="height: 10px;"></div>`;
+                } else {
+                    // Texto normal
+                    voucherHTML += `<div>${line}</div>`;
+                }
+            });
+            
+            voucherHTML += `</div>`;
+            return voucherHTML;
+        }
+        // Función para imprimir el voucher desde el modal
+        function imprimirVoucher() {
+            const contenido = document.querySelector('.voucher-container').outerHTML;
+            const ventanaImpresion = window.open('', '_blank');
+            ventanaImpresion.document.write(`
+                <html>
+                    <head>
+                        <title>Comprobante de Pago</title>
+                        <style>
+                            body { margin: 0; padding: 20px; }
+                            @media print {
+                                body { width: 80mm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${contenido}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                setTimeout(function() { window.close(); }, 500);
+                            }
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            ventanaImpresion.document.close();
+        }
+        // Función para generar un PDF del voucher
+        function generarPDFVoucher(voucherLines) {
+            // Verificar que jsPDF esté disponible
+            if (!window.jspdf) {
+                alert("La biblioteca jsPDF no está cargada. No se puede generar el PDF.");
+                return null;
+            }
+            
+            // Crear una instancia de jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [80, 200] // Ancho x Alto (similar a tickets térmicos)
+            });
+            
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(9);
+            
+            let y = 10; // Posición inicial Y
+            const lineHeight = 4; // Altura de línea
+            const margin = 5; // Margen
+            
+            // Procesar cada línea del voucher
+            voucherLines.forEach(line => {
+                line = line.trim();
+                
+                // Procesar etiquetas especiales
+                if (line === "#BR#") {
+                    // Salto de página
+                    y += lineHeight * 2;
+                    doc.setDrawColor(0);
+                    doc.setLineDashPattern([1, 1], 0);
+                    doc.line(margin, y - lineHeight / 2, 80 - margin, y - lineHeight / 2);
+                    y += lineHeight;
+                } else if (line === "#CF#") {
+                    // Ignorar centrado (el texto ya se centrará según necesitemos)
+                    // No hacemos nada
+                } else if (line === "#LOGO#") {
+                    // Aquí podrías incluir un logo si lo tienes como imagen
+                    y += lineHeight * 2;
+                } else if (line.startsWith("/H")) {
+                    // Texto en negrita (Header)
+                    const text = line.substring(2, line.indexOf("/N")).trim();
+                    doc.setFont('courier', 'bold');
+                    doc.text(text, 40, y, { align: 'center' });
+                    doc.setFont('courier', 'normal');
+                    y += lineHeight;
+                } else if (line.startsWith("/I")) {
+                    // Texto en itálica
+                    const text = line.substring(2, line.indexOf("/N")).trim();
+                    doc.setFont('courier', 'italic');
+                    doc.text(text, 40, y, { align: 'center' });
+                    doc.setFont('courier', 'normal');
+                    y += lineHeight;
+                } else if (line.trim() === "") {
+                    // Línea en blanco
+                    y += lineHeight;
+                } else {
+                    // Texto normal
+                    doc.text(line, margin, y);
+                    y += lineHeight;
+                }
+                
+                // Si se necesita una nueva página
+                if (y > 190) {
+                    doc.addPage();
+                    y = 10;
+                }
+            });
+            
+            return doc;
+        }
+        
+        // Manejo del envío del formulario
+        document.getElementById('paymentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Obtener los valores del formulario
+            const empCod = document.getElementById('empCod').value;
+            const termCod = document.getElementById('termCod').value;
+            const moneda = document.getElementById('moneda').value;
+            const monto = parseFloat(document.getElementById('monto').value) * 100; // Convertir a centésimas
+            const facturaNro = document.getElementById('facturaNro').value;
+            const consumidorFinal = document.getElementById('consumidorFinal').checked;
+            
+            // Crear el objeto de datos para enviar al backend
+            const data = {
+                empCod: empCod,
+                termCod: termCod,
+                monedaISO: moneda,
+                monto: monto,
+                facturaNro: parseInt(facturaNro),
+                consumidorFinal: consumidorFinal,
+                POSType: "GetNet"
+            };
+            
+            // Mostrar los datos que se enviarían
+            const responseContainer = document.getElementById('responseContainer');
+            responseContainer.innerHTML = `
+                <div class="alert alert-info">
+                    <h5>Enviando petición...</h5>
+                    <p>Datos que se enviarán al backend:</p>
+                </div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            // Mostrar el loader
+            mostrarLoader(true);
+            
+            // Enviar la petición al backend
+            sendAsyncPost("postearTransaccion", data)
+                .then(function(response) {  
+                    // Procesar primera respuesta (token)
+                    if (response.result == 2) {
+                        // Si la respuesta es exitosa, obtener el token y consultar el estado
+                        const tokenNro = response.objectResult.TokenNro;
+                        
+                        responseContainer.innerHTML += `
+                            <div class="alert alert-success mt-3">
+                                <h5>Token recibido</h5>
+                                <p>Token: ${tokenNro}</p>
+                                <p>Consultando estado de la transacción...</p>
+                            </div>
+                        `;
+                        
+                        consultarEstadoTransaccion(tokenNro);
+                    } else {
+                        // Error al obtener el token
+                        mostrarLoader(false);
+                        responseContainer.innerHTML += `
+                            <div class="alert alert-danger mt-3">
+                                <h5>Error al procesar el pago</h5>
+                                <p>${response.message || "No se pudo iniciar la transacción."}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(function(error) {
+                    mostrarLoader(false);
+                    responseContainer.innerHTML += `
+                        <div class="alert alert-danger mt-3">
+                            <h5>Error al conectar con el servidor</h5>
+                            <p>${error.message || "No se pudo conectar con el servidor para procesar el pago."}</p>
+                        </div>
+                    `;
+                    console.error("Error en la petición:", error);
+                });
+
+            // Función para consultar el estado de la transacción repetidamente
+            function consultarEstadoTransaccion(tokenNro, intentos = 0, maxIntentos = 30) {
+                // Mostrar estado de consulta
+                if (intentos === 0) {
+                    responseContainer.innerHTML += `
+                        <div id="status-consulta" class="alert alert-info mt-3">
+                            <h5>Consultando estado de la transacción</h5>
+                            <p>Esperando respuesta del POS... <span id="contador-intentos">Intento 1/${maxIntentos}</span></p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                    role="progressbar" style="width: 0%" 
+                                    aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Actualizar contador de intentos
+                    document.getElementById('contador-intentos').textContent = `Intento ${intentos + 1}/${maxIntentos}`;
+                    
+                    // Actualizar barra de progreso
+                    const porcentaje = Math.min(100, (intentos / maxIntentos) * 100);
+                    document.querySelector('.progress-bar').style.width = `${porcentaje}%`;
+                    document.querySelector('.progress-bar').setAttribute('aria-valuenow', porcentaje);
+                }
+                
+                // Realizar la consulta
+                sendAsyncPost("consultarTransaccion", { tokenNro: tokenNro })
+                    .then(function(transaccionResponse) {
+                        // Si la transacción está finalizada o hubo un error crítico
+                        if (transaccionResponse.result == 2 || transaccionResponse.result == 0) {
+                            // Ocultar loader
+                            mostrarLoader(false);
+                            
+                            // Eliminar div de estado de consulta
+                            const statusDiv = document.getElementById('status-consulta');
+                            if (statusDiv) statusDiv.remove();
+                            
+                            if (transaccionResponse.result == 2) {
+                                // Transacción exitosa
+
+                                // Añadir logs para depuración
+                                console.log("Respuesta completa:", transaccionResponse);
+                                console.log("ObjectResult:", transaccionResponse.objectResult);
+
+                                if (transaccionResponse.objectResult && transaccionResponse.objectResult.Voucher) {
+                                    console.log("Voucher:", transaccionResponse.objectResult.Voucher);
+                                    window.voucherData = transaccionResponse.objectResult.Voucher;
+                                } else {
+                                    console.log("El voucher no está disponible en la respuesta");
+                                    // Crear un array vacío para evitar errores
+                                    window.voucherData = [];
+                                }
+
+
+                                responseContainer.innerHTML += `
+                                    <div class="alert alert-success mt-3">
+                                        <h5>Transacción Completada</h5>
+                                        <p>${transaccionResponse.message || "Pago procesado correctamente."}</p>
+                                        <p><strong>ID Transacción:</strong> ${transaccionResponse.objectResult.TransaccionId || "N/A"}</p>
+                                        <p><strong>Ticket:</strong> ${transaccionResponse.objectResult.Ticket || "N/A"}</p>
+                                        <p><strong>Autorización:</strong> ${transaccionResponse.objectResult.NroAutorizacion || "N/A"}</p>
+                                        
+                                        <div class="d-flex gap-2 mt-3">
+                                            <button class="btn btn-primary" onclick="mostrarVoucher()">
+                                                <i class="bi bi-receipt"></i> Ver Comprobante
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="imprimirVoucherDirecto()">
+                                                <i class="bi bi-printer"></i> Imprimir
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="descargarPDF()">
+                                                <i class="bi bi-file-pdf"></i> Descargar PDF
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Guardar el voucher en una variable global para usarlo después
+                                window.voucherData = transaccionResponse.objectResult.Voucher;
+                                
+                                // Definir las funciones para los botones
+                                window.mostrarVoucher = function() {
+                                    if (!window.voucherData || !Array.isArray(window.voucherData) || window.voucherData.length === 0) {
+                                        alert("No hay datos de voucher disponibles");
+                                        return;
+                                    }
+                                    
+                                    const voucherHTML = renderizarVoucher(window.voucherData);
+                                    const modalHtml = `
+                                        <div class="modal fade" id="voucherModal" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Comprobante de Pago</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body text-center">
+                                                        ${voucherHTML}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                                        <button type="button" class="btn btn-primary" onclick="imprimirVoucher()">Imprimir</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    // Eliminar modal previo si existe
+                                    const prevModal = document.getElementById('voucherModal');
+                                    if (prevModal) prevModal.remove();
+                                    
+                                    // Agregar el modal al cuerpo del documento y mostrarlo
+                                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                                    const modal = new bootstrap.Modal(document.getElementById('voucherModal'));
+                                    modal.show();
+                                };
+                                
+                                window.imprimirVoucherDirecto = function() {
+                                    const voucherHTML = renderizarVoucher(window.voucherData);
+                                    const ventanaImpresion = window.open('', '_blank');
+                                    ventanaImpresion.document.write(`
+                                        <html>
+                                            <head>
+                                                <title>Comprobante de Pago</title>
+                                                <style>
+                                                    body { margin: 0; padding: 20px; font-family: monospace; }
+                                                    @media print {
+                                                        body { width: 80mm; }
+                                                    }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                ${voucherHTML}
+                                                <script>
+                                                    window.onload = function() {
+                                                        window.print();
+                                                        setTimeout(function() { window.close(); }, 500);
+                                                    }
+                                                <\/script>
+                                            </body>
+                                        </html>
+                                    `);
+                                    ventanaImpresion.document.close();
+                                };
+                                
+                                window.descargarPDF = function() {
+                                    const doc = generarPDFVoucher(window.voucherData);
+                                    doc.save('comprobante-pago.pdf');
+                                };
+                            } else {
+                                // Error en la transacción
+                                responseContainer.innerHTML += `
+                                    <div class="alert alert-danger mt-3">
+                                        <h5>Error en la Transacción</h5>
+                                        <p>${transaccionResponse.message || "No se pudo procesar el pago."}</p>
+                                    </div>
+                                `;
+                            }
+                        } 
+                        // Si la transacción está pendiente (result == 1) o en otro estado intermedio
+                        else if (intentos < maxIntentos) {
+                            // Esperar y consultar nuevamente
+                            setTimeout(() => {
+                                consultarEstadoTransaccion(tokenNro, intentos + 1, maxIntentos);
+                            }, 2000); // Consultar cada 2 segundos
+                        } 
+                        // Si se alcanzó el límite de intentos
+                        else {
+                            // Ocultar loader
+                            mostrarLoader(false);
+                            
+                            // Eliminar div de estado de consulta
+                            const statusDiv = document.getElementById('status-consulta');
+                            if (statusDiv) statusDiv.remove();
+                            
+                            // Mostrar mensaje de tiempo excedido
+                            responseContainer.innerHTML += `
+                                <div class="alert alert-warning mt-3">
+                                    <h5>Tiempo de espera excedido</h5>
+                                    <p>La transacción podría seguir procesándose. Verifique el estado más tarde.</p>
+                                    <button class="btn btn-primary mt-2" onclick="consultarEstadoTransaccion('${tokenNro}', 0, ${maxIntentos})">
+                                        Intentar consultar nuevamente
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(function(error) {
+                        // Si hay un error en la consulta pero no es crítico para el proceso
+                        if (intentos < maxIntentos) {
+                            // Log del error pero continúa intentando
+                            console.error("Error en intento " + (intentos + 1) + ": ", error);
+                            setTimeout(() => {
+                                consultarEstadoTransaccion(tokenNro, intentos + 1, maxIntentos);
+                            }, 2000);
+                        } else {
+                            // Ocultar loader
+                            mostrarLoader(false);
+                            
+                            // Eliminar div de estado de consulta
+                            const statusDiv = document.getElementById('status-consulta');
+                            if (statusDiv) statusDiv.remove();
+                            
+                            // Mostrar error después de agotar intentos
+                            responseContainer.innerHTML += `
+                                <div class="alert alert-danger mt-3">
+                                    <h5>Error al consultar la transacción</h5>
+                                    <p>${error.message || "Ocurrió un error inesperado."}</p>
+                                    <button class="btn btn-primary mt-2" onclick="consultarEstadoTransaccion('${tokenNro}', 0, ${maxIntentos})">
+                                        Intentar consultar nuevamente
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

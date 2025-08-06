@@ -1,7 +1,5 @@
 
-$('#modalSetClient').off('shown.bs.modal').on('shown.bs.modal', function(){
-	$('#inputTextToSearchClient').focus();
-})
+
 
 $('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function(){
 	$('#modalResponse button').focus();
@@ -100,18 +98,55 @@ function createClient(documentClient, nameClient, address, city, department, ema
 	});
 }
 
+function setClientValues(modal, name, document, address, city, department, email, phone){
+	if (modal == 'modalSetClientByButton') {
+		$('#inputDocumentClient_SetClientByButton').val(document)
+		$('#inputNameClient_SetClientByButton').val(name)
+		$('#inputAddressClient_SetClientByButton').val(address)
+		$('#inputCityClient_SetClientByButton').val(city)
+		$('#inputDepartmentClient_SetClientByButton').val(department)
+		$('#inputEmailClient_SetClientByButton').val(email)
+		$('#inputPhoneClient_SetClientByButton').val(phone)
+	} else if (modal == "modalSetClient") {
+		$('#inputDocumentClient').val(document)
+		$('#inputNameClient').val(name)
+		$('#inputAddressClient').val(address)
+		$('#inputCityClient').val(city)
+		$('#inputDepartmentClient').val(department)
+		$('#inputEmailClient').val(email)
+		$('#inputPhoneClient').val(phone)
+	}
+}
+
+// function setClientValues(name, documentC, address, city, department, email, phone){
+// 	$('#inputNameClient').val(name);
+// 	$('#inputDocumentClient').val(documentC);
+// 	$('#inputAddressClient').val(address);
+// 	$('#inputCityClient').val(city);
+// 	$('#inputDepartmentClient').val(department);
+// 	$('#inputEmailClient').val(email);
+// 	$('#inputPhoneClient').val(phone);
+// }
+
+// function cancelClientSelected(){
+// 	clientSelected = [];
+// 	$('#inputTextToSearchClient').val("");
+// 	$('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");
+// 	setClientValues(null, null, null, null, null, null, null);
+// 	$('#selectTypeVoucher').val(101).change();
+// 	$('#buttonCancelClient').css('display', 'none');
+// }
+
 //esta función busca cliente desde la vista de ventas
-function searchClient(inputToSearch, e){ //cuando se ingresan numeros el el buscador de cliente por rut se llama a esta función para buscar los datos
+function searchClient(inputToSearch, e, dataList, modal){ //cuando se ingresan numeros el el buscador de cliente por rut se llama a esta función para buscar los datos
 	console.log("searchClient")
 	e.preventDefault();
 	if ( inputToSearch.value.length > 2 ){
-		//$('#listClient').empty();
 		const response = sendPost("searchClientsToSale",{textToSearch: inputToSearch.value });
 		if ( response ){
 			console.log(response);
-			//setClientValues(null, null, null, null, null, null);
 			if(response.result == 2){
-				$('#listClient').empty();
+				$('#' + dataList).empty();
 				if(response.listResult.length > 0){
 					for (var i = 0; i < response.listResult.length; i++) {
 						//console.log(response.listResult[i].document);
@@ -122,133 +157,67 @@ function searchClient(inputToSearch, e){ //cuando se ingresan numeros el el busc
 							option.label = response.listResult[i].name;
 							option.value = response.listResult[i].document;
 							option.id = "documentClient_"+response.listResult[i].document;
-							$('#listClient').append(option);
+							$('#' + dataList).append(option);
 						}
 
 					}
+				} else {
+					cleanFields(modal)
 				}
-				else setClientValues(null, null, null, null, null, null, null);
 			}
 		}
 	}else{
 		console.log("limpiar tabla");
-		$('#listClient').empty();
-		setClientValues(null, null, null, null, null, null, null);
+		$('#' + dataList).empty();
 	}
 }
 
-function setClientValues(name, documentC, address, city, department, email, phone){
-	$('#inputNameClient').val(name);
-	$('#inputDocumentClient').val(documentC);
-	$('#inputAddressClient').val(address);
-	$('#inputCityClient').val(city);
-	$('#inputDepartmentClient').val(department);
-	$('#inputEmailClient').val(email);
-	$('#inputPhoneClient').val(phone);
-}
-
-function cancelClientSelected(){
-	clientSelected = [];
-	$('#inputTextToSearchClient').val("");
-	$('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");
-	setClientValues(null, null, null, null, null, null, null);
-	$('#selectTypeVoucher').val(101).change();
-	$('#buttonCancelClient').css('display', 'none');
-}
-
-function keyPressAddClient(keyPress, value, size){
-	////console.log("keyPressAddClient");
-	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
-		if(keyPress.srcElement.id == "inputTextToSearchClient")
-			$('#inputNameClient').focus();
-		if(keyPress.srcElement.id == "inputNameClient")
-			$('#inputDocumentClient').focus();
-		else if(keyPress.srcElement.id =="inputDocumentClient")
-			$('#inputPhoneClient').focus();
-		else if(keyPress.srcElement.id =="inputPhoneClient")
-			$('#inputEmailClient').focus();
-		else if(keyPress.srcElement.id =="inputEmailClient")
-			$('#inputAddressClient').focus();
-		else if(keyPress.srcElement.id == "inputAddressClient")
-			$('#inputCityClient').focus();
-		else if(keyPress.srcElement.id == "inputCityClient")
-			$('#inputDepartmentClient').focus();
-		else if(keyPress.srcElement.id == "inputDepartmentClient")
-			$('#btnConfirmSetClient').click();
-	}
-	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
-		if(keyPress.srcElement.id == "inputDepartmentClient")
-			$('#inputCityClient').focus();
-		else if(keyPress.srcElement.id == "inputCityClient")
-			$('#inputAddressClient').focus();
-		else if(keyPress.srcElement.id == "inputAddressClient")
-			$('#inputEmailClient').focus();
-		else if(keyPress.srcElement.id =="inputEmailClient")
-			$('#inputPhoneClient').focus();
-		else if(keyPress.srcElement.id =="inputPhoneClient")
-			$('#inputDocumentClient').focus();
-		else if(keyPress.srcElement.id =="inputDocumentClient")
-			$('#inputNameClient').focus();
-		else if(keyPress.srcElement.id == "inputNameClient")
-			$('#inputTextToSearchClient').focus();
-	}
-	else if(value != null && value.length == size) {
-		return false;
-	}
-}
-
-function searchCompleteData(value, e){
-	console.log("buscando... para completar todos los datos");
+function searchCompleteData(value, e, dataList, modal){
+	console.log("searchCompleteData | buscando... para completar todos los datos");
 	console.log("dato ingresado "+value);
 	e.preventDefault();
-	setClientValues(null, null, null, null, null, null, null);
-	//console.log("largo rut "+value.length);
-
+	cleanFields(modal);
 	let onlyNumber = /^\d+$/.test(value)
 	if (onlyNumber){
-
-
 		if ( value.length == 11 || value.length == 12 ){
-			//chequear rut valido
 			let validRut = validateRut(value);
 			console.log(validRut);
 			if ( validRut ){
-				$('#listClient').empty();
-				//e.preventDefault();
+				$('#' + dataList).empty();
 				sendAsyncPost("searchClientToSale", {documentClient: value})
 				.then((response)=>{
 					console.log(response);
 
 					if ( response.result == 2 ){
 						let client = response.objectResult;
-						setClientValues(client.nombreReceptor, client.docReceptor, client.direccion, client.localidad, client.departamento, client.correo, client.celular);
-						$("#inputDepartmentClient").focus();
+						setClientValues(modal, client.nombreReceptor, client.docReceptor, client.direccion, client.localidad, client.departamento, client.correo, client.celular);
+						$('#' + modal).find('input[id^="inputDepartment"]').trigger('focus')
 					}
 				})
 				.catch((error)=>{
 					console.log("catch :"+error);
 				})
-			}else showReplyMessage(1, "El rut ingresado no es válido.", "Buscar cliente", "modalSetClient");
+			}else showReplyMessage(1, "El rut ingresado no es válido.", "Buscar cliente", modal);
 		}else if (value.length == 8){
 			let validCi = validateCI(value);
 			console.log(validCi);
 			if ( validCi ){
-				$('#listClient').empty();
+				$('#' + dataList).empty();
 				sendAsyncPost("searchClientToSale", {documentClient: value})
 				.then((response)=>{
 					console.log(response);
 					if ( response.objectResult.docReceptor == value ){
 						let client = response.objectResult;
-						setClientValues(client.nombreReceptor, client.docReceptor, client.direccion, client.localidad, client.departamento, client.correo, client.celular);
-						$("#inputDepartmentClient").focus();
+						setClientValues(modal, client.nombreReceptor, client.docReceptor, client.direccion, client.localidad, client.departamento, client.correo, client.celular);
+						$('#' + modal).find('input[id^="inputDepartment"]').trigger('focus')
 					}else console.log("no se ha encontrado resultado");
 				})
 				.catch((error)=>{
 					console.log("catch :"+error);
 				})
-			}else showReplyMessage(1, "La cédula ingresada no es válida.", "Buscar cliente", "modalSetClient");
+			}else showReplyMessage(1, "La cédula ingresada no es válida.", "Buscar cliente", modal);
 		}else if (value.length <= 0){
-			$('#listClient').empty();
+			$('#' + dataList).empty();
 		}
 
 	}

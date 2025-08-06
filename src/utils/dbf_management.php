@@ -266,6 +266,7 @@ class dbf_management{
                         $product->codigoBarra = $codebar;
                         $product->detalle = isset($cleanRow['OBS']) ? mb_convert_encoding(trim($cleanRow['OBS']), 'UTF-8', 'CP850') : '';
                         $product->moneda = "UYU";
+                        $product->unidadVenta = "Unidad";
                         $product->descuento = 0.00;
                         
                         // CALCULO EL IMPORTE

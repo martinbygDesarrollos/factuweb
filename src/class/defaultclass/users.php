@@ -67,6 +67,23 @@ class users{
 		$usersInstance->setNewTokenAndSession($responseQuery->id);
 		return $responseQuery;
 	}
+	
+	//NEW
+	public function getAllUsersfromCompany($idBusiness){
+		$dbClass = new DataBase();
+		$responseQuery = $dbClass->sendQuery("SELECT * FROM usuarios WHERE idEmpresa = ?", array('i', $idBusiness), "LIST");
+		$arrayResult = array();
+		if($responseQuery->result == 2){
+			foreach ($responseQuery->listResult as $key => $row) {
+				$arrayResult[] = ["id" => $row['idUsuario'], "nombre" => $row['correo'], "caja" => $row['caja'] ];
+			}
+		}
+		if($responseQuery->result == 1)
+			$responseQuery->message = "Ningun usuario para esta empresa";
+
+		$responseQuery->listResult = $arrayResult;
+		return $responseQuery;
+	}
 
 	public function updatedVouchers($idUser, $value){
 		return DataBase::sendQuery("UPDATE usuarios SET datosActualizados = ? WHERE idUsuario = ?", array('ii', $value, $idUser), "BOOLE");
@@ -394,10 +411,15 @@ class users{
 		$responsePermissionPointOfSale = $usersInstance->getPermission("POINTOFSALE", $idBusiness);
     	if($responsePermissionPointOfSale->result == 1)
     		$usersInstance->insertPermission($idBusiness, "POINTOFSALE", "NO");
+
+		$responsePermissionPointOfSale = $usersInstance->getPermission("CAJA", $idBusiness);
+    	if($responsePermissionPointOfSale->result == 1)
+    		$usersInstance->insertPermission($idBusiness, "CAJA", "NO");
     }
 
     public function setNewTokenAndSession($idUser){
 		$usersInstance = new users();
+		$cajaClass = new caja();
 		$dbClass = new DataBase();
 		$handleDateTimeClass = new handleDateTime();
     	$newToken = bin2hex(random_bytes((100 - (100 % 2)) / 2));
@@ -416,6 +438,21 @@ class users{
     			$objectSession->empresa = $responseQuery->objectResult->nombre;
     			$objectSession->idEmpresa = $responseQuery->objectResult->idEmpresa;
     			$objectSession->tokenRest = $responseQuery->objectResult->tokenRest;
+    			$objectSession->cart = [];
+    			$objectSession->caja = null;
+				if(!isset($responseQuery->objectResult->caja)){
+					$responseCaja = $cajaClass->insertCaja($responseQuery->objectResult->idEmpresa, "UYU", $idUser, "SIN NOMBRE");
+					if($responseCaja->result == 2){
+						$responseNewCaja = $dbClass->sendQuery('UPDATE usuarios SET caja = ? WHERE idUsuario = ?', array('ii', $responseCaja->id, $idUser), "BOOLE");
+						if($responseNewCaja->result != 2){
+							$responseQuery->message = "Un error interno no permitio iniciar sesión con este usuario.";
+							return $responseQuery;
+						}
+						$objectSession->caja = $responseNewCaja->id;
+					}
+				} else {
+					$objectSession->caja = $responseQuery->objectResult->caja;
+				}
 				
     			$responsePermission = $usersInstance->getPermissionsBusiness($responseQuery->objectResult->idEmpresa);
     			if($responsePermission->result == 2){

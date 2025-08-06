@@ -1,17 +1,41 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 			VARIABLES Y FUNCIONES SIN NOMBRE
 
+// const { act } = require("react");
+
+// NEW NEW NEW
+var cliente = null; // EN CUALQUIER PUNTO DE LA VENTA SI SE INGRESA CLIENTE SE LLENA ESTA VARIABLE
+var configDesc = null;
+var configSuperFastSale = null;
+var configSkipSelectClient = null;
+var productsInCart = []; // array de productos en el carro, cada item tiene todos los datos que tiene el producto en la base
+var configIncludeIva = null;
+var configDiscountInPercentage = null;
+var cotizacionDolar = null;
+var configrAllowProductsNotEntered = null;
+var IndFactDefault = null; // AL ABRIR EL MODAL DE ADD PRODUCT USA EL IVA POR DEFECTO
+var caja = [];
+var CFE_reservado = null; // SI LA CAJA TIENE POS AL MOMENTO DE VENDER CON POS RESERVO CFE
+
+// Variable global para mantener el estado de ver los campos desglozados de importes
+var detailsPricesVisible = false;
+
+
+var idProductSelected = null;
+
+// var moneda = "UYU";
+// -----------
+
 var quote = 1; // Cotizacion
 var USD = 1; // Valor del dolar
 var todayQuote = false; // Si se consulto hoy
-var idProductSelected = 0; 
+// var idProductSelected = 0; 
 // var arrayDetails=[]; //en este array se guardan todos los productos que se agregan al carro, los items de este array son productos y tienen todos los datos que tiene el producto en la base
-var productsInCart=[]; // array de productos en el carro, cada item tiene todos los datos que tiene el producto en la base
 var totalToShow = 0;
-var indexDetail = 0;
+// var indexDetail = 0;
 
-var includeIva = null; // Configuracion traida desde la BD
-var discountPercentage = null; // Configuracion traida desde la BD
+// var includeIva = null; // Configuracion traida desde la BD
+// var discountPercentage = null; // Configuracion traida desde la BD
 
 var btnAddDetailClickNumber = 0;
 
@@ -22,1005 +46,1125 @@ const MIN_EXECUTION_INTERVAL = 1500;
 var config_value = null;
 var headingval = null;
 
-$('#inputTaxProduct').change(function(){
-	calculateInverseByCost();
-})
+// UPDATED --------------------------------------------------------------------
 
-$('#inputCountProduct').change(function(){
-	calculateInverseByCost();
-})
+async function getAllConfigurations(){
+    console.log("getAllConfigurations");
+    
+    let responseDesc = await sendAsyncPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+    if(responseDesc.result == 2){
+        if(responseDesc.configValue == "SI"){
+            configDesc = true;
+            $('#headerTdDesc').text("Descuento(%)")
+        }
+        else{
+            configDesc = false;
+            $('#headerTdDesc').text("Descuento($)")
+            
+        }
+    }
+    
+    let responseSuperFastSale = await sendAsyncPost("getConfiguration", {nameConfiguration: "SUPERFAST_SALE"});
+    if(responseSuperFastSale.result == 2){
+        if(responseSuperFastSale.configValue == "SI"){
+            configSuperFastSale = true;
+            $('#fastSaleConfirm').removeClass("d-none")
+        } else {
+            configSuperFastSale = false;
+            $('#fastSaleConfirm').addClass("d-none")
+        }
+    }
+    
+    let responseShowClient = await sendAsyncPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
+    if(responseShowClient.result == 2){
+        if(responseShowClient.configValue == "SI"){
+            configSkipSelectClient = true;
+        } else {
+            configSkipSelectClient = false;
+        }
+    }
 
-$('#inputPriceProduct').change(function(){
-	calculateInverseByCost();
-})
+    let responseIncludeIva = await sendAsyncPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
+    if(responseIncludeIva.result == 2){
+        if(responseIncludeIva.configValue == "SI"){
+            configIncludeIva = true;
+        } else {
+            configIncludeIva = false;
+        }
+    }
 
-$('#inputDiscountProduct').change(function(){
-	calculateInverseByCost();
-});
+    let responseDiscountPercentage = await sendAsyncPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+    if(responseDiscountPercentage.result == 2){
+        if(responseDiscountPercentage.configValue == "SI"){
+            configDiscountInPercentage = true;
+        } else {
+            configDiscountInPercentage = false;
+        }
+    }
+    let responseAllowProductsNotEntered = await sendAsyncPost("getConfiguration", {nameConfiguration: "PERMITIR_PRODUCTOS_NO_INGRESADOS"});
+    if(responseAllowProductsNotEntered.result == 2){
+        if(responseAllowProductsNotEntered.configValue == "SI"){
+            configrAllowProductsNotEntered = true;
+        } else {
+            configrAllowProductsNotEntered = false;
+        }
+    }
+	
+    let responseIndFactDefault = await sendAsyncPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"});
+    if(responseIndFactDefault.result == 2){
+		IndFactDefault = responseIndFactDefault.configValue;
+    }
 
-// $('#selectTypeVoucher').on('focus', function() {
-// 	$(this).addClass('focus-animation');
-// });
-
-// $('#selectTypeVoucher').on('blur', function() {
-// 	$(this).removeClass('focus-animation');
-// });
-
-$('#modalAddProduct').off('shown.bs.modal').on('shown.bs.modal', function () {
-	if(!includeIva){
-		let response = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
-		if(response.result == 2)
-			includeIva = response.configValue;
+    let responseCaja = await sendAsyncPost("getUserCaja", {});
+	// console.log(responseCaja)
+    if(responseCaja.result == 2){
+		caja = responseCaja.caja;
+    } else {
+		caja = [];
 	}
-	if(!discountPercentage){
-		let response = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-		if(response.result == 2)
-			discountPercentage = response.configValue;
+}
+
+function configCaja(){
+	let simbolo = caja.moneda === "UYU" ? "$" : "U$D";
+	let texto = `Precio(${simbolo})`;
+	if (configIncludeIva) {
+		texto += " IVA Inc.";
 	}
-	if(includeIva && includeIva == "SI")
-		$('#titleModalCreateModifyService').text("Agregar artículo (IVA incluido)");
-	else if (includeIva == "NO" || includeIva == null)
-		$('#titleModalCreateModifyService').text("Agregar artículo");
+	$('#headerTdPrice').text(texto);
+	$('#sectionCaja').find('h5').html(`Caja [${caja.nombre}]. Moneda [${caja.moneda}]`)
+}
 
-	$('#inputDescriptionProduct').focus();
-});
+async function getCotizacionDolar() {
+	console.log("getCotizacionDolar");
+	let response = await sendAsyncPost("getQuote", {typeCoin: "USD", dateQuote: 1});
+	cotizacionDolar = parseFloat(response.currentQuote).toFixed(2);
+}
 
-// $('#modalListPrice').on('shown.bs.modal', function () {
-// 	console.log("Modal abierto LIST PRICES")
-// 	$('#inputTextToSearchPrice').focus();
-// });
+function continueSale(){
+	console.log("continueSale")
+	if (productsInCart.length == 0) {
+		showReplyMessage(1, "Ningún producto ingresado", "Producto requerido", null);
+		return;
+	}
+	if(configSkipSelectClient){ // Si hay que saltearlo paso a seleccionar tipo de voucher [Select TypeVoucher]
+		console.log("ABRIR: modalSetTypeVoucher")
+		$('#modalSetTypeVoucher').modal('show')
+	} else {
+		if(!cliente){ // Si no tiene cliente, hay que seleccionarlo [Selecccionar Cliente]
+			$('#modalSetClient').modal('show')
+		} else { // Si ya tiene cliente, paso a seleccionar tipo de voucher [Select TypeVoucher]
+			console.log("ABRIR: modalSetTypeVoucher")
+			$('#modalSetTypeVoucher').modal('show')
+		}
+	}
+}
 
-$('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-	// console.log("modalSetClient.onHidden")
-    // Check if the modalConfirm modal is open
-    // if ($('#modalConfirm').hasClass('show')) {
-	// 	console.log("Modal setClient cerrado pero Confirm esta abierto")
-	// 	// console.log("Modal setClient Cerrado")
-	// 	// $('#modalConfirmButtonSI').focus();
-	// } else {
-		// console.log("Modal setClient cerrado")
-		setNextStep('selectTypeVoucher')
-		// $('#selectTypeVoucher').focus();
-	// }
-});
+function cleanFields(modal) {
+	$('#' + modal).find('input').each(function () {
+		if ($(this).is('[type="checkbox"], [type="radio"]')) {
+			$(this).prop('checked', false);
+		} else {
+			$(this).val('');
+		}
+	});
+	$('#' + modal).find('textarea').val('');
+	$('#' + modal).find('select').each(function () {
+		$(this).prop('selectedIndex', 0).trigger('change');
+	});
+}
 
-// $('#modalSetPayments').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-// 	console.log("Modal setPayments cerrado")
-// 	$('#selectTypeVoucher').focus();
-// });
+function setConsumidorFinalByButton(){ // DESDE EL MODAL DE SELECCIONAR CLIENTE [modalSetClientByButton]
+	cliente = null;
+	$('#buttonSetClient').find('span').html("Consumidor final");
+}
 
-// function keyPressAddPaymentMethod(keyPress, value){
-// 	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
-// 		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
-// 			$('#modalInsertNewPaymentMethodButtonConfirm').on('click', function(){
-// 		})
-// 	}
-// 	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
-// 		if(keyPress.srcElement.id == "modalInsertNewPaymentMethodAmount")
-// 			$('#modalInsertNewPaymentMethodOptions').trigger('focus');
-// 	}
-// 	// if(value == null || value.length == 0) {
-// 	// 	return false;
-// 	// }
+function setConsumidorFinal(){ // DESDE EL MODAL DE SELECCIONAR CLIENTE PERO DEL BOTON DE CONTINUAR VENTA [modalSetClient]
+	cliente = null;
+	$('#buttonSetClient').find('span').html("Consumidor final");
+	console.log("ABRIR: modalSetTypeVoucher")
+	$('#modalSetTypeVoucher').modal('show')
+}
+
+function setClient(modal) { // Setea el cliente (y lo guarda) y dependiendo del modal no hace nada o abre el selector de voucher
+    console.log("setClient");
+    
+    // Inicializar variables
+    let document = null;
+    let name = null;
+    let address = null;
+    let city = null;
+    let department = null;
+    let email = null;
+    let phone = null;
+
+    // Obtener datos según el modal
+    if (modal == "modalSetClientByButton") {
+        document = $('#inputDocumentClient_SetClientByButton').val().trim();
+        name = $('#inputNameClient_SetClientByButton').val().trim();
+        address = $('#inputAddressClient_SetClientByButton').val().trim();
+        city = $('#inputCityClient_SetClientByButton').val().trim();
+        department = $('#inputDepartmentClient_SetClientByButton').val().trim();
+        email = $('#inputEmailClient_SetClientByButton').val().trim();
+        phone = $('#inputPhoneClient_SetClientByButton').val().trim();
+    } else if (modal == "modalSetClient") {
+        document = $('#inputDocumentClient').val().trim();
+        name = $('#inputNameClient').val().trim();
+        address = $('#inputAddressClient').val().trim();
+        city = $('#inputCityClient').val().trim();
+        department = $('#inputDepartmentClient').val().trim();
+        email = $('#inputEmailClient').val().trim();
+        phone = $('#inputPhoneClient').val().trim();
+    }
+    
+    // Validar cliente (esto ya no es async, por lo que no necesita await)
+    const result = validarCliente(document, name, address, city, department, email, phone);
+    
+    // Manejar resultado de validación
+    if (typeof result === 'string') {
+        // Es un mensaje de error
+        console.log(result);
+        showReplyMessage(1, result, "Error", modal);
+        return;
+    }
+    console.log('CARGANDO...')
+	$('#' + modal).modal('hide') 
+	mostrarLoader(true)
+    // Si la validación fue exitosa, enviar los datos al servidor
+	sendAsyncPost("createModifyClient", {documentReceiver: document, nameReceiver: name, numberMobile: phone, addressReceiver: address, locality: city, department: department, email: email})
+		.then(( response )=>{
+			console.log(response);
+    		console.log('...FIN')
+			console.log("Cliente guardado");
+			mostrarLoader(false)
+			// Crear objeto cliente
+			cliente = {
+				document: document,
+				name: name,
+				address: address,
+				city: city,
+				department: department,
+				email: email,
+				phone: phone
+			};
+
+			if(modal == "modalSetClientByButton"){// SI es por boton simplemente cierro el modal
+				$('#buttonSetClient').find('span').html(name);
+			} else { // Si es por continuar la compra abro el otro modal
+				$('#buttonSetClient').find('span').html(name);
+				console.log("ABRIR: modalSetTypeVoucher")
+				$('#modalSetTypeVoucher').modal('show')
+			}
+		})
+		.catch(()=>{
+			mostrarLoader(false)
+			console.log('...FIN')
+       		console.log("Error al guardar el cliente");
+		})
+}
+
+function onChangeTypeVoucher(selectTypeVoucher){ 
+	console.log("onChangeTypeVoucher");
+	if(selectTypeVoucher.value == "101_credito" || selectTypeVoucher.value == "111_credito"){ // CREDITOS
+		$('#containerInfoCredito').removeClass("d-none");
+		let futureDate = new Date();
+		futureDate.setDate(futureDate.getDate() + 30);
+		document.getElementById("inputDateExpirationVoucher").valueAsDate = futureDate;
+	} else {
+		$('#containerInfoCredito').removeClass("d-none").addClass("d-none");
+	}
+}
+
+function verifyClient(){
+	if(cliente){ // Si hay cliente verifico si es empresa o persona
+		if (!validateRut(cliente.document))
+			return "persona";
+		else
+			return "empresa";
+    } else {
+		return "persona";
+	}
+}
+
+function validarCliente(document, name, address, city, department, email, phone) {
+    console.log("validarCliente");
+    if (!department || !city || !address || !name) {
+        return "Campos obligatorios incompletos";
+    }
+    if (!validateRut(document) && !validateCI(document)) {
+        return "Documento inválido";
+    }
+    return true;
+}
+
+function switchExpirationDate(element){
+	console.log("switchExpirationDate")
+	const expirationDateInput = document.getElementById("inputDateExpirationVoucher");
+	if (element.checked) {
+		expirationDateInput.disabled = true;
+    } else {
+		expirationDateInput.disabled = false;
+    }
+}
+
+function confirmTypeVoucher(modal){
+	console.log("confirmTypeVoucher")
+	if($('#selectTypeVoucher').val() == "101_credito" || $('#selectTypeVoucher').val() == "111_credito"){// VENTA A CREDITO GENERAR CFE
+		console.log('VENTA A CREDITO')
+	} else { // VENTA CONTADO ABRIR MODAL METODOS DE PAGO
+		resetPayments()
+		$('#modalSetTypeVoucher').modal('hide')
+		console.log("ABRIR: modalSetPayments")
+		insertRemainingAmount('inputRemainingAmount')
+		$('#modalSetPayments').modal('show')
+	}
+}
+
+function resetPayments(){ // Esta funcion resetea todos los medios de pago (Si existen... Limpia el modal por completo)
+	console.log("resetPayments")
+	$('#containerPayments .row').not('.payments-header').remove();
+}
+
+function insertNewPayment(){ // ABRE EL MODAL PARA SELECCIONAR EL MEDIO DE PAGO
+	console.log("insertNewPayment")
+	insertRemainingAmount('modalInsertNewPaymentMethodAmount')
+	$('#modalSetPayments').modal('hide')
+	$('#modalInsertNewPaymentMethod').modal('show')
+}
+
+function cancelInsertPaymentMethod(action = null, token = null){ // CANCELA LA INSERCION DE UN NUEVO MEDIO DE PAGO (CIERRA EL MODAL Y ABRE EL ANTERIOR) (STATUS ME INTERESA SOLO SI VIENE DE CANCELAR UNA TRANSACCION CON POS)
+	console.log("cancelInsertPaymentMethod - " + action + " - " + token) // cierro todos porque puede venir de varios lugares
+	$('#modalInsertNewPaymentMethod').modal('hide') // cierro todos porque puede venir de varios lugares
+	$('#modalConfigMethodPayment').modal('hide') // cierro todos porque puede venir de varios lugares
+	// $('#modalPOSPayment').modal('hide') // Este modal veo cuando lo cierro
+	if($('#statusText').text().includes("CANCELADA") || $('#statusText').text().includes("EXPIRADA")){
+		$('#modalPOSPayment').modal('hide')
+		$('#modalSetPayments').modal('show')
+		return;
+	}
+	if(action){ // SI tiene valor es porque un pago ya se realizo con tarjeta pero quiero cancelarlo
+		console.log(action)
+		//("Transaccion POS: Si viene 'CANCEL' deberia cancelar la transaccion (necesito el token), si viene 'ERROR' YA esta cancelada, si viene 'REV' debo hacer una devolucion porque ya se completo la transaccion")
+		if(action == "CANCEL"){
+			if(token){
+				console.log(token)
+				// Enviar la petición al backend
+				$('#CancelPOSPaymentLoader').removeClass('d-none')
+				$('#btnCancelPOSPayment').prop('disabled', true)
+				sendAsyncPost("cancelarTransaccion", {tokenNro: token})
+				.then(function(response) {
+						$('#CancelPOSPaymentLoader').addClass('d-none')
+						// $('#btnCancelPOSPayment').prop('disabled', false)
+						console.log(response)
+						// QUE HACER?
+					})
+					.catch(function(error) {
+						$('#CancelPOSPaymentLoader').addClass('d-none')
+						// QUE HACER?
+						console.log(error)
+						console.log("ERROR EN LA PETICION")
+					});
+			}
+		} else if(action == "ERROR"){
+			$('#modalPOSPayment').modal('hide')
+			$('#modalSetPayments').modal('show')
+		}
+	} else {
+		$('#modalSetPayments').modal('show')
+	}
+}
+
+function cancelTypeVoucher(){
+	$('#modalSetTypeVoucher').modal('hide')
+}
+
+function insertRemainingAmount(campo){ // INSERTA LA CANTIDAD QUE FALTA PARA COMPLETAR LA VENTA EN EL CAMPO DADO
+	console.log("insertRemainingAmount")
+	total = $('#inputPriceSale').val() || 0
+	total = parseFloat(total.replace(/[$,]/g, ''))
+	totalPayments = 0
+	// Get all input values within containerPayments and sum them
+    $('#containerPayments input[type="number"]').each(function() {
+        let value = parseFloat($(this).val()) || 0;
+    
+		// Sumar al total
+		totalPayments += value;
+		// Corregir el formato del campo (agregar .00 si no tiene decimales)
+	    $(this).val(value.toFixed(2));
+    });
+	console.log("PRECIO VENTA:" + total)
+	console.log("SUMA DE TODOS LOS METODOS DE PAGO: " + totalPayments)
+	if(campo)
+		$('#' + campo).val(parseFloat(total - parseFloat(totalPayments).toFixed(2)).toFixed(2))
+	$('#inputRemainingAmount').trigger('change')
+}
+
+function isValid(element){
+	console.log("isValid - " + element.value)
+	if(parseFloat(element.value) === 0.00){
+		$(element).removeClass('bg-danger bg-success').addClass('bg-success')
+	} else {
+		$(element).removeClass('bg-danger bg-success').addClass('bg-danger')
+	}
+}
+
+async function insertPaymentMethod(method, amount, skipMethod){ //INSERTA UNA NUEVA FILA (METODO DE PAGO) CON EL METODO QUE RECIBA Y LA CANTIDAD [skipMethod dice si ya se compoletaron los campos de ese metodo de pago y skipea el switch]
+	console.log("insertPaymentMethod - " + method + " - " + amount + " - " + skipMethod)
+	if(parseFloat($('#inputRemainingAmount').val()) < parseFloat(amount)){
+		showReplyMessage(1, "El monto ingresado supera el importe total de la venta, por favor corregir", "Importe inválido", "modalInsertNewPaymentMethod");
+		return;
+	}
+	console.log(skipMethod)
+	if(skipMethod == null)
+		skipMethod = false;
+	if(!skipMethod && method != 'Efectivo'){ // SI no tiene que saltearse y si no es Efectivo
+		switch (method) {
+			case 'Tarjeta':
+				if(caja.POS){
+					$('#modalInsertNewPaymentMethod').modal('hide')
+					if(parseFloat(amount || 0) <= 0) {
+						showReplyMessage(1, "Imposible usar el método de pago 'tarjeta' con este importe", "Importe inválido", "modalInsertNewPaymentMethod");
+						insertRemainingAmount('modalInsertNewPaymentMethodAmount')
+						return;
+					} else {
+						let consumidorFinal = null;
+						if(!CFE_reservado){
+							let TipoCFE = null;
+							if(cliente){
+								TipoCFE = validateRut(cliente.document) ? 111 : 101;
+							} else {
+								TipoCFE = 101;
+							}
+							(TipoCFE == 111) ? consumidorFinal = false : consumidorFinal = true;
+							let responseCFE = await sendAsyncPost("reserveCFE", {TipoCFE: TipoCFE});
+							// console.log(responseCaja)
+							if(responseCFE.result == 2){
+								CFE_reservado = responseCFE.CFE
+								openModalPOS(amount, consumidorFinal, CFE_reservado.numeroCFE)
+							} else {
+								CFE_reservado = null
+								showReplyMessage(1, "Error al obtener el número de factura", "Error interno", "modalInsertNewPaymentMethod");
+							}
+						} else {
+							let TipoCFE = null;
+							if(cliente){
+								TipoCFE = validateRut(cliente.document) ? 111 : 101;
+							} else {
+								TipoCFE = 101;
+							}
+							(TipoCFE == 111) ? consumidorFinal = false : consumidorFinal = true;
+
+							openModalPOS(amount, consumidorFinal, CFE_reservado.numeroCFE)
+						}
+					}
+				} else {
+					$('#modalInsertNewPaymentMethod').modal('hide')
+					openModalConfigMethodPayment(amount, method)
+				}
+				break;
+			
+			case 'Cheque':
+				$('#modalInsertNewPaymentMethod').modal('hide')
+				openModalConfigMethodPayment(amount, method)
+				break;
+			
+			case 'Depósito':
+				$('#modalInsertNewPaymentMethod').modal('hide')
+				openModalConfigMethodPayment(amount, method)
+				
+				break;
+			default:
+				$('#modalInsertNewPaymentMethod').modal('hide')
+				openModalConfigMethodPayment(amount, method)
+
+				break;
+		}
+	} else {
+		$('#modalConfigMethodPayment').modal('hide') // ESCENCIAL
+		console.log(skipMethod)
+		// Creating a new row with the selected payment method and amount
+		let newRow = $('<div class="row mt-1" style="align-items: center; padding: .2rem;"></div>');
+		
+		let col8 = $('<div class="col-6 pr-1"></div>');
+		let pTag = $('<p class="mt-0 mb-0 form-control method-val" data-banco="' + (skipMethod.banco ? skipMethod.banco : "") + '" style="font-size: .875rem;">' + method + '</p>');
+		col8.append(pTag);
+		
+		let colAuto1 = $('<div class="col pl-1 pr-1" data-banco="' + (skipMethod.banco ? skipMethod.banco : "") + '"></div>');
+		
+		let disabledAttr = (method == 'Tarjeta' && caja.POS) ? 'disabled' : '';
+		let input = $('<input type="number" min="0" value="' + amount + '" name="amount" style="font-size: .875rem;" class="form-control text-center amount-val" onchange="insertRemainingAmount(\'inputRemainingAmount\')" ' + disabledAttr + '>');
+		
+		// NEW [data medio_pago]
+		let hidden_banco = $('<input type="hidden" value="' + (skipMethod.banco ? skipMethod.banco : "") + '" name="banco" >');
+		let hidden_fecha = $('<input type="hidden" value="' + (skipMethod.fecha ? skipMethod.fecha : "") + '" name="fecha" >');
+		let hidden_fecha_diferido = $('<input type="hidden" value="' + (skipMethod.fecha_diferido ? skipMethod.fecha_diferido : "") + '" name="fecha_diferido" >');
+		let hidden_titular = $('<input type="hidden" value="' + (skipMethod.titular ? skipMethod.titular : "") + '" name="titular" >');
+		let hidden_obs = $('<input type="hidden" value="' + (skipMethod.obs ? skipMethod.obs : "") + '" name="obs" >');
+		// END [data medio_pago]
+		
+		colAuto1.append(input);
+
+		skipMethod.banco && colAuto1.append(hidden_banco);
+		skipMethod.fecha && colAuto1.append(hidden_fecha);
+		skipMethod.fecha_diferido && colAuto1.append(hidden_fecha_diferido);
+		skipMethod.titular && colAuto1.append(hidden_titular);
+		skipMethod.obs && colAuto1.append(hidden_obs);
+		
+		let colAuto2 = $('<div class="col-1 pl-1" style="max-width: 54px; min-width: 54px;"></div>');
+		if(method == 'Tarjeta' && caja.POS){
+			let btnPayback = $(`<button onclick="payBackPaymentMethod(this,'${skipMethod.consumidor}', '${skipMethod.RUT}', '${skipMethod.monto}', '${skipMethod.gravado}', '${skipMethod.factura}', '${skipMethod.ticket}')" title="Hacer devolución" class="btn btn-warning p-1 pl-2 pr-2 btn-dev"> <i class="fas fa-undo-alt"></i> </button>`);
+			colAuto2.append(btnPayback);
+		} else {
+			let btnDelete = $('<button onclick="deletePaymentMethod(this)" title="Eliminar método" class="btn btn-warning p-1 pl-2 pr-2 btn-supr"> <i class="fas fa-trash-alt"></i> </button>');
+			colAuto2.append(btnDelete);
+		}
+		
+		newRow.append(col8, colAuto1, colAuto2);
+		
+		$('#containerPayments').append(newRow);
+		$('#modalInsertNewPaymentMethod').modal('hide')
+		insertRemainingAmount('inputRemainingAmount')
+		$('#modalSetPayments').modal('show')
+	}
+}
+
+function payBackPaymentMethod(element, consumidor, RUT, monto, gravado, factura, ticket){
+	console.log("payBackPaymentMethod")
+	// console.log($(element).closest('.row.mt-1'))
+	// console.log(consumidor)
+	// consumidor = consumidor == "BOLETA CON RUT" ? false : true;
+	// console.log(consumidor)
+	// console.log(RUT)
+	// monto = monto / 100
+	// gravado = gravado / 100
+	// console.log(monto / 100)
+	// console.log(gravado / 100)
+	// console.log(factura)
+	// console.log(ticket)
+	const icon = $('#POSDEV-cardIcon');
+	const text = $('#POSDEV-statusText');
+	const button = $('#btnConfirmPOSDEV');
+	const buttonCancel = $('#btnCancelPOSDEV');
+	$('#POSDEV-logText').text('');
+
+	$('#POSDEV-amount').text(getFormatValue(monto))
+	// VISUAL
+	icon.removeClass().addClass('fas fa-credit-card fa-5x card-pulse text-primary');
+	text.text('Esperando conexión con POS...').removeClass().addClass('status-text text-processing');
+	button.prop('disabled', true).find('.maintext').text('Procesando...');
+	// END
+	$('#modalSetPayments').modal('hide');
+	$('#modalPOSDEV').modal('show');
+	
+	console.log(parseFloat(monto))
+	const data = {
+		monto: monto,
+		consumidorFinal: consumidor,
+		gravado: gravado,
+		factura: factura,
+		ticket: ticket,
+		tipo: "DEV"
+	};
+	// return;
+	// Enviar la petición al backend
+	sendAsyncPost("postearTransaccionDEV", data)
+
+		.then(function(response) {  
+			// Procesar primera respuesta (token)
+			if (response.result == 2) {
+				// Si la respuesta es exitosa, obtener el token y consultar el estado
+				const tokenNro = response.objectResult.TokenNro;
+				console.log(tokenNro)
+				// VISUAL
+				icon.removeClass().addClass('fas fa-circle-notch fa-5x loading-spinner text-info');
+				text.text('Procesando pago...').removeClass().addClass('status-text text-processing');
+				// END
+				consultarEstadoTransaccionDEV(tokenNro, 0, 30, element);
+				return
+			} else {
+				// Error al obtener el token
+				// VISUAL
+				icon.removeClass().addClass('fas fa-exclamation-triangle fa-5x error-shake text-danger');
+				text.text('No se pudo conectar con el servidor.').removeClass().addClass('status-text text-processing');
+				button.prop('disabled', true).find('.maintext').text('Error...');
+				// END
+				console.log("ERROR AL OBTENER EL TOKEN")
+			}
+		})
+		.catch(function(error) {
+			// VISUAL
+			icon.removeClass().addClass('fas fa-exclamation-triangle fa-5x error-shake text-danger');
+			text.text('No se pudo conectar con el servidor.').removeClass().addClass('status-text text-processing');
+			button.prop('disabled', true).find('.maintext').text('Error...');
+			// END
+			console.log("ERROR EN LA PETICION")
+		});
+}
+
+// function cancelPOSPayment(){
+// 	console.log("cancelPOSPayment")
+// 	$('#modalPOSPayment').modal('hide')
+// 	$('#modalSetPayments').modal('show')
 // }
-function keyPressAddDetail(keyPress, value, size){
-	if(keyPress.keyCode == 13 && !keyPress.shiftKey){
-		if(keyPress.srcElement.id == "inputCountProduct")
-			$('#inputDescriptionProduct').focus();
-		else if(keyPress.srcElement.id =="inputDescriptionProduct")
-			$('#inputDiscountProduct').focus();
-		else if(keyPress.srcElement.id =="inputDiscountProduct")
-			$('#inputPriceProduct').focus();
-		else if(keyPress.srcElement.id =="inputPriceProduct")
-			$('#inputDetailProduct').focus();
-		else if(keyPress.srcElement.id =="inputDetailProduct")
-			$('#btnConfirmAddDetail').click(); 
-	}
-	else if(keyPress.keyCode == 13 && keyPress.shiftKey){
-		if(keyPress.srcElement.id == "inputDetailProduct")
-			$('#inputPriceProduct').focus();
-		else if(keyPress.srcElement.id =="inputPriceProduct")
-			$('#inputDiscountProduct').focus();
-		else if(keyPress.srcElement.id =="inputDiscountProduct")
-			$('#inputDescriptionProduct').focus();
-		else if(keyPress.srcElement.id =="inputDescriptionProduct")
-			$('#inputCountProduct').focus();
-	}
-	if(value != null && value.length == size) {
-		return false;
-	}
-}
 
-// $('#modalInsertNewPaymentMethod').off('shown.bs.modal').on('shown.bs.modal', function () {
-// 	console.log("Modal new payment method abierto")
-// 	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
-// 	// $('#').val();
-// 	$('#modalInsertNewPaymentMethodOptions').trigger('focus');
-// });
-
-// $('#modalInsertNewPaymentMethod').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-// 	console.log("Modal new payment method cerrado")
-// 	$('#modalSetPayments').modal();
-// });
-
-// $('#modalInsertNewPaymentMethodButtonConfirm').on('click', function(){ // Confirmacion de nuevo modo de pago añadido
-// 	let selectedOption = $('#modalInsertNewPaymentMethodOptions').val();
-// 	let amount = $('#modalInsertNewPaymentMethodAmount').val();
-// 	newRowPaymentMethod(selectedOption, amount);
-// 	$('#modalInsertNewPaymentMethod').modal('hide');
-// })
-function insertPaymentMethod(){
-	// calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
-	let selectedOption = $('#modalInsertNewPaymentMethodOptions').val();
-	let amount = $('#modalInsertNewPaymentMethodAmount').val();
-	newRowPaymentMethod(selectedOption, amount);
-	// $('#modalInsertNewPaymentMethod').modal('hide');
-	$('#modalInsertNewPaymentMethod').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-		// $('#modalSetPayments').modal();
-		$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
-			// $('#inputPriceSale2').val($('#inputPriceSale').val())
-			$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
-			calculateRemainingAmount('inputPriceSale22');
-		}).modal();
-	}).modal('hide');
-}
-function newRowPaymentMethod(method, amount){	
-	console.log("newRowPaymentMethod")	
-    // Creating a new row with the selected payment method and amount
-    let newRow = $('<div class="row mt-1" style="align-items: center;"></div>');
-
-    let col8 = $('<div class="col-6 pr-1"></div>');
-    let pTag = $('<p class="mt-0 mb-0 form-control" style="font-size: .875rem;">' + method + '</p>');
-    col8.append(pTag);
-
-    let colAuto1 = $('<div class="col pl-1 pr-1"></div>');
-    let input = $('<input type="number" value="' + amount + '" style="font-size: .875rem;" class="form-control text-center" onchange="calculateRemainingAmount(\'inputPriceSale22\')">');
-    colAuto1.append(input);
-
-    let colAuto2 = $('<div class="col-1 pl-1" style="max-width: 54px; min-width: 54px;"></div>');
-    let btnDelete = $('<button onclick="deletePaymentMethod(this)" class="btn btn-warning p-1 pl-2 pr-2"> <i class="fas fa-trash-alt"></i> </button>');
-    colAuto2.append(btnDelete);
-
-    newRow.append(col8, colAuto1, colAuto2);
-
-    $('#containerPayments').append(newRow);
-}
-
-function insertNewPayment(){
-	console.log("inserNewPayment")
-	calculateRemainingAmount("modalInsertNewPaymentMethodAmount")
-	$('#modalSetPayments').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-		// $('#modalInsertNewPaymentMethod').modal();
-		$('#modalInsertNewPaymentMethod').off('shown.bs.modal').on('shown.bs.modal', function () {
-			$('#modalSetPayments').off('hidden.bs.modal')
-			$('#modalInsertNewPaymentMethodOptions').trigger('focus');
-		}).modal();
-	}).modal('hide');
-
-	// $('#modalSetPayments').modal('hide');
-	// setTimeout(function() {
-	// 	$('#modalInsertNewPaymentMethod').modal('show');
-    // }, 150); // Delay of 0 milliseconds to ensure it's executed after current execution stack
-	// $('#modalSetPayments').modal('hide', function(){
-	// 	console.log("Modal setPayments cerrado");
-	// 	$('#modalInsertNewPaymentMethod').modal('show');
-	// 	// $('#selectTypeVoucher').focus();
-	// });
-	// $('#modalInsertNewPaymentMethod').modal();
-}
-
-function deletePaymentMethod(element){
+function deletePaymentMethod(element){ // ELIMINA UN MEDIO DE PAGO
 	console.log("deletePaymentMethod")
 	console.log(element)
 	const rowDiv = element.closest('div.row');
     if (rowDiv) {
         rowDiv.remove();
     }
-	calculateRemainingAmount('inputPriceSale22')
-}
-// Suma todos los payments methods y setea el faltante
-function calculateRemainingAmount(campo){
-	console.log("calculateRemainingAmount")
-	total = $('#inputPriceSale').val() || 0
-	total = parseFloat(total.replace(/[$,]/g, ''))
-	totalPayments = 0
-	// Get all input values within containerPayments and sum them
-    $('#containerPayments input[type="number"]').each(function() {
-        totalPayments += parseFloat($(this).val()) || 0;
-    });
-	console.log(total)
-	console.log(totalPayments)
-	$('#' + campo).val(parseFloat(total - parseFloat(totalPayments).toFixed(2)).toFixed(2))
-	// $('#inputPriceSale2').val(total) inputPriceSale22
-	$('#inputPriceSale22').trigger('change')
+	insertRemainingAmount('inputRemainingAmount')
 }
 
-// $('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
-// 	$('#inputPriceSale2').val($('#inputPriceSale').val())
-// 	calculateRemainingAmount('inputPriceSale22');
-// });
+// function calcTotal(){ // EL DESCUENTO SE HACE SOBRE EL PRODUCTO CON IVA (EN CASO DE IVA INC.) Y CADA PRODUCTO NO A LA SUMA DE TODOS ESTOS (EJ: 2 x $10 con Dcto: $8 => $4 porque el $8 se le aplica a cada producto)
+// 	console.log('calcTotal')
+// 	// VARIABLES DEL TOTAL DE LA VENTA
+// 	let sale_total = 0;
+// 	let sale_gravado_basico = 0;
+// 	let sale_iva_basico = 0;
+// 	let sale_gravado_minimo = 0;
+// 	let sale_iva_minimo = 0;
+// 	let sale_no_gravado = 0;
+	
+// 	for (var i = 0; i < productsInCart.length; i++){
+// 		let subTotal = 0 // PRODUCTO SIN IVA
+// 		let total = 0 // PRODUCTO CON IVA
+// 		let iva = 0; // IVA
+// 		let descuento = 0;	// DESCUENTO ($) // calcular porque puede estar en %
+
+// 		if (productsInCart[i].includeIva){ // EL IMPORTE ES EL VALOR YA CON IVA
+// 			subTotal = productsInCart[i].import / getIvaValue(productsInCart[i].idIva) // getIvaValue devuelve 1.22 o 1.1 o 1 dependiendo del iva (1 es excento = 1, 2 es minimo = 1.1, 3 es basico = 1.22, los demas = 1)
+// 			total = productsInCart[i].import
+// 		} else {
+// 			subTotal = productsInCart[i].import
+// 			total = subTotal * getIvaValue(productsInCart[i].idIva)
+// 		}
 
 
-//se llama esta funciòn cuando se ingresa texto para buscar un nuevo producto.
-//no uso la moneda seleccionada en la factura para buscar los productos porque si se seleccionan productos en dolares se convierte el precio a pesos en la funcion calculateInverseByCost
-function getSuggestionDetail(inputToSearch){
-	let idIvaDefault = config_value;
-	if ( !idIvaDefault ){
-		sendAsyncPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"})
-		.then(( response )=>{
-			if ( response.result == 2 ){
-				//console.log("----- se obtuvo respuesta", response);
-				idIvaDefault = response.configValue;
-				$('#inputTaxProduct').val(idIvaDefault);
+// 		if(!configDiscountInPercentage){ // DESCUENTO $
+// 			if(configIncludeIva){ // Punto de venta en modo IVA incluido | entonces el descuento es por sobre el valor total
+// 				subTotal = productsInCart[i].import - productsInCart[i].discount / getIvaValue(productsInCart[i].idIva) // 
+// 				total = productsInCart[i].import - productsInCart[i].discount
+// 			} else { // entonces el descuento es por sobre el sub total
+// 				subTotal = productsInCart[i].import - productsInCart[i].discount
+// 				total = subTotal * getIvaValue(productsInCart[i].idIva)
+// 			}
+// 		} else if(configDiscountInPercentage){ // DESCUENTO %
+// 			if(configIncludeIva){ // Punto de venta en modo IVA incluido | entonces el descuento es por sobre el valor total
+// 				descuento = total * (productsInCart[i].discount / 100)
+// 				subTotal = productsInCart[i].import - descuento / getIvaValue(productsInCart[i].idIva) // 
+// 				total = productsInCart[i].import - descuento
+// 			} else { // entonces el descuento es por sobre el sub total
+// 				descuento = subTotal * (productsInCart[i].discount / 100)
+// 				subTotal = productsInCart[i].import - descuento
+// 				total = subTotal * getIvaValue(productsInCart[i].idIva)
+// 			}
+// 		}
+// 		console.log(total)
+// 		switch (productsInCart[i].idIva) {
+// 			case 1:
+// 				sale_total = sale_total + total
+// 				sale_no_gravado = sale_no_gravado + subTotal
+// 				break;
+		
+// 			case 2:
+// 				sale_total = sale_total + total
+// 				sale_gravado_minimo = sale_gravado_minimo + subTotal
+// 				sale_iva_minimo = sale_iva_minimo + (total - subTotal)
+// 				break;
+			
+// 			case 3:
+// 				sale_total = sale_total + total
+// 				sale_gravado_basico = sale_gravado_basico + subTotal
+// 				sale_iva_basico = sale_iva_basico + (total - subTotal)
+// 				break;
+		
+// 			default:
+// 				sale_total = sale_total + total
+// 				sale_no_gravado = sale_no_gravado + subTotal
+// 				break;
+// 		}
+
+// 		sale_total = parseFloat(sale_total).toFixed(2)
+// 		sale_gravado_basico = parseFloat(sale_gravado_basico).toFixed(2)
+// 		sale_iva_basico = parseFloat(sale_iva_basico).toFixed(2)
+// 		sale_gravado_minimo = parseFloat(sale_gravado_minimo).toFixed(2)
+// 		sale_iva_minimo = parseFloat(sale_iva_minimo).toFixed(2)
+// 		sale_no_gravado = parseFloat(sale_no_gravado).toFixed(2)
+// 	}
+
+// 	$('#inputPriceSale').val(getFormatValue(sale_total));
+// 	$('#inputPriceSale-gravado-basica').val(getFormatValue(sale_gravado_basico));
+// 	$('#inputPriceSale-iva-basico').val(getFormatValue(sale_iva_basico));
+// 	$('#inputPriceSale-gravado-minima').val(getFormatValue(sale_gravado_minimo));
+// 	$('#inputPriceSale-iva-minimo').val(getFormatValue(sale_iva_minimo));
+// 	$('#inputPriceSale-nogravado').val(getFormatValue(sale_no_gravado));
+
+// }
+
+function calcTotal(){
+    console.log('calcTotal')
+    let sale_total = 0;
+    let sale_gravado_basico = 0;
+    let sale_iva_basico = 0;
+    let sale_gravado_minimo = 0;
+    let sale_iva_minimo = 0;
+    let sale_no_gravado = 0;
+    
+    for (var i = 0; i < productsInCart.length; i++){
+        let subTotal = 0;
+        let total = 0;
+        let descuento = 0;
+
+        // Convertir a número por si es string
+        let importValue = parseFloat(productsInCart[i].import) || 0;
+        let discountValue = parseFloat(productsInCart[i].discount) || 0;
+        let quantity = parseFloat(productsInCart[i].quantity) || 1; // ✅ parseFloat para decimales
+        
+        // Cálculo inicial
+        if (productsInCart[i].ivaIncluded){
+            total = importValue;
+            subTotal = total / getIvaValue(productsInCart[i].idIva);
+        } else {
+            subTotal = importValue;
+            total = subTotal * getIvaValue(productsInCart[i].idIva);
+        }
+
+        // Aplicar descuentos
+        if(!configDiscountInPercentage){ // DESCUENTO $
+            if(configIncludeIva){
+                total = total - (discountValue / quantity);
+                subTotal = total / getIvaValue(productsInCart[i].idIva);
+            } else {
+                subTotal = subTotal - (discountValue / quantity);
+                total = subTotal * getIvaValue(productsInCart[i].idIva);
+            }
+        } else if(configDiscountInPercentage){ // DESCUENTO %
+            if(configIncludeIva){
+                descuento = total * (discountValue / 100);
+                total = total - descuento;
+                subTotal = total / getIvaValue(productsInCart[i].idIva);
+            } else {
+                descuento = subTotal * (discountValue / 100);
+                subTotal = subTotal - descuento;
+                total = subTotal * getIvaValue(productsInCart[i].idIva);
+            }
+        }
+
+        // Multiplicar por cantidad (puede ser decimal)
+        total = total * quantity;
+        subTotal = subTotal * quantity;
+
+        console.log('Producto', i, 
+                   'Unidad:', productsInCart[i].unidad_venta, 
+                   'Cantidad:', quantity, 
+                   'Total unitario:', (total/quantity).toFixed(2), 
+                   'Total línea:', total.toFixed(2));
+        
+        // Sumar a los totales
+        switch (productsInCart[i].idIva) {
+            case 1:
+                sale_total += total;
+                sale_no_gravado += subTotal;
+                break;
+            case 2:
+                sale_total += total;
+                sale_gravado_minimo += subTotal;
+                sale_iva_minimo += (total - subTotal);
+                break;
+            case 3:
+                sale_total += total;
+                sale_gravado_basico += subTotal;
+                sale_iva_basico += (total - subTotal);
+                break;
+            default:
+                sale_total += total;
+                sale_no_gravado += subTotal;
+                break;
+        }
+    }
+
+    // Actualizar los inputs
+    $('#inputPriceSale').val(getFormatValue(sale_total));
+    $('#inputPriceSaleModal').val(getFormatValue(sale_total));
+
+    $('#inputPriceSale-gravado-basica').val(getFormatValue(sale_gravado_basico));
+    $('#inputPriceSale-iva-basico').val(getFormatValue(sale_iva_basico));
+    $('#inputPriceSale-gravado-minima').val(getFormatValue(sale_gravado_minimo));
+    $('#inputPriceSale-iva-minimo').val(getFormatValue(sale_iva_minimo));
+    $('#inputPriceSale-nogravado').val(getFormatValue(sale_no_gravado));
+	showDetailsPricesFields() // Si los campos se tienen que mostrar
+}
+
+function getFormatValue(value){
+	let formatter = new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	});
+
+	return formatter.format(value);
+}
+
+function getListPrice(element){ // INSERTA LOS ARTICULOS AL MODAL LISTA DE PRECIOS
+	console.log("getListPrice")
+	if($(element).val().length > 0 || $('#inputTextToSearchPrice').prop( "readOnly") == false){
+		let valueToSearch = $('#inputTextToSearchPrice').val();
+		let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
+		$('#tbodyListPrice').empty();
+		if(response.result == 2){
+			let list = response.listResult;
+			firstRow = true;
+			for (var i = 0; i < list.length; i++) {
+				let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda, 1);
+				$('#tbodyListPrice').append(row);
+				if(firstRow){
+					$('#tbodyListPrice tr:first').addClass('selected')
+					firstRow = false
+				}
 			}
-			else console.log( response );
-		})
+		}
+	}
+}
+
+function createRowListPrice(idProduct, description, heading, price, coin, cantidad){ // CREA UNA LINEA EN LA TABLA DE PRODUCTOS EN EL MODAL LISTA DE PRECIOS cantidad es la cuantos agrega el boton (si viene por codebar puede que ser distinto a 1)
+	let row = "<tr>";
+	let priceUYU = "";
+	let priceUSD = "";
+
+	if (coin == 'UYU'){
+		priceUYU = "<td class='text-center align-middle col-2'> $  "+ price +"</td>";
+	}
+	else if (coin == 'USD'){
+		priceUSD = "<td class='text-center align-middle col-2'> U$S  "+ price +"</td>";
 	}
 
+	row += "<td class='text-left align-middle col-6'>"+ description +"</td>";
+	row += "<td class='text-left align-middle col-2'>"+ heading +"</td>";
+	row += priceUYU;
+	row += priceUSD
+	row += "<td class='text-center align-middle col-2'><button onclick='addProductById(" + idProduct + ", " + cantidad + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
+
+	return row;
+}
+
+function getSuggestionProduct(inputToSearch){// CREA EL DATALIST DE PRODUCTOS QUE COINCIDAN CON LA DESCRIPCION ESCRITA
+	console.log("getSuggestionProduct")
 	let valueToSearch = inputToSearch.value;
 	let response = "";
-
 	if(valueToSearch.length == 0){
-		$("#listDetail").empty();
-		idProductSelected = 0;
-		clearModalDetail();
+		$("#listProducts").empty();
 	}
 	else if (valueToSearch.length >= 3){
 		response = 	sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
-		//console.log(response);
 	}
-
-	$("#listDetail").empty();
-
+	$("#listProducts").empty();
 	if(response.result == 2){
 		let list = response.listResult; //los productos encontrados
 		let option = null;
-		idProductSelected = 0;
 		for (let i = list.length - 1; i >= 0; i--) {//si hay más de una coincidencia
-			option = getOption(list[i].idArticulo, list[i].descripcion);
-			$("#listDetail").append(option); //select de articulos por descripcion
-			if(list[i].descripcion == inputToSearch.value){
-				setTimeout(function(){
-					if(list[i].descripcion == inputToSearch.value){
-						idProductSelected = list[i].idArticulo;
-						selectListItem(list[i]);
-					}
-				}, 250);
-			}
-			else{
-				idProductSelected = 0;
-				clearModalDetail();
-			//console.log("1 - iva encontrado es "+idIvaDefault+" se setea al valor por defecto");
-
-				$('#inputTaxProduct').val(idIvaDefault);
-			}
-		}
-		if(inputToSearch.value == ""){
-			idProductSelected = 0;
-			clearModalDetail();
-			//console.log("2 - iva encontrado es "+idIvaDefault+" se setea al valor por defecto");
-			$('#inputTaxProduct').val(idIvaDefault);
-		}
-	}else{
-		idProductSelected = 0;
-		clearModalDetail();
-		//console.log("3 - iva encontrado es "+idIvaDefault+" se setea al valor por defecto");
-
-		$('#inputTaxProduct').val(idIvaDefault);
-	}
-}
-
-function getOption(idArticulo, descripcion){
-	return "<option id='"+ idArticulo +"' onclick='selectListItem("+descripcion+")' value='"+ descripcion +"''></option>"
-}
-
-function selectListItem(itemSelected){
-	addValuesModalDetail(itemSelected);
-}
-
-function addValuesModalDetail(articulo){
-	// console.log("ARTICULO");
-	// console.log(articulo);
-	// console.log("END ARTICULO");
-	let allIndicatorsInvoice = [];
-	$('#inputDetailProduct').val(articulo.detalle);
-	$('#inputDiscountProduct').val(articulo.descuento);
-
-	$("#inputTaxProduct option").each(function(){
-		allIndicatorsInvoice.push($(this).val());
-	});
-	$('#inputTaxProduct').val( allIndicatorsInvoice[0] );// se agrega un impuesto por defecto para que se muestre en caso de que el impuesto del producto ingresado no esté habilitado
-	for (var i = 0; i < allIndicatorsInvoice.length; i++) {
-		if(allIndicatorsInvoice[i] == articulo.idIva){
-			$('#inputTaxProduct').val(articulo.idIva);
+			option = newOption(list[i].idArticulo, list[i].descripcion);
+			$("#listProducts").append(option); //select de articulos por descripcion
 		}
 	}
-
-	// let moneyToConvert = $('#selectTypeCoin').val();
-
-	let ivaincluido = includeIva;
-	// let ivaincluido = $('#checkboxConfigIvaIncluido').val();
-	/*let response = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
-	if (response.result == 2){
-		ivaincluido = response.configValue;
-	}*/
-
-
-	let precioUnitario = articulo.importe;
-	if ( ivaincluido === "NO" ){ // SI el IVA no esta incluido el precio unitario es el costo. y el importe final es costo + IVA (Al parecer en la BD no se esta usando la ganancia VER VER VER)
-		precioUnitario = articulo.costo;
-		if ( precioUnitario < 1 ){
-			precioUnitario = calcularCostoPorImporte(articulo.importe, articulo.idIva);
-		}
-	}
-	else
-		precioUnitario = articulo.importe;
-
-
-
-	if(articulo.moneda != "UYU"){ // Porque solo manejo USD y UYU
-		if(!todayQuote)
-			USD = cotizacion();
-		// let USD = cotizacion();
-		precioUnitario = calculeQuote(articulo.importe, USD, articulo.moneda, "UYU");
-	}
-	$('#inputPriceProduct').val(precioUnitario);
-	calculateInverseByCost();
 }
 
-function calcularCostoPorImporte(importe, idiva){
-	let percent = 0;
-	switch (idiva) {
-	  case 2:
-	    percent = 1.1;
-	    break;
-	  case 3:
-	  	percent = 1.22;
-	  	break;
-	  default:
-	    return importe;break;
-	}
-	return (importe / percent).toFixed(2);
+function newOption(idArticulo, descripcion){
+    // Las opciones del datalist deben mostrar la descripción y tener value
+    return `<option value="${descripcion}" data-id="${idArticulo}">${descripcion}</option>`;
 }
 
-//se confirma y se agrega un nuevo articulo a la tabla de facturacion
-function insertNewDetail(){
-
-	// Obtener el tiempo actual
-    const currentTime = Date.now();
-
-	// Verificar si ha pasado suficiente tiempo desde la última ejecución
-    if (currentTime - lastExecutionTime < MIN_EXECUTION_INTERVAL) {
-        console.log("Demasiado rápido, espera un momento...");
-        return; // Salir de la función sin hacer nada
-    }
-    
-    // Actualizar el timestamp de la última ejecución
-    lastExecutionTime = currentTime;
-
-	// console.log("insertNewDetail")
-	// btnAddDetailClickNumber++;//esto está porque cuando se daba enter varias veces seguidas en el confirmar de agregar un nuevo producto, se terminaba agregando muchas veces
-	// if(btnAddDetailClickNumber == 1){
-
-		if( productsInCart.length == 0){
-			insertNewDetailProcess();
-			// btnAddDetailClickNumber = 0;
-		}
-		else if (productsInCart.length > 0){
-			const product = productsInCart.find(prod => prod.idArticulo == idProductSelected && ( prod.removed == false || prod.removed == "false"));
-
-			if ( product && ( product.removed == false || product.removed == "false") && idProductSelected != 0) { //significa que el producto que se quiere ingresar ya se encuentra en la lista, entonces solo se aumenta la cantidad y no se agrega otra fila por ese producto
-				let newCount = $('#inputCountProduct').val();
-				let position = product.idDetail -1;
-				product.count = parseInt(product.count) + parseInt(newCount);
-				$('#inputCount' + position).val(product.count);
-				addTotal();
-				// $('#selectTypeCoin').prop( "disabled", true );
-				$('#modalAddProduct').modal('hide');
-				// btnAddDetailClickNumber = 0;
-				updateProductsInSession(position, "count", product.count);
-			}else{
-				insertNewDetailProcess();
-				// btnAddDetailClickNumber = 0;
-			}
-		}
-	// }
-	// else{
-	// 	// btnAddDetailClickNumber = 0;
-	// }
+function selectItem(id, cantidad){
+	console.log("selectItem - " + id + " - " + cantidad)
+	addProductById(id, cantidad)
+	$('#modalAddProduct').modal('hide')
 }
 
-function updateProductsInSession(product, indexProduct, data){
-	updateDataSession(product, indexProduct, data);
-}
+function createNewFactura(){ // DESDE EL BOTON DE MEDIOS DE PAGOS
+	console.log("Create New Factura")
 
-function insertNewDetailProcess(){
-	// console.log("insertNewDetailProcess")
-
-	let description = $('#inputDescriptionProduct').val() || null;
-	let detail = $('#inputDetailProduct').val() || null;
-	let count = $('#inputCountProduct').val() || null;
-	let price = $('#inputPriceProduct').val() || null;
-	let discount = $('#inputDiscountProduct').val() || null;
-	let idIva = $('#inputTaxProduct').val() || null;
-	let total = $('#inputTotalProduct').val() || null;
-	let ivaValue = $('#inputTaxProduct option:selected').attr('name');
-
-	if(total < 0){
-		showReplyMessage(1, "El importe no puede ser negativo.", "Importe no válido", "modalAddProduct");
+	if(parseFloat($('#inputRemainingAmount').val().trim()) != 0){
+		showReplyMessage(1, "El importe acreditado no coincide con el total de la venta", "Error", "modalSetPayments");
 		return;
 	}
-	if(description){
-		if(count && count >= 1){
-			if(price && price > 0){
-				// btnAddDetailClickNumber = 0;
-				indexDetail++;
-				createDetailArray(count); // productsInCart es creado
-				let row = createDetailRow(indexDetail, description, detail, count, price, discount, idIva, ivaValue, price);
-				addTotal();
-				$('#tbodyDetailProducts').prepend(row);
+	console.log(cliente)
+	console.log(voucherData)
+	let error = false;
+	let tipoCod = null;
+	let mediosPago = []
+	let tipoMoneda = caja.moneda
+	let adenda = $('#adenda').val() || null; // ADENDA
+	let discountTipo = configDiscountInPercentage
 
-				$('#tbodyDetailProducts tr').removeClass('selected')
-                           .first()
-                           .addClass('selected');
-
-				// $('#selectTypeCoin').prop( "disabled", true );
-				// $('#checkboxConfigIvaIncluido').prop( "disabled", true );
-				$('#modalAddProduct').modal('hide');
-			}else showReplyMessage(1, "El precio no puede ser ingresado vacio o cero para el articulo que intenta agregar", "Precio no valido", "modalAddProduct");
-		}else showReplyMessage(1, "La cantidad no puede ingresarse vacia o menor a 1 para el articulo que intenta agregar", "Cantidad no valida", "modalAddProduct");
-	}else showReplyMessage(1, "Debe ingresar el nombre para el articulo que intenta agregar.", "Nombre requerido", "modalAddProduct");
-}
-
-function createDetailArray(cant){
-	let count = cant || 1;
-	let ivaValue = $('#inputTaxProduct option:selected').attr('name');
-	// let total = $('#inputTotalProduct').val() || null;
-	includeIva = null;
-	let response = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
-		if(response.result == 2)
-			includeIva = response.configValue;
-	let total = 0;
-	if (includeIva == "SI")
-		total = $('#inputPriceProduct').val() || null;
-	else if(includeIva == "NO")
-		total = $('#inputTotalProduct').val() || null;
-	// total = total / count;
-	let itemDetail = null;
-	let description = $('#inputDescriptionProduct').val() || null;
-	let detail = $('#inputDetailProduct').val() || null;
-	let discount = parseFloat($('#inputDiscountProduct').val() || 0).toFixed(2);
-	let idIva = $('#inputTaxProduct').val() || null;
-	let idEmpresa = 0;//traer el id que se usa en la funcion
-	let idInventary = null;
-	let brand = "";
-	let cost = 0;
-	let coefficient = 0;
-	let idHeading = 0;
-	let coin = "UYU" || null;
-	let price = $('#inputPriceProduct').val() || null;
-
-	if(idProductSelected != 0){
-		let response = sendPost('getProductById', { idProduct: idProductSelected});
-
-		if(response.result == 2){
-			let product = response.objectResult;
-			idEmpresa = product.idEmpresa;
-			idInventary = product.idInventario;
-			brand = product.marca;
-			cost = product.costo;
-			coefficient = product.coeficiente;
-			idHeading = product.idRubro;
-			coin = product.moneda;
-		}
+	if(cliente){
+		tipoCod = validateRut(cliente.document) ? 111 : 101;
+		tipoCod == 101 && (!validateCI(cliente.document)) ? error = "CLIENTE FINAL PERO CI NO VALIDA" : error = false
+	} else {
+		tipoCod = 101;
 	}
-
-	itemDetail = {
-		idDetail: indexDetail,
-		idArticulo: idProductSelected,
-		idHeading: idHeading,//usar la funcion que te devuelve el id del rubro
-		idInventary: idInventary,
-		idBusiness: idEmpresa,
-		brand: brand,
-		typeCoin: coin,
-		cost: cost,//calcular el costo
-		coefficient: coefficient, //calcular el coeficiente
-		price: price,
-		amount: total,//importe es el precio unitario por la cantidad de productos ingresados
-		description: description,
-		detail: detail,
-		count: count,
-		discount: discount,
-		idIva: idIva,
-		ivaValue: ivaValue,
-		removed: false
-	};
-
-	productsInCart.push(itemDetail);
-	// document.cookie = 'TYPECOIN='+$('#selectTypeCoin').val();
-	responseSaveProduct = sendPost("saveProductsInSession", {product: itemDetail});
-	if (responseSaveProduct.result == 2){
-		console.log("CAMBIO NUMERO DE CLICKS")
-		// btnAddDetailClickNumber = 0;
-	}
-	// console.log(productsInCart)
-}
-
-function getObjectProductsInCart(trItem){
-	for (let i = 0; i < productsInCart.length; i++) {
-		if(productsInCart[i].idDetail == trItem)
-			return i;
-	}
-}
-
-function addProductByCodeBar(barcode){ // LA CANTIDAD DE ARTICULOS CON LIMITE EN 80 es de distintos? u 80 del mismo articulo tambien es el el limite? VER VER VER
-
-	var x = elementsNoRemoved();
-	// console.log(x);
-	if(x < 80){
-		let data = null;
-		let newBarcode = barcode;
-		let newCantidad = 1;
-
-		if (barcode.includes("*")) {
-			data = barcode.split("*");
-			data[0] > 0 ? newCantidad = data[0] : newCantidad = 1;
-			newBarcode = data[1];
-		}
-
-		let response = sendPost('addProductByCodeBar', {barcode: newBarcode});
-		if(response.result == 2){
-			$('#tbodyListPrice').empty();
-			if( response.listResult.length > 1 ){
-				let list = response.listResult;
-				firstRow = true;
-				for (var i = 0; i < list.length; i++) {
-					// console.log(list[i].descripcion + " = " + list[i].codigoBarra)
-					let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
-					$('#tbodyListPrice').append(row);
-					if(firstRow){
-						$('#tbodyListPrice tr:first').addClass('selected')
-						firstRow = false
-					}
-				}
-
-
-				$('#modalListPrice .modal-title').text("Seleccionar producto");
-				$('#inputTextToSearchPrice').val("");
-				$('#inputTextToSearchPrice').prop( "readOnly", true );
-				$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
-					// console.log("addProductByCodeBar")
-					$('#inputTextToSearchPrice').focus();
-				});
-				$('#modalListPrice').modal('show');
-			}
-			else if( response.listResult.length == 1 ){
-				objeto = response.listResult[0];
-				addValuesModalDetail(objeto);
-				// console.log(objeto);
-				idProductSelected = objeto.idArticulo
-				$('#modalListPrice').modal('hide');
-				$('#modalDeleteDetail').modal('hide');
-				$('#modalSeeVoucher').modal('hide');
-				$('#modalSetClient').modal('hide');
-				$('#modalAddProduct').modal('hide');
-				let product = objeto;
-				$('#inputDescriptionProduct').val(product.descripcion);
-				$('#inputDetailProduct').val(product.detalle);
-				$('#inputCountProduct').val(newCantidad)
-				// let moneyToConvert = $('#selectTypeCoin').val();
-				let precioUnitario = product.importe;
-				if(product.moneda != "UYU"){
-					// if(quote == 1){
-					if(!todayQuote)
-						cotizacion();
-							//     USD = cotizacion();
-					// }
-					precioUnitario = calculeQuote(product.importe, USD, product.moneda, "UYU");
-				}
-				$('#inputPriceProduct').val(precioUnitario);
-				$('#inputTaxProduct').val(product.idIva);
-				$('#inputDiscountProduct').val(product.descuento);
-				calculateInverseByCost();
-				insertNewDetail();
-			}
-		}
-	}
-	else if(productsInCart.length == 80 || productsInCart.length > 80){
-		showReplyMessage(1, "80 artículos es la cantidad máxima soportada", "Detalles", null);
-	}
-}
-
-function setClientFinal(){
-	// console.log('Set cliente final');
-	$('#inputTextToSearchClient').val("");
-	// $('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");
-	$("#selectTypeVoucher").empty();
-	$("#selectTypeVoucher").append('<option value="201">ETicket Contado</option>');
-	$("#selectTypeVoucher").append('<option value="211">ETicket Crédito</option>');
-	$("#selectTypeVoucher").prop("selectedIndex", 0);
-	$('#buttonModalClientWithName').html("Consumidor final");
-	// $("#selectTypeVoucher").focus();
-}
-
-function modalBorrarDetail(trItem){
-	let position = getObjectProductsInCart(trItem);
-	// let disabledTypeCoin = false;
-	// let disabledIva = false;
-	$('#textDeleteDetail').html("¿Desea eliminar '"+ productsInCart[position].description +"'?");
 	
-	$('#modalDeleteDetail').off('shown.bs.modal').on('shown.bs.modal', function () {
-		$('#btnConfirmDeleteDetail').focus();
-	});
-
-	$('#modalDeleteDetail').modal();
-	$('#btnConfirmDeleteDetail').off('click');
-	$('#btnConfirmDeleteDetail').click(function(){
-		productsInCart[position]["removed"] = true;
-		//modificar en la sesion el producto removido
-		updateProductsInSession(position, "removed", true);
-		$('#' + trItem).addClass("removedElement");
-		addTotal();
-		for (let i = 0; i < productsInCart.length; i++) {
-			if ( !productsInCart[i].removed || productsInCart[i].removed == "false"){
-				// disabledTypeCoin = true;
-				// disabledIva = true;
-				break;
+	$('#containerPayments .row').not('.payments-header').each(function() {
+        let value = (parseFloat($(this).find('.amount-val').val()) || 0).toFixed(2);
+		
+		let medioPago = {
+			'codigo': getCode($(this).find('.method-val').text()),
+			'glosa': $(this).find('.form-control').text(),
+			'valor': parseFloat(value)
+		}
+		
+		// Agregar todos los input type="hidden" al objeto medioPago
+		$(this).find('input[type="hidden"]').each(function() {
+			let name = $(this).attr('name');
+			let val = $(this).val();
+			if (name) { // Solo agregar si tiene atributo name
+				medioPago[name] = val;
 			}
-		}
-		// $('#selectTypeCoin').prop( "disabled", disabledTypeCoin );
-		// $('#checkboxConfigIvaIncluido').prop( "disabled", disabledIva );
-		$('#modalDeleteDetail').modal('hide');
-	});
-}
+		});
+		
+		mediosPago.push(medioPago);
+    });
+	
+	
 
-async function discardSalesProducts (){
-	mostrarLoader(true)
-	// $('#progressbar').modal();
-	// progressBarIdProcess = loadPrograssBar();
-	await removeAllElementsArrayDetail()
-	.then((response) => {
-		mostrarLoader(false)
-		// $('#progressbar h5').text("Descartando productos...");
-		// $('#progressbar').modal("hide");
-		// stopPrograssBar(progressBarIdProcess);
-		// document.cookie = "TYPECOIN=UYU";
-		// $('#selectTypeCoin').val("UYU");
-		$('#inputQuote').val("");
-		$('#containerQuote').css("visibility", "hidden");
-		addTotal();
-		window.location.reload();
-	})
-	.catch((error) => {
-		$('#progressbar').modal("hide");
-		stopPrograssBar(progressBarIdProcess);
-	})
-}
-
-async function removeAllElementsArrayDetail(){
-
-	for (var i = 0; i < productsInCart.length; i++) {
-		if(productsInCart[i].removed == false || productsInCart[i].removed == "false"){
-			productsInCart[i].removed = "true";
-		}
+	if(error){
+		showReplyMessage(1, error, "Error", "modalInsertNewPaymentMethod");
+		return;
 	}
-	return new Promise(resolve => {
-		resolve(removedAllProducts());
-	});
-}
 
-function nextStep(){
-    if($('#idButtonShowModalPayment').hasClass('d-none')){ // Primer Ctrl + Fin en siguiente (Agregar cliente y comprobante)
-		if(productsInCart.filter(item => 
-			item.removed !== true && 
-			item.removed !== "true"
-			).length > 0){
+	let data = {
+		client: JSON.stringify(cliente ? [cliente] : []),
+		typeVoucher: tipoCod, // 101/111
+		typeCoin: tipoMoneda,
+		shapePayment: 1, // formaPago 2 credito | 1 contado
+		dateVoucher: null, // Hoy
+		adenda: adenda,
+		idBuy: null,
+		detail: null, // Lista de articulos
+		amount: null, // ESTO SE ENVIA AL PEDO
+		discountTipo: (discountTipo == true) ? 2 : 1, // En procentaje | en importe
+		mediosPago: JSON.stringify(mediosPago)
+	};
+	if(CFE_reservado)
+		data.CFE_reservado = CFE_reservado;
 
-				// alert("darle a siguiente");
-				$('#idButtonShowModalPayment').removeClass('d-none');
-				$('#nextStep').addClass('d-none');
-				$('#modalSetClient').modal({
-					backdrop: 'static'
-				});
-				$('#clientSelection').removeClass('d-none'); // Seccion del cliente
+	{ // LOGS
+		console.log(cliente)
+		console.log(error)
+		console.log(tipoCod)
+		console.log(mediosPago)
+		console.log(tipoMoneda)
+		console.log(CFE_reservado)
+		console.log(data)
+	}
+	$('#modalSetPayments').modal('hide')
+	mostrarLoader(true)
+	sendAsyncPost("createNewVoucherPointSale", data)
+	.then(function(response){
+		mostrarLoader(false)
+		console.log(response)
+
+		// console.log(response)
+		if (response.result == 2 ){
+			let data = {id:response.info.ID}
+			openModalVoucherFromPointSale(data, "CLIENT", "sale");
+			$('#modalSeeVoucher button.close').on('click', function (e) {
+				discardCart()
+			})
 		} else {
-			showReplyMessage(1, "Ningun producto ingresado", "Productos requeridos", null);
+			showReplyMessage(response.result, response.message, "Nueva factura", null);
 		}
 
-    } else {
-		if($('#nextStep').hasClass('d-none')){ //Segundo Ctrl + Fin en siguiente (Continuar a medios de pagos)
-			// alert("darle a siguiente");
-			$('#idButtonShowModalPayment').removeClass('d-none'); // por las dudas
-			$('#nextStep').addClass('d-none'); // por las dudas
-			if(!$('#containerInfoCredito').hasClass("d-none")){ // Si se seleccionó CREDITO ya deberia generar el CFE
-				console.log("OPCION CREDITO")
-				console.log('CREAR FACTURA')
-				createNewFactura()
-			} else {
-				console.log("OPCION CONTADO")
-				$('#modalSetPayments').modal({
-					backdrop: 'static',
-					keyboard: false
-				});
-			}
-		}
-        // $('#discardSales').click(); 
-        // $('#idButtonShowModalPayment').addClass('d-none');
-    }
-}
-
-function switchExpirationDate(element){
-	const expirationDateInput = document.getElementById("inputDateExpirationVoucher");
-	if (element.checked) {
-        // Checkbox is checked
-        console.log("Checkbox is checked");
-		expirationDateInput.disabled = true;
-        // Add your code for when the checkbox is checked
-    } else {
-        // Checkbox is unchecked
-        console.log("Checkbox is unchecked");
-		expirationDateInput.disabled = false;
-        // Add your code for when the checkbox is unchecked
-    }
-}
-// 	// $('#step-2').removeClass('d-none'); // Seccion del cliente
-
-function showModalPayment(){
-	$('#modalSetPayments').modal({
-		backdrop: 'static',
-		keyboard: false
+	})
+	.catch(function(response){
+		mostrarLoader(false)
+		console.log("este es el catch", response);
 	});
 }
 
 function superFastSale(){
-	const countNonRemovedItems = (items) => {
-		return items.filter(item => 
-			item.removed !== true && // checks for boolean true
-			item.removed !== "true" // checks for string "true"
-		).length;
-	};
+	console.log("superFastSale")
+	if (productsInCart.length == 0) {
+		showReplyMessage(1, "Ningún producto ingresado", "Producto requerido", null);
+		return;
+	}
 
-	if (countNonRemovedItems(productsInCart) <= 0){
-		showReplyMessage(1, "Ningun producto ingresado", "Producto requerido", null);
+	if (!configSuperFastSale) {
+		showReplyMessage(1, "Venta rápida desactivada", "Opción desactivada", null);
 		return;
 	}
 
 	let dateVoucher = getCurrentDate();
-	let adenda = $('#inputAdenda').val() || null; // ADENDA
-	let idBuy = $('#inputIdBuy').val() || null; // NO SE, NULL
-	let amount = null; // TOTAL
-	let discountPercentage = null
-	
-	let total = 0;
-	let totalProduct = 0;
-	let quantity = 1;
-	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-	if(responseDesc.result == 2)
-		discountPercentage = responseDesc.configValue;
-	// console.log('DESC EN %: ' + discountPercentage )
-	for (var i = 0; i < productsInCart.length; i++){
-		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
-			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
-				productsInCart[i].discount = 0;
-			discount = productsInCart[i].discount;
-			quantity = productsInCart[i].count;
-				if(!discountPercentage || discountPercentage == "NO")
-                	totalProduct =  parseFloat(productsInCart[i].amount) * quantity - discount;
-				else if(discountPercentage == "SI")
-	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
-			// console.log(productsInCart[i].amount)
-			// console.log(totalProduct)
-			total = totalProduct + total;
-			parseFloat(total).toFixed(2)
-		}
+	let adenda = $('#adenda').val() || null; // ADENDA
+	let tipoCod = 101;
+	let tipoMoneda = caja.moneda
+	let discountTipo = configDiscountInPercentage
+	let mediosPago = []
+	let total = $('#inputPriceSale').val() || 0
+	let importe = parseFloat(total.replace(/[$,]/g, ''))
+	let error = false
+
+	let medioPago = {
+		'codigo': 1,
+		'glosa': 'Efectivo',
+		'valor': importe
 	}
-	amount = parseFloat(total).toFixed(2);
+	mediosPago.push(medioPago);
 
-	if(responseDesc.result == 2)
-		discountPercentage = responseDesc.configValue;
-	let mediosPago = [{
-		codigo: 1,
-		glosa: "Efectivo",
-		valor: parseFloat(total).toFixed(2)
-	}]
-	// console.log(mediosPago)
-
-	newArrayToInvoice = prepareToCreateNewFactura(productsInCart);
-	// console.log(newArrayToInvoice)
-	if(newArrayToInvoice.length != 0){
-		for (var i = newArrayToInvoice.length - 1; i >= 0; i--) {
-			if(newArrayToInvoice[i].idArticulo == 0){ //significa que es un articulo nuevo por crear
-				console.log(createNewProduct(newArrayToInvoice[i], null)); // Creo un producto nuevo sin rubro
-			}
-		}
-		let consumidorFinal = [];
-		// consumidorFinal[0] = ({
-		// 	document: null,
-		// 	name: null,
-		// 	address: null,
-		// 	city: null,
-		// 	department: null,
-		// 	email: null,
-		// 	phone: null
-		// });
-
-		let data = {
-			client: JSON.stringify(consumidorFinal),
-			typeVoucher: 101, // 101/111
-			typeCoin: "UYU",
-			shapePayment: 1,
-			dateVoucher: dateVoucher,
-			adenda: adenda,
-			idBuy: idBuy,
-			detail: JSON.stringify(newArrayToInvoice),
-			amount: amount, // ESTO SE ENVIA AL PEDO
-			discountTipo: discountPercentage == "SI" ? 2 : 1,
-			mediosPago: JSON.stringify(mediosPago)
-		};
-		mostrarLoader(true)
-		sendAsyncPost("createNewVoucher", data)
-		.then(function(response){
-			mostrarLoader(false)
-			// console.log(response)
-			if (response.result == 2 ){
-				let responseVoucher = sendPost("getLastVoucherEmitted");
-				if (responseVoucher.result == 2) {
-					let data = {id:responseVoucher.objectResult.id}
-					openModalVoucher(data, "CLIENT", "sale");
-				}
-				prepareToNewSale();
-				removeAllElementsArrayDetail();
-			} else {
-				// console.log(response.message)
-				prepareToNewSale();
-				removeAllElementsArrayDetail();
-				updateVouchersById();
-				showReplyMessage(response.result, response.message, "Nueva factura", null);
-			}
-		})
-		.catch(function(response){
-			mostrarLoader(false)
-			console.log("este es el catch", response);
-		});
-	} else {
-		showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", null);
-	}
-}
-
-//VL:si se ingresaron artìculos que no se encuentran guardados, se guardan
-//si se agregan artìculos y se identifican cambios en los datos del artìculo se actualiza en la base
-function createNewFactura(){ // VER VER VER
-	console.log("Create New Factura")
-	// document.getElementById("idButtonCreateNewFactura").disabled=true;
-	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmando...";
-	let dateVoucher = $('#inputDateVoucher').val() || null; // FECHA DEL COMPROBANTE
-	let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
-	let tipoCod = typeVoucher == 211 || typeVoucher == 201 ? 101 : 111
+	let data = {
+		client: JSON.stringify([]),
+		typeVoucher: tipoCod, // 101/111
+		typeCoin: tipoMoneda,
+		shapePayment: 1, // formaPago 2 credito | 1 contado
+		dateVoucher: null, // Hoy
+		adenda: adenda,
+		idBuy: null,
+		detail: null, // Lista de articulos
+		amount: null, // ESTO SE ENVIA AL PEDO
+		discountTipo: (discountTipo == true) ? 2 : 1, // En procentaje | en importe
+		mediosPago: JSON.stringify(mediosPago)
+	};
 	
-	let mediosPago = null
-	if(typeVoucher != 211 && typeVoucher != 311){ // NO es ninguno de los CREDITOS
-		mediosPago = extractPaymentMethods()
+	// mostrarLoader(true)
+
+	{ // LOGS
+		console.log(cliente)
+		console.log(error)
+		console.log(tipoCod)
 		console.log(mediosPago)
-		if(mediosPago.length == 0){ // NO HAY MEDIO DE PAGO INGRESADO
-			showReplyMessage(1, "Debe ingresar un medio de pago", "Medio de pago requerido", "modalSetPayments");
-			return;
-		}
-	}
-	
-	// let shapePayment = $('#selectShapePayment').val() || null; 
-	// let typeCoin = $('#selectTypeCoin').val() || null; //selectTypeCoin es el tipo de moneda que se utiliza para crear la nueva factura 
-	let dateExpiration = $('#inputDateExpirationVoucher').val() || null; // FECHA DE EXPIRACION DEL COMPROBANTE
-	let adenda = $('#inputAdenda').val() || null; // ADENDA
-	let amount = $('#inputPriceSale').val().replace(/[$,]/g, '') || null; // TOTAL
-	let idBuy = $('#inputIdBuy').val() || null; // NO SE, NULL
-	let newArrayToInvoice = null; 
-	let discountPercentage = null
-	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-	if(responseDesc.result == 2)
-		discountPercentage = responseDesc.configValue;
+		console.log(tipoMoneda)
+		console.log(CFE_reservado)
+		console.log(data)
+	}	
+	// return; // LOCO
+	mostrarLoader(true)
+	sendAsyncPost("createNewVoucherPointSale", data)
+	.then(function(response){
+		mostrarLoader(false)
+		console.log(response)
 
-	// newArrayToInvoice = prepareToCreateNewFactura(arrayDetails);
-	newArrayToInvoice = prepareToCreateNewFactura(productsInCart);
-	console.log(newArrayToInvoice)
-	
-	if(newArrayToInvoice.length != 0){
-		if(dateVoucher){
-			if(typeVoucher == 211 || typeVoucher == 311){ // los 2 CREDITOS
-				let isChecked = $('#inputNotUseExpirationDate').is(':checked'); // Check de sin vencimiento
-				if(!isChecked){
-					if(!dateExpiration){
-						showReplyMessage(1, "Debe ingresar una fecha de vencimiento para comprobante a crédito, de lo contrario seleccione 'Sin vencimiento'", "Fecha vencimiento", null);
-						return;
-					}
-				}
-			}
-			for (var i = newArrayToInvoice.length - 1; i >= 0; i--) {
-				if(newArrayToInvoice[i].idArticulo == 0){ //significa que es un articulo nuevo por crear
-					// if ( headingval ){
-						console.log(createNewProduct(newArrayToInvoice[i], null)); // Creo un producto nuevo sin rubro
-					// }
-				}else{ // NO VA A ACTUALIZAR EL PRODUCTO NI SU INVENTARIO ACA, SE HARA AL FINALIZAR EL CFE
-					// if ( typeCoin == newArrayToInvoice[i].typeCoin){
-					// 	//console.log("se va a actualizar el producto porque las monedas son iguales, sino no se actualiza");
-					// console.log(updateProduct(newArrayToInvoice[i])); // Updateo el inventario de un producto
-					// }
-				}
-			}
-			// let data = {
-			// 	client: JSON.stringify(clientSelected),
-			// 	typeVoucher: tipoCod, // 101/111
-			// 	typeCoin: "UYU",
-			// 	shapePayment: (typeVoucher == 211 || typeVoucher == 311) ? 2 : 1,
-			// 	dateVoucher: dateVoucher,
-			// 	// dateExpiration: dateExpiration,
-			// 	dateExpiration: ((typeVoucher == 211 || typeVoucher == 311) && $('#inputNotUseExpirationDate').is(':checked')) ? null : dateExpiration,
-			// 	adenda: adenda,
-			// 	idBuy: idBuy,
-			// 	detail: JSON.stringify(newArrayToInvoice),
-			// 	amount: amount
-			// }
-			let data = {
-				client: JSON.stringify(clientSelected),
-				typeVoucher: tipoCod, // 101/111
-				typeCoin: "UYU",
-				shapePayment: (typeVoucher == 211 || typeVoucher == 311) ? 2 : 1,
-				dateVoucher: dateVoucher,
-				adenda: adenda,
-				idBuy: idBuy,
-				detail: JSON.stringify(newArrayToInvoice),
-				amount: amount, // ESTO SE ENVIA AL PEDO
-				discountTipo: discountPercentage == "SI" ? 2 : 1,
-				mediosPago: JSON.stringify(mediosPago)
-			};
-			
-			// Add dateExpiration only if conditions are met
-			if ((typeVoucher == 211 || typeVoucher == 311) && !$('#inputNotUseExpirationDate').is(':checked')) {
-				data.dateExpiration = dateExpiration;
-			}
-			$('#modalSetPayments').modal('hide');
-			mostrarLoader(true)
-			sendAsyncPost("createNewVoucher", data)
-			.then(function(response){
-				mostrarLoader(false)
-				console.log(response) // ACA ACA ACA ACA ACA
-				if (response.result == 2 ){
-					let responseVoucher = sendPost("getLastVoucherEmitted");
-					if (responseVoucher.result == 2) {
-						// if(typeVoucher != 211 && typeVoucher != 311)// NO ES CREDITO (ESTA ABIERTO EL MODAL DE MEDIOS DE PAGO)
-						// 	$('#modalSetPayments').modal('hide');
-						let data = {id:responseVoucher.objectResult.id}
-						openModalVoucher(data, "CLIENT", "sale");
-					}
-					prepareToNewSale();
-					removeAllElementsArrayDetail();
-				} else {
-					console.log(response.message)
-					if ( response.message == "El comprobante fue emitido correctamente pero un error no permitio traerlo al sistema. Actualice los comprobantes almacenados para obtenerlo." ){
-						prepareToNewSale();
-						removeAllElementsArrayDetail();
-						//ruta para cargar todos los comprobantes en la base local
-						updateVouchersById();
-					} else {
-					// 	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
-					// 	// document.getElementById("idButtonCreateNewFactura").disabled=false;
-					}
-					// updateVouchersById();
-					// $('#modalSetPayments').modal('hide');
-					showReplyMessage(response.result, response.message, "Nueva factura", null);
-				}
+		// console.log(response)
+		if (response.result == 2 ){
+			// let responseVoucher = sendPost("getLastVoucherEmitted");
+			let data = {id:response.info.ID}
+			openModalVoucherFromPointSale(data, "CLIENT", "sale");
+			$('#modalSeeVoucher button.close').on('click', function (e) {
+				discardCart()
 			})
-			.catch(function(response){
-				mostrarLoader(false)
-				console.log("este es el catch", response);
+		} else {
+			showReplyMessage(response.result, response.message, "Nueva factura", null);
+		}
+
+	})
+	.catch(function(response){
+		mostrarLoader(false)
+		console.log("este es el catch", response);
+	});
+}
+
+// FUNCIONES REPLICADAS
+
+function openModalVoucherFromPointSale(data, prepareFor, view){ // Se entiende que es 'CLIENT' y 'sale' siempre
+	mostrarLoader(true)
+	let idVoucher = data.id;
+	let responseGetCFE = sendPost('getVoucherCFE', {idVoucher: idVoucher, prepareFor: prepareFor});
+	if(responseGetCFE.result == 2){
+		mostrarLoader(false)
+		let iFrame = document.getElementById("frameSeeVoucher");
+		var dstDoc = iFrame.contentDocument || iFrame.contentWindow.document;
+		dstDoc.write(responseGetCFE.voucherCFE.representacionImpresa);
+		dstDoc.close();
+
+		$('#buttonExportVoucher').off('click');
+		$('#buttonExportVoucher').click(function(){
+			exportVoucherNew(idVoucher, prepareFor);
+		});
+		
+		$('#buttonDownloadVoucher').off('click');
+		$('#buttonDownloadVoucher').click(function(){
+			downloadVoucher(idVoucher, prepareFor);
+		});
+
+		if ( responseGetCFE.voucherCFE.isAnulado ){
+			$("#seeVoucherIsAnuladoMotivo").empty();
+			$("#seeVoucherIsAnuladoMotivo").append("<strong>Motivo:</strong> "+responseGetCFE.voucherCFE.motivoRechazo);
+			$("#seeVoucherIsAnulado").removeAttr("hidden");
+			$("#seeVoucherIsAnulado").removeClass("fade");
+		}else{
+			$("#seeVoucherIsAnuladoMotivo").empty();
+
+			$("#seeVoucherIsAnulado").attr("hidden",true);
+			$("#seeVoucherIsAnulado").addClass("fade");
+		}
+
+		console.log("open modal voucher para clientes");
+		$('#buttonCancelVoucher').css('visibility', 'visible');
+		let responseConsultCaes = sendPost('consultCaes', {typeCFE: responseGetCFE.voucherCFE.tipoCFE});
+		console.log(responseConsultCaes);
+		console.log("vista "+view);
+		if(responseConsultCaes.result == 2){
+			$('#buttonCancelVoucher').off('click');
+			$('#buttonCancelVoucher').click(function(){
+				$('#modalSeeVoucher').modal('hide');
+				$('#modalCancelVoucher').modal();
+				$('#inputDateCancelVoucher').val(getDateIntToHTML(responseGetCFE.voucherCFE.fecha));
+				$('#btnCancelVoucher').off('click');
+				$('#btnCancelVoucher').click(function(){
+					cancelVoucherFromPointSale(idVoucher);
+				});
 			});
-		}else showReplyMessage(1, "Debe seleccionar una fecha para el comprobante que quiere emitir.", "Fecha requerida", null);
-	} else {
-		if(typeVoucher == 211 || typeVoucher == 311) // CREDITO
-			showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", null);
-		else
-			showReplyMessage(1, "Ningun producto cargado.", "Producto requerido", "modalSetPayments");
+		} else {
+			$('#buttonCancelVoucher').off('click');
+			$('#buttonCancelVoucher').click(function(){
+				$('#modalSeeVoucher').modal('hide');
+				showReplyMessage(responseConsultCaes.result, responseConsultCaes.message, "Anular comprobante", "modalSeeVoucher");
+			});
+		}
+
+		if(responseGetCFE.voucherCFE.isAnulado){
+			if (view == 'vouchersEmitted' && !$('#' + idVoucher).hasClass('voucherDgiAnulado')){ // Esta anulado pero en nuestra base no
+				sendAsyncPost("cancelVoucherById", {idVoucher: idVoucher})
+				.then(( response )=>{
+					// console.log(response)
+					if ( response.result == 2 ){
+						$('#' + idVoucher).addClass('voucherDgiAnulado')
+					}
+				});
+				console.log(idVoucher)
+			}
+			$('#buttonCancelVoucher').css('visibility', 'hidden');
+		}
+
+		$('#modalSeeVoucher').modal({
+            keyboard: false,
+            backdrop: 'static'
+        });
+	}else {
+		mostrarLoader(false)
+		if ( !responseGetCFE.message || responseGetCFE.message == "" ){
+			showReplyMessage(responseGetCFE.result, "No se encontró el comprobante. Intente nuevamente.", "Ver comprobante", null);
+		}
+		else showReplyMessage(responseGetCFE.result, responseGetCFE.message, "Ver comprobante", null);
 	}
 }
+
+function cancelVoucherFromPointSale(idVoucher){
+	let dateCancelVoucher = $('#inputDateCancelVoucher').val() || null;
+	let appendix = $('#inputCancelAppendix').val() || null;
+	let response = sendPost("cancelVoucherEmitted", {idVoucher: idVoucher, dateCancelVoucher: dateCancelVoucher, appendix: appendix});
+	showReplyMessageWithFunction(
+                response.result, 
+                response.message, 
+                "Cancelar comprobante", 
+                "modalCancelVoucher",
+				function() {
+                    if(response.result == 2)
+						discardCart()
+                }
+            );
+}
+
+// FUNCIONES REPLICADAS END
+
+// ----------------------------------------------------------------------------
 
 function extractPaymentMethods() {
 	const container = document.getElementById('containerPayments');
@@ -1075,6 +1219,9 @@ function getCode(glosa){
 			break;
 		case 'Otros':
 			respuesta = 11
+			break;
+		case 'Tarjeta Offline':
+			respuesta = 12
 			break;
 			
 		default:
@@ -1140,46 +1287,46 @@ function confirmSale(){
 	$('#confirmSaleBtn').click();
 }
 
-function setNextStep(step){ // le settea el siguiente paso al boton de confirmar
-	// console.log("setNextStep: " + step)
-	switch (step) {
-		case 'selectClient':
-			$('#confirmSaleBtn').off('click').on('click', function () {
-				$('#modalSetClient').modal({
-					backdrop: 'static'
-				});
-			});
-			break;
-		case 'selectPaymentWay':
-			$('#confirmSaleBtn').off('click').on('click', function () {
-				// setClientFinal()
-				let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
-				if(typeVoucher == 211 || typeVoucher == 311){
-					createNewFactura()
-					return;
-				}
-				$('#inputPriceSale2').val($('#inputPriceSale').val())
-				calculateRemainingAmount('inputPriceSale22');
-				$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
-					$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
-				});
-				showModalPayment()
-			});
-			break;
-		case 'selectTypeVoucher':
-			$('#clientSelection').removeClass('d-none')
-			$('#confirmSaleBtn').off('click').on('click', function () {
-				if($('#buttonModalClientWithName').text() == "Consumidor final"){
-					setClientFinal()
-				}
-				$('#selectTypeVoucher').focus()
-				setNextStep('selectPaymentWay')
-			});
-			break;
-		default:
-			break;
-	}
-}
+// function setNextStep(step){ // le settea el siguiente paso al boton de confirmar
+// 	// console.log("setNextStep: " + step)
+// 	switch (step) {
+// 		case 'selectClient':
+// 			$('#confirmSaleBtn').off('click').on('click', function () {
+// 				$('#modalSetClient').modal({
+// 					backdrop: 'static'
+// 				});
+// 			});
+// 			break;
+// 		case 'selectPaymentWay':
+// 			$('#confirmSaleBtn').off('click').on('click', function () {
+// 				// setClientFinal()
+// 				let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
+// 				if(typeVoucher == 211 || typeVoucher == 311){
+// 					createNewFactura()
+// 					return;
+// 				}
+// 				$('#inputPriceSale2').val($('#inputPriceSale').val())
+// 				calculateRemainingAmount('inputPriceSale22');
+// 				$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
+// 					$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
+// 				});
+// 				showModalPayment()
+// 			});
+// 			break;
+// 		case 'selectTypeVoucher':
+// 			$('#clientSelection').removeClass('d-none')
+// 			$('#confirmSaleBtn').off('click').on('click', function () {
+// 				if($('#buttonModalClientWithName').text() == "Consumidor final"){
+// 					setClientFinal()
+// 				}
+// 				$('#selectTypeVoucher').focus()
+// 				setNextStep('selectPaymentWay')
+// 			});
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// }
 
 function createNewProduct(producto, heading){ 
 	if(producto.description && producto.description.length > 4){
@@ -1198,6 +1345,7 @@ function createNewProduct(producto, heading){
 				discount: producto.discount,
 				inventory: producto.count, // ES LA CANTIDAD QUE DEBE TENER EN STOCK
 				minInventory: 0, //mìnima cantidad de articulos en stock
+				unidadVenta: producto.unidadVenta
 			}
 			let response = sendPost('insertProduct',data);
 			if(response.result != 2){
@@ -1220,42 +1368,21 @@ function prepareToCreateNewFactura(originalArray){ // VER VER VER
 	return newArray;
 }
 
-function onChangeTypeVoucher(selectTypeVoucher){ 
-	console.log("event onchange de selectTypeVoucher");
-	if(selectTypeVoucher.value == 211 || selectTypeVoucher.value == 311){ // CREDITOS
-		$('#containerInfoCredito').removeClass("d-none");
-		// document.getElementById("inputDateExpirationVoucher").valueAsDate = new Date();
-		let futureDate = new Date();
-		futureDate.setDate(futureDate.getDate() + 30);
-		document.getElementById("inputDateExpirationVoucher").valueAsDate = futureDate;
-		// $('#selectShapePayment').val(2).change();
-		// $('#containerInputIdBuy').addClass("show");
-		
-		// $('#containerInputIdBuy').removeAttr("hidden");
-		
-	} else {
-		$('#containerInfoCredito').removeClass("d-none");
-		$('#containerInfoCredito').addClass("d-none");
-		$('#selectShapePayment').val(1).change();
 
-		// $('#containerInputIdBuy').removeClass("show");
-		// $('#containerInputIdBuy').addClass("fade");
 
-		// $('#containerInputIdBuy').attr("hidden", true);
-	}
-}
-
-function loadProductsInSession (){
-	let productsInSession = getDataSession("arrayProductsSales"); // ManagerDataSession.js
-	productsInCart = productsInSession.data;
-	indexDetail = productsInCart.length;
-	if ( productsInSession.result == 2 ){
-		insertAllElementsInDetail();
-	}
-}
+// function loadProductsInSession (){
+// 	console.log("loadProductsInSession")
+// 	let productsInSession = getDataSession("arrayProductsSales"); // ManagerDataSession.js
+// 	productsInCart = productsInSession.data;
+// 	indexDetail = productsInCart.length;
+// 	if ( productsInSession.result == 2 ){
+// 		insertAllElementsInDetail();
+// 	}
+// }
 
 //se confirma y se agrega un nuevo articulo a la tabla de facturacion
 function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU y NO se toca el IVA, si tiene IVA se vende con él sino no
+    console.log("insertAllElementsInDetail");
     // console.log("START COOKIES");
     // console.log(document.cookie);
     // console.log("END COOKIES");
@@ -1281,7 +1408,7 @@ function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU 
         if(productsInCart[i].typeCoin == ""){
             console.log("ESTE ARTICULO DEBERIA TENER COIN DE UYU");
         }
-		let row = createDetailRow(productsInCart[i].idDetail, productsInCart[i].description, productsInCart[i].detail, productsInCart[i].count, productsInCart[i].price, productsInCart[i].discount, productsInCart[i].idIva, productsInCart[i].ivaValue, productsInCart[i].price);
+		let row = createDetailRow(productsInCart[i].idDetail, productsInCart[i].description, productsInCart[i].detail, productsInCart[i].count, productsInCart[i].price, productsInCart[i].discount, productsInCart[i].idIva, productsInCart[i].ivaValue, productsInCart[i].price, productsInCart[i].unidadVenta);
 		$('#tbodyDetailProducts').prepend(row);
 		if( productsInCart[i].removed == "true" ){
 			$('#' + productsInCart[i].idDetail).addClass("removedElement");
@@ -1298,119 +1425,191 @@ function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU 
 }
 
 //crea las lineas que se muestran en la tabla luego de agregarse los productos
-function createDetailRow(indexDetail, name, description, count, price, discount, idIva, ivaValue, total){
-	let row = "<tr id='" + indexDetail +"' >";
+// function createDetailRow(indexDetail, name, description, count, price, discount, idIva, ivaValue, total, unidadVenta){
+// 	console.log(`createDetailRow [indexDetail: ${indexDetail}. name: ${name}. description: ${description}. count: ${count}. price: ${price}. discount: ${discount}. idIva: ${idIva}. ivaValue: ${ivaValue}. total: ${total}. unidadVenta: ${unidadVenta}.`)
+// 	discount = discount ?? 0
+// 	let row = "<tr id='" + indexDetail +"' >";
 
-	row += "<td class='col-6 text-left overflow-example' title='"+ name +"'>"+ name;
-	if(description){
-		row += "<br>";
-		row += "<p class='overflow-example' style='margin-bottom: 0;'> " + description + " </p>"
-	//</br>row += "<td class='text-left overflow-example' title='"+ description +"'>"+ description +"</td>";
+// 	row += "<td class='col-5 text-left overflow-example' title='"+ name +"'>"+ name;
+// 	if(description){
+// 		row += "<br>";
+// 		row += "<p class='overflow-example' style='margin-bottom: 0;'> " + description + " </p>"
 
-	} else {
-		row += "</td>";
-	// 	row += "<td class='text-left'></td>";
+// 	} else {
+// 		row += "</td>";
+// 	}
+// 	row += `<td class='col-1 text-left align-middle'>
+// 				<button class='btn btn-danger btn-sm shadow-sm align-middle' style='width: 3em;' onclick='modalBorrarDetail(${indexDetail})'>
+// 					<i class='fas fa-trash-alt'></i>
+// 				</button>
+// 			</td>`;
+// 	let step = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.1 : 1;
+// 	let min = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.001 : 1;	
+// 	row += `<td class='col-2 text-right align-middle'>
+// 				<input id='inputCount${indexDetail -1}' 
+// 					type='number' 
+// 					min='${min}' 
+// 					step='${step}' 
+// 					class='form-control form-control-sm text-right' 
+// 					value='${count}' 
+// 					oninput='handleCountChange(event, ${indexDetail - 1})'
+// 					onblur='handleCountBlur(event, ${indexDetail - 1})'
+// 					style='min-width: 100px;'>
+// 			</td>`;
+	
+// 	row += `<td class='col-2 text-right align-middle'>
+// 				<input id='inputDiscount${indexDetail -1}' 
+// 					type='number' 
+// 					min=0 
+// 					max=100 
+// 					class='form-control form-control-sm text-right' 
+// 					value='${parseFloat(discount).toFixed(2)}' 
+// 					oninput='handleDiscountChange(event, ${indexDetail - 1})'
+// 					style='min-width: 100px;'>
+// 			</td>`;
+// 	row += `<td class='col-1 text-right align-middle' style='min-width: 100px;'>
+// 				${getFormatValue(total)}
+// 			</td>`;
+// 	row += "</tr>";
+
+// 	return row;
+// }
+
+function handleCountChange(e, itemDetail) {
+	e.preventDefault();
+
+	let input = e.target;
+	let unidadVenta = productsInCart[itemDetail].unidadVenta || "Unidad";
+	let rawValue = input.value;
+
+	let parsedCount = parseFloat(rawValue);
+	// let minCount = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.001 : 1;
+	let step = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.1 : 1;
+
+	// Establecer dinámicamente el step del input
+	input.step = step;
+
+	// No hacemos validaciones fuertes aquí, solo actualizamos si es número
+	if (!isNaN(parsedCount)) {
+		productsInCart[itemDetail]['count'] = parsedCount;
+		updateProductsInSession(itemDetail, "count", parsedCount);
+		addTotal();
 	}
-	row += "<td class='col-1 text-left align-middle '><button class='btn btn-danger btn-sm shadow-sm align-middle' style='width: 3em;' onclick='modalBorrarDetail(" + indexDetail + ")'><i class='fas fa-trash-alt'></i></button></td>";
-	row += "<td class='col-2 text-right align-middle'><input id='inputCount"+ (indexDetail -1) +"' type='number' min=1 class='form-control form-control-sm text-right' value='"+ count + "' onchange='changeItemDetail("+ (indexDetail -1) +")' onkeyup='this.onchange()'></td>";
-	row += "<td class='col-2 text-right align-middle'><input id='inputDiscount"+ (indexDetail -1) +"' type='number' min=0 max=100 class='form-control form-control-sm text-right' value='"+ parseFloat(discount).toFixed(2) + "' onchange='changeItemDetail("+ (indexDetail -1) +")' onkeyup='this.onchange()'></td>";
-	row += "<td class='col-1 text-right align-middle'>"+ getFormatValue(total) +"</td>";
-	row += "</tr>";
-
-	return row;
 }
 
-//cuando se modifica la cantidad del producto en el detalle de producto que estàn agregados al carro
-function changeItemDetail(itemDetail){
-	console.log(productsInCart);
+function handleCountBlur(e, itemDetail) {
+	e.preventDefault();
+
+	let input = e.target;
+	let unidadVenta = productsInCart[itemDetail].unidadVenta || "Unidad";
+	let rawValue = input.value;
+
+	let parsedCount = parseFloat(rawValue) || 0;
+	let minCount = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.001 : 1;
 	
-	// let total = 0;
-	// let totalProduct = 0;
-	// let valueQuote = quote;
-	if(!discountPercentage){
-		let response = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-		if(response.result == 2)
-			discountPercentage = response.configValue;
+	// Si no es número o es menor al mínimo → corregir
+	if (isNaN(parsedCount) || parsedCount < minCount ) {
+		parsedCount = minCount;
+		input.value = parsedCount;
 	}
-	if(discountPercentage == "SI"){
-		if($('#inputDiscount' + itemDetail).val() > 100)
-			$('#inputDiscount' + itemDetail).val(100)
-		else if($('#inputDiscount' + itemDetail).val() < 0)
-			$('#inputDiscount' + itemDetail).val(0)
+
+	// Redondear si es unidad
+	if (unidadVenta === 'Unidad') {
+		parsedCount = Math.floor(parsedCount);
+		input.value = parsedCount;
 	}
-	
-	let newCount = $('#inputCount' + itemDetail).val() || 1;
-	let newDiscount = $('#inputDiscount' + itemDetail).val() || 0;
-	
-	productsInCart[itemDetail]['discount'] = newDiscount;
-	productsInCart[itemDetail]['count'] = newCount;
-	updateProductsInSession(itemDetail, "count", newCount);
-	updateProductsInSession(itemDetail, "discount", newDiscount);
-	
+
+	productsInCart[itemDetail]['count'] = parsedCount;
+	updateProductsInSession(itemDetail, "count", parsedCount);
 	addTotal();
-	console.log(productsInCart);
 }
 
-function getFormatValue(value){
-	let formatter = new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-	});
+function handleDiscountChange(e, itemDetail) {
+	e.preventDefault();
 
-	return formatter.format(value);
+	let input = e.target;
+	let rawValue = input.value;
+
+	let parsedDiscount = parseFloat(rawValue);
+
+	// Validar y corregir
+	if (isNaN(parsedDiscount) || parsedDiscount < 0) {
+		parsedDiscount = 0;
+	} else if (parsedDiscount > 100) {
+		parsedDiscount = 100;
+	}
+
+	// Redondear a dos decimales (o entero si lo querés así)
+	parsedDiscount = parseFloat(parsedDiscount.toFixed(2));
+	input.value = parsedDiscount;
+
+	// Actualizar
+	productsInCart[itemDetail]['discount'] = parsedDiscount;
+	updateProductsInSession(itemDetail, "discount", parsedDiscount);
+	addTotal();
 }
+
+
+// function getFormatValue(value){
+// 	let formatter = new Intl.NumberFormat('en-US', {
+// 		style: 'currency',
+// 		currency: 'USD',
+// 	});
+
+// 	return formatter.format(value);
+// }
 
 //suma todos los importes, ademas si la moneda del producto es distinta a UYU se calcula el importe segun la cotizacion.
-function addTotal(){
-	let total = 0;
-	let totalProduct = 0;
-	// let typeCoinSelected = $('#selectTypeCoin').val(); // UYU
-	// let valueQuote = quote;
-	let quantity = 1;
-	// if(!todayQuote)
-	//     USD = cotizacion();
-    // console.log(USD)
-	// if(USD == 1){
-	// 	cotizacion();
-	// 	USD = quote;
-	// }
-	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-	if(responseDesc.result == 2)
-		discountPercentage = responseDesc.configValue;
-	// console.log('DESC EN %: ' + discountPercentage )
-	for (var i = 0; i < productsInCart.length; i++){
-		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
-			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
-				productsInCart[i].discount = 0;
-			discount = productsInCart[i].discount;
-			quantity = productsInCart[i].count;
-            // if(productsInCart[i].typeCoin != "UYU"){ // SOLO manejo UYU y USD
-			// 	console.log(productsInCart[i].amount);
-            //     totalProduct = parseFloat(productsInCart[i].amount) * USD * quantity * ((100 - discount)/ 100);
-            // } else {
-				if(!discountPercentage || discountPercentage == "NO")
-                	totalProduct =  parseFloat(productsInCart[i].amount) * quantity - discount;
-				else if(discountPercentage == "SI")
-	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
-            // }
-			// console.log(productsInCart[i].amount)
-			// console.log(totalProduct)
-			// totalProduct =  parseFloat(productsInCart[i].amount) * quantity;
-			total = totalProduct + total;
-			parseFloat(total).toFixed(2)
-		}
-	}
-	// $('#inputPriceSale').val(getFormatValue(total));
-	$('#inputPriceSale').val(getFormatValue(total));
-}
+// function addTotal(){
+// 	let total = 0;
+// 	let totalProduct = 0;
+// 	// let typeCoinSelected = $('#selectTypeCoin').val(); // UYU
+// 	// let valueQuote = quote;
+// 	let quantity = 1;
+// 	// if(!todayQuote)
+// 	//     USD = cotizacion();
+//     // console.log(USD)
+// 	// if(USD == 1){
+// 	// 	cotizacion();
+// 	// 	USD = quote;
+// 	// }
+// 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+// 	if(responseDesc.result == 2)
+// 		discountPercentage = responseDesc.configValue;
+// 	// console.log('DESC EN %: ' + discountPercentage )
+// 	for (var i = 0; i < productsInCart.length; i++){
+// 		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
+// 			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
+// 				productsInCart[i].discount = 0;
+// 			discount = productsInCart[i].discount;
+// 			quantity = productsInCart[i].count;
+//             // if(productsInCart[i].typeCoin != "UYU"){ // SOLO manejo UYU y USD
+// 			// 	console.log(productsInCart[i].amount);
+//             //     totalProduct = parseFloat(productsInCart[i].amount) * USD * quantity * ((100 - discount)/ 100);
+//             // } else {
+// 				if(!discountPercentage || discountPercentage == "NO")
+//                 	totalProduct =  parseFloat(productsInCart[i].amount) * quantity - discount;
+// 				else if(discountPercentage == "SI")
+// 	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
+//             // }
+// 			// console.log(productsInCart[i].amount)
+// 			// console.log(totalProduct)
+// 			// totalProduct =  parseFloat(productsInCart[i].amount) * quantity;
+// 			total = totalProduct + total;
+// 			parseFloat(total).toFixed(2)
+// 		}
+// 	}
+// 	// $('#inputPriceSale').val(getFormatValue(total));
+// 	$('#inputPriceSale').val(getFormatValue(total));
+// }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function cotizacion(){
-	let response = sendPost("getQuote", {typeCoin: "USD", dateQuote: 1});
-	todayQuote = true;
-	return parseFloat(response.currentQuote).toFixed(2);
-	// return response;
-}
+// function cotizacion(){
+// 	let response = sendPost("getQuote", {typeCoin: "USD", dateQuote: 1});
+// 	todayQuote = true;
+// 	return parseFloat(response.currentQuote).toFixed(2);
+// 	// return response;
+// }
 
 // async function cotizacion() {
 //     let response = await sendAsyncPost("getQuote", {typeCoin: "USD", dateQuote: 1});
@@ -1419,242 +1618,188 @@ function cotizacion(){
 // }
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-function openModalAddProduct(){
+// function openModalAddProduct(){
+// 	console.log("openModalAddProduct")
 
-	$('#inputCountProduct').val(1);
-	let response = sendPost("getConfiguration", {nameConfiguration: "PERMITIR_PRODUCTOS_NO_INGRESADOS"});
-	if(response.result == 2){
-		if (response.configValue == "SI"){
-			var x = elementsNoRemoved();
-			if(x < 80){
+// 	$('#inputCountProduct').val(1);
+// 	let response = sendPost("getConfiguration", {nameConfiguration: "PERMITIR_PRODUCTOS_NO_INGRESADOS"});
+// 	if(response.result == 2){
+// 		if (response.configValue == "SI"){
+// 			var x = elementsNoRemoved();
+// 			if(x < 80){
 
-				clearModalDetail();
-				$('#inputDescriptionProduct').val(""); //se limpia el buscador
+// 				clearModalDetail();
+// 				$('#inputDescriptionProduct').val(""); //se limpia el buscador
 
-				sendAsyncPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"}) // (CREO) busca si la empresa tiene IVA por defecto y lo pone, de lo contrario coloca el 22% por defecto
-				.then(( response )=>{
-					//console.log(response);
-					if ( response.result == 2 ){
-						$('#inputTaxProduct').val( response.configValue );
-					}else{
-						$('#inputTaxProduct').val( 3 );
-					}
-				})
+// 				sendAsyncPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"}) // (CREO) busca si la empresa tiene IVA por defecto y lo pone, de lo contrario coloca el 22% por defecto
+// 				.then(( response )=>{
+// 					//console.log(response);
+// 					if ( response.result == 2 ){
+// 						$('#inputTaxProduct').val( response.configValue );
+// 					}else{
+// 						$('#inputTaxProduct').val( 3 );
+// 					}
+// 				})
 
-				$('#modalAddProduct').modal();
+// 				$('#modalAddProduct').modal();
 
-			}else showReplyMessage(1, "80 artículos es la cantidad máxima soportada", "Detalles", null);
-		}
-	}
-}
+// 			}else showReplyMessage(1, "80 artículos es la cantidad máxima soportada", "Detalles", null);
+// 		}
+// 	}
+// }
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-function openModalGetPrices(){
-	console.log("openModalGetPrices")
-	$('#inputTextToSearchPrice').val("");
-	let valueToSearch = $('#inputTextToSearchPrice').val();
-	let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
-	$('#tbodyListPrice').empty();
-	if(response.result == 2){
-		let list = response.listResult;
-		firstRow = true;
-		for (var i = 0; i < list.length; i++) {
-			let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
-			$('#tbodyListPrice').append(row);
-			if(firstRow){
-				$('#tbodyListPrice tr:first').addClass('selected')
-				firstRow = false
-			}
-		}
-		$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
-			$('#inputTextToSearchPrice').prop( "readOnly", false );
-			$('#inputTextToSearchPrice').focus();
-		});
-		$('#modalListPrice').modal("show");
-	}
-}
-
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-//obtener la lista de articulos usando getSuggestionProductByDescription
-function getListPrice(element){
-	console.log("getListPrice")
-	if($(element).val().length > 0 || $('#inputTextToSearchPrice').prop( "readOnly") == false){
-		let valueToSearch = $('#inputTextToSearchPrice').val();
-		let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
-		$('#tbodyListPrice').empty();
-		if(response.result == 2){
-			let list = response.listResult;
-			firstRow = true;
-			for (var i = 0; i < list.length; i++) {
-				let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
-				$('#tbodyListPrice').append(row);
-				if(firstRow){
-					$('#tbodyListPrice tr:first').addClass('selected')
-					firstRow = false
-				}
-			}
-		}
-	}
-}
+// function openModalGetPrices(){
+// 	console.log("openModalGetPrices")
+// 	$('#inputTextToSearchPrice').val("");
+// 	let valueToSearch = $('#inputTextToSearchPrice').val();
+// 	let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
+// 	$('#tbodyListPrice').empty();
+// 	if(response.result == 2){
+// 		let list = response.listResult;
+// 		firstRow = true;
+// 		for (var i = 0; i < list.length; i++) {
+// 			let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
+// 			$('#tbodyListPrice').append(row);
+// 			if(firstRow){
+// 				$('#tbodyListPrice tr:first').addClass('selected')
+// 				firstRow = false
+// 			}
+// 		}
+// 		$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
+// 			$('#inputTextToSearchPrice').prop( "readOnly", false );
+// 			$('#inputTextToSearchPrice').focus();
+// 		});
+// 		$('#modalListPrice').modal("show");
+// 	}
+// }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-//crar una nueva linea para la tabla que muestra los articulos
-function createRowListPrice(idProduct, description, heading, price, coin){
-	let row = "<tr>";
-	let priceUYU = "";
-	let priceUSD = "";
-
-	if(!todayQuote){
-		USD = cotizacion();
-	}
-
-		// let response = cotizacion();
-		// if(response.result == 2){
-		// 	quote = parseFloat(response.currentQuote);
-		// }
-	// todayQuote = false;
-	// quote = cotizacion();
-
-	// let moneyToConvert = "";
-	if (coin == 'UYU'){
-		priceUYU = "<td class='text-center align-middle'> $  "+ price +"</td>";
-	}
-	else if (coin == 'USD'){
-		priceUSD = "<td class='text-center align-middle'> U$S  "+ price +"</td>";
-	}
-
-	row += "<td class='text-left align-middle'>"+ description +"</td>";
-	row += "<td class='text-left align-middle'>"+ heading +"</td>";
-	row += priceUYU;
-	row += priceUSD
-	row += "<td class='text-center align-middle'><button onclick='addToCar(this, " + idProduct + ")' class='btn btn-sm background-template-color2 text-template-background'><i class='fas fa-cart-plus text-mycolor'></i></button></td>";
-
-	return row;
-}
 
 //agrega un nuevo producto al carro de compra
-function addToCar(element, idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
-	mostrarLoader(true)
-	console.log(element)
-	$("#tbodyListPrice button").attr('disabled', "true");
-	// $(element).attr('disabled', 'true')
-	$('#modalListPrice').modal("hide")
-	// $(element).off('click');
-	// let response = sendPost('getProductById', { idProduct: idProduct});
-	// if(response.result == 2){
+// function addToCar(element, idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
+// 	console.log("addToCar");
+// 	mostrarLoader(true)
+// 	console.log(element)
+// 	$("#tbodyListPrice button").attr('disabled', "true");
+// 	// $(element).attr('disabled', 'true')
+// 	$('#modalListPrice').modal("hide")
+// 	// $(element).off('click');
+// 	// let response = sendPost('getProductById', { idProduct: idProduct});
+// 	// if(response.result == 2){
 
-	sendAsyncPost("getProductById", { idProduct: idProduct })
-		.then(( response )=>{
-			mostrarLoader(false)
-			$('#modalListPrice').modal('hide');
-			let newProduct = response.objectResult;
-			// console.log(newProduct);
-			if(newProduct.moneda == "USD")
-				newProduct.importe = calculeQuote(newProduct.importe, USD, newProduct.moneda, "UYU");
-			$('#inputDescriptionProduct').val(newProduct.descripcion);
-			$('#inputDetailProduct').val(newProduct.detalle);
-			$('#inputCountProduct').val(1)
-			$('#inputDiscountProduct').val(newProduct.descuento);
-			$('#inputTaxProduct').val(newProduct.idIva);
-			$('#inputPriceProduct').val(newProduct.importe);
-			idProductSelected = idProduct;
-			calculateInverseByCost();
-			insertNewDetail();
-			$("#tbodyListPrice button").attr('disabled', "false");
-			// $(element).on('click', function() {
-			// 	addToCar(element, idProduct);
-			// });
-		})
-		.catch(function(response){
-			mostrarLoader(false)
-			showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
-			$("#tbodyListPrice button").attr('disabled', "false");
+// 	sendAsyncPost("getProductById", { idProduct: idProduct })
+// 		.then(( response )=>{
+// 			mostrarLoader(false)
+// 			$('#modalListPrice').modal('hide');
+// 			let newProduct = response.objectResult;
+// 			// console.log(newProduct);
+// 			if(newProduct.moneda == "USD")
+// 				newProduct.importe = calculeQuote(newProduct.importe, USD, newProduct.moneda, "UYU");
+// 			$('#inputDescriptionProduct').val(newProduct.descripcion);
+// 			$('#inputDetailProduct').val(newProduct.detalle);
+// 			$('#inputCountProduct').val(1)
+// 			$('#inputDiscountProduct').val(newProduct.descuento);
+// 			$('#inputTaxProduct').val(newProduct.idIva);
+// 			$('#inputPriceProduct').val(newProduct.importe);
+// 			$('#inputUnidadVentaProduct').val(newProduct.unidad_venta);
+// 			idProductSelected = idProduct;
+// 			calculateInverseByCost();
+// 			insertNewDetail();
+// 			$("#tbodyListPrice button").attr('disabled', "false");
+// 			// $(element).on('click', function() {
+// 			// 	addToCar(element, idProduct);
+// 			// });
+// 		})
+// 		.catch(function(response){
+// 			mostrarLoader(false)
+// 			showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+// 			$("#tbodyListPrice button").attr('disabled', "false");
 
-			console.log("este es el catch", response);
-		});
-	// } else {
-		// mostrarLoader(false)
+// 			console.log("este es el catch", response);
+// 		});
+// 	// } else {
+// 		// mostrarLoader(false)
 
-		// showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
-		// $("#tbodyListPrice button").attr('disabled', "false");
-		// $(element).on('click', function() {
-		// 	addToCar(element, idProduct);
-		// });
+// 		// showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
+// 		// $("#tbodyListPrice button").attr('disabled', "false");
+// 		// $(element).on('click', function() {
+// 		// 	addToCar(element, idProduct);
+// 		// });
 
-	// }
-}
+// 	// }
+// }
 
-function elementsNoRemoved (){ // Devuelve la cantidad de productos en el carro
-	count = 0
-	for (var i = productsInCart.length - 1; i >= 0; i--) {
-		if (productsInCart[i].removed == "false" || productsInCart[i].removed == false){
-			count++;
-		}
-	}
-	return count;
-}
+// function elementsNoRemoved (){ // Devuelve la cantidad de productos en el carro
+// 	count = 0
+// 	for (var i = productsInCart.length - 1; i >= 0; i--) {
+// 		if (productsInCart[i].removed == "false" || productsInCart[i].removed == false){
+// 			count++;
+// 		}
+// 	}
+// 	return count;
+// }
 
-function clearModalDetail(){ // Limpia el modal de agregar producto
-	// $('#inputTextToSearchDetail').val("");
-	$('#inputDetailProduct').val("");
-	$('#inputPriceProduct').val("");
-	$('#inputDiscountProduct').val("");
-	$('#inputSubtotalProduct').val(0);
+// function clearModalDetail(){ // Limpia el modal de agregar producto
+// 	// $('#inputTextToSearchDetail').val("");
+// 	$('#inputDetailProduct').val("");
+// 	$('#inputPriceProduct').val("");
+// 	$('#inputDiscountProduct').val("");
+// 	$('#inputSubtotalProduct').val(0);
+// 	$('#inputUnidadVentaProduct').val('Unidad');
+// 	//HERE
+// 	let allIndicatorsInvoice = [];
 
-	let allIndicatorsInvoice = [];
-
-	$("#inputTaxProduct option").each(function(){
-		allIndicatorsInvoice.push($(this).val());
-	});
-	$('#inputTaxProduct').val( allIndicatorsInvoice[0] );// se agrega un impuesto por defecto para que se muestre en caso de que el impuesto del producto ingresado no esté habilitado
-	$('#inputIVAProduct').val(0);
-	$('#inputTotalProduct').val(0);
-}
+// 	$("#inputTaxProduct option").each(function(){
+// 		allIndicatorsInvoice.push($(this).val());
+// 	});
+// 	$('#inputTaxProduct').val( allIndicatorsInvoice[0] );// se agrega un impuesto por defecto para que se muestre en caso de que el impuesto del producto ingresado no esté habilitado
+// 	$('#inputIVAProduct').val(0);
+// 	$('#inputTotalProduct').val(0);
+// }
 
 //calcula precio sin iva, subtotal, importe, y el valor del iva a partir de cost, coefficient, iva, discount
 //esta funcion se usa en el modal de agregar articulos
-function calculateInverseByCost(){ // FALTA EL TEMA DE EL COEFFICIENT 
-	let count = $('#inputCountProduct').val() || 0;
-	let price = $('#inputPriceProduct').val() || 0;
-	let discount = $('#inputDiscountProduct').val() || 0;
-	let subtotal = $('#inputSubtotalProduct');
-	let total = $('#inputTotalProduct');
-	let taxSelected = $('#inputTaxProduct option:selected').attr('name');
-	let valueIVA = $('#inputIVAProduct');
-	count = parseFloat(count);
-	price = parseFloat(price);
-	discount = parseFloat(discount);
+// function calculateInverseByCost(){ // FALTA EL TEMA DE EL COEFFICIENT 
+// 	let count = $('#inputCountProduct').val() || 0;
+// 	let price = $('#inputPriceProduct').val() || 0;
+// 	let discount = $('#inputDiscountProduct').val() || 0;
+// 	let subtotal = $('#inputSubtotalProduct');
+// 	let total = $('#inputTotalProduct');
+// 	let taxSelected = $('#inputTaxProduct option:selected').attr('name');
+// 	let valueIVA = $('#inputIVAProduct');
+// 	count = parseFloat(count);
+// 	price = parseFloat(price);
+// 	discount = parseFloat(discount);
 
-	// if(!discountPercentage){
-	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-	if(responseDesc.result == 2)
-		discountPercentage = responseDesc.configValue;
-	// }
-	// if(!includeIva){
-	let responseIVA = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
-	if(responseIVA.result == 2)
-		includeIva = responseIVA.configValue;
-	// }
+// 	// if(!discountPercentage){
+// 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
+// 	if(responseDesc.result == 2)
+// 		discountPercentage = responseDesc.configValue;
+// 	// }
+// 	// if(!includeIva){
+// 	let responseIVA = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
+// 	if(responseIVA.result == 2)
+// 		includeIva = responseIVA.configValue;
+// 	// }
 
 
-	if(discountPercentage == "SI"){
-		if(discount > 0)
-			discount = ((price * count) * discount)/100;
-	}
+// 	if(discountPercentage == "SI"){
+// 		if(discount > 0)
+// 			discount = ((price * count) * discount)/100;
+// 	}
 
-	if(includeIva == "SI"){
-		x = parseFloat(((price * count) - discount) - ((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)
-		y = parseFloat(((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)// importe / (1+(iva/100))
-		z = parseFloat(((price * count) - discount)).toFixed(2)
-	}else{
-		x = parseFloat(((price * count) - discount)*(parseFloat(taxSelected)/100)).toFixed(2);
-		y = parseFloat(((price * count) - discount)).toFixed(2)
-		z = (parseFloat(x) + parseFloat(y)).toFixed(2);
-	}
-	valueIVA.val(x);
-	subtotal.val(y);
-	total.val(z);
-}
+// 	if(includeIva == "SI"){
+// 		x = parseFloat(((price * count) - discount) - ((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)
+// 		y = parseFloat(((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)// importe / (1+(iva/100))
+// 		z = parseFloat(((price * count) - discount)).toFixed(2)
+// 	}else{
+// 		x = parseFloat(((price * count) - discount)*(parseFloat(taxSelected)/100)).toFixed(2);
+// 		y = parseFloat(((price * count) - discount)).toFixed(2)
+// 		z = (parseFloat(x) + parseFloat(y)).toFixed(2);
+// 	}
+// 	valueIVA.val(x);
+// 	subtotal.val(y);
+// 	total.val(z);
+// }

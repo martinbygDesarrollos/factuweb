@@ -57,10 +57,34 @@ class handleDateTime{
 	}
 
 	//funcion que devuelve fecha y hora actual en formato string concatenado 20211012093347
+	// public function getCurrentDateTimeInt(){
+	// 	date_default_timezone_set('America/Montevideo');
+	// 	$dateTime = date('m-d-Y H:i:s');
+	// 	return substr($dateTime, 6, 4) . substr($dateTime, 0, 2) . substr($dateTime, 3, 2) . substr($dateTime,11,2) . substr($dateTime, 14, 2) . substr($dateTime, 17, 2);
+	// }
 	public function getCurrentDateTimeInt(){
 		date_default_timezone_set('America/Montevideo');
-		$dateTime = date('m-d-Y h:i:s a', time());
-		return substr($dateTime, 6, 4) . substr($dateTime, 0, 2) . substr($dateTime, 3, 2) . substr($dateTime,11,2) . substr($dateTime, 14, 2) . substr($dateTime, 17, 2);
+		return date('YmdHis', time());
+	}
+
+	//funcion que devuelve fecha actual en formato string concatenado 20211012 a partir de una fecha asi 2021-10-12
+	public function getCurrentDateFormatDB($date){
+		date_default_timezone_set('America/Montevideo');
+		return substr($date, 0, 4) . substr($date, 5, 2) . substr($date, 8, 2);
+	}
+
+	public function formatDateTimeFromInt($dateTimeInt){
+		date_default_timezone_set('America/Montevideo');
+		
+		// Extraer cada parte del formato YYYYMMDDHHmmSS
+		$year = substr($dateTimeInt, 0, 4);    // YYYY
+		$month = substr($dateTimeInt, 4, 2);   // MM
+		$day = substr($dateTimeInt, 6, 2);     // DD
+		$hour = substr($dateTimeInt, 8, 2);    // HH
+		$minute = substr($dateTimeInt, 10, 2); // mm
+		$second = substr($dateTimeInt, 12, 2); // SS
+		
+		return $day . '/' . $month . '/' . $year . ' ' . $hour . ':' . $minute . ':' . $second;
 	}
 
 	public function getCurrentDateInt(){

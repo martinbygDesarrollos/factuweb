@@ -159,6 +159,12 @@ class sendPetition{
 		$thisClass = new sendPetition();
 		return $thisClass->prepareAndSendCurl("GET", "company/".$rut."?CustomFields=*&IncludeLogo=1", $token, null);
 	}
+	// NEW
+	public function reserveCFE($rut, $data, $token){
+		error_log("PETICION: POST - " . "company/$rut/reservations - DATA: TipoCFE:" . $data['TipoCFE'] );
+		$thisClass = new sendPetition();
+		return $thisClass->prepareAndSendCurl("POST", "company/".$rut."/reservations", $token, $data);
+	}
 
 	public function consultarCertificadoDigital($rut, $token){
 		$sendPetitionInstance = new sendPetition();

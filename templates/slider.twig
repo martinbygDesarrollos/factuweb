@@ -45,11 +45,19 @@
                     <i class="fas fa-receipt text-template-background ml-3 mr-2"></i>Lista de artículos
                 </a>
             </li>
+            {% if systemSession.permission.CAJA == 'SI' %}
+            <li class="nav-item">
+                <a href="{{ path_for('CashRegister') }}" class="nav-link text-dark font-italic bg-light">
+                    <i class="fas fa-cash-register text-template-background ml-3 mr-2"></i>Caja
+                </a>
+            </li>
             {# <li class="nav-item">
                 <a href="{{ path_for('Caja') }}" class="nav-link text-dark font-italic bg-light">
                     <i class="fas fa-cash-register text-template-background ml-3 mr-2"></i>Caja
                 </a>
             </li> #}
+            {% endif %}
+
         </ul>
         {% endif %}
         {% if systemSession.permission.CLIENT == 'SI' %}

@@ -28,6 +28,27 @@ class ctr_rest{
 		// if($responseGetToken->result == 2){
 		// }else return $responseGetToken;
 	}
+	//NEW
+	public function reserveCFE($rut, $data, $token){
+		$sendPetitionClass = new sendPetition();
+		$response = new \stdClass();
+		$responseRest = json_decode($sendPetitionClass->reserveCFE($rut, $data, $token));
+		if($responseRest->resultado->codigo == 200){
+			$response->result = 2;
+			$objectResult = new \stdClass();
+			$objectResult->tipoCFE = $responseRest->tipoCFE;
+			$objectResult->serieCFE = $responseRest->serieCFE;
+			$objectResult->numeroCFE = $responseRest->numeroCFE;
+			$objectResult->cae = $responseRest->cae;
+			$objectResult->vencimiento = $responseRest->vencimiento;
+			$response->CFE = $objectResult;
+		} else {
+			$response->result = 0;
+			$response->CFE = null;
+			$response->message = "Error. No se pudo reservar el CFE";
+		}
+		return $response;
+	}
 	//UPDATED
 	public function buscarCliente($rut, $textToSearch, $token){
 		$sendPetitionClass = new sendPetition();
@@ -569,6 +590,99 @@ class ctr_rest{
 			$response->message = $responseRest->resultado->error;
 		}
 		// }else return $responseToken;
+
+		return $response;
+	}
+	// NEW
+	public function nuevoCFENew($data, $tokenRest){
+		$response = new \stdClass();
+		$sendPetitionClass = new sendPetition();
+		$restControllerInstance = new ctr_rest();
+
+		// Función auxiliar: solo convierte "" y null a null, mantiene todo lo demás
+		$getValueOrNull = function($value) {
+			return ($value === "" || $value === null) ? null : $value;
+		};
+
+		// Extraer valores del array $data
+		$rut = $getValueOrNull($data['rut'] ?? null);
+		$tipoCFE = $getValueOrNull($data['tipoCFE'] ?? null);
+		$fecha = $getValueOrNull($data['dateVoucher'] ?? null);
+		$montosBrutos = $getValueOrNull($data['grossAmount'] ?? null);
+		$formaPago = $getValueOrNull($data['formaPago'] ?? null);
+		$fechaVencimiento = $getValueOrNull($data['dateExpiration'] ?? null);
+		$tipoMoneda = $getValueOrNull($data['typeCoin'] ?? null);
+		$exchangeRate = $getValueOrNull($data['exchangeRate'] ?? null);
+		$detalle = $getValueOrNull($data['arrayDetail'] ?? null);
+		$receptor = $getValueOrNull($data['receiver'] ?? null);
+		$indCobranza = $getValueOrNull($data['IndCobranzaPropia'] ?? null);
+		$referencias = $getValueOrNull($data['referencias'] ?? null);
+		$adenda = $getValueOrNull($data['adenda'] ?? null);
+		$sucursal = $getValueOrNull($data['sucursal'] ?? null);
+		$idEnvio = $getValueOrNull($data['idEnvio'] ?? null);
+		$mediosPago = $getValueOrNull($data['mediosPago'] ?? null);
+		$ticketFormat = $getValueOrNull($data['ticketFormat'] ?? null);
+		
+		$serieCFE = $getValueOrNull($data['serieCFE'] ?? null);
+		$numeroCFE = $getValueOrNull($data['numeroCFE'] ?? null);
+		
+		$dataToSend = array(
+			"tipoCFE" => $tipoCFE,
+			"fecha" => $fecha,
+			"montosBrutos" => $montosBrutos,
+			"formaPago" => $formaPago,
+			"receptor" => $receptor,
+			"tipoMoneda" => $tipoMoneda,
+			"detalles" => $detalle
+		);
+
+		if(!is_null($idEnvio))
+			$dataToSend['idEnvio'] = $idEnvio;
+
+		if ( isset($sucursal) && $sucursal != "" && $sucursal > 0 ){
+			$dataToSend['sucursal'] = $sucursal;
+		}
+
+		if($formaPago == 2 && !is_null($fechaVencimiento))
+			$dataToSend['vencimiento'] = $fechaVencimiento;
+
+		if(!is_null($indCobranza))
+			$dataToSend['IndCobranzaPropia'] = $indCobranza;
+
+		if(!is_null($referencias))
+			$dataToSend['referencias'] = $referencias;
+
+		if(strcmp($tipoMoneda, "UYU") != 0)
+			$dataToSend['tipoCambio'] = $exchangeRate;
+
+		if(!is_null($adenda))
+			$dataToSend['adenda'] = $adenda;
+		
+		if(!is_null($mediosPago)){
+			$dataToSend['mediosPago'] = $mediosPago;
+		}
+
+		if(!is_null($serieCFE)){
+			$dataToSend['serieCFE'] = $serieCFE;
+		}
+		if(!is_null($numeroCFE)){
+			$dataToSend['numeroCFE'] = $numeroCFE;
+		}
+		
+		if(!is_null($ticketFormat)){
+			$dataToSend['conRepresentacionImpresa'] = 1;
+			$dataToSend['formatoRepresentacionImpresa'] = $ticketFormat;
+		}
+		
+		$responseRest = json_decode($sendPetitionClass->nuevoCFE($rut, $dataToSend, $tokenRest));
+		if($responseRest->resultado->codigo == 201){
+			$response->result = 2;
+			unset($responseRest->resultado);
+			$response->cfe = $responseRest;
+		}else{
+			$response->result = 0;
+			$response->message = $responseRest->resultado->error;
+		}
 
 		return $response;
 	}

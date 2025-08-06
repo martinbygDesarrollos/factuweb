@@ -3,18 +3,18 @@
 		<div class="modal-content">
 			<div class="modal-header background-template-color">
 				<span class="modal-title text-template-color" id="titleModalSetPayments">Agregar medios de pago</span>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				{# <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
-				</button>
+				</button> #}
 			</div>
 			<div class="modal-body">
-                <div id="containerPayments" class="border rounded shadow-sm p-2 w-100" style="height: 80%;"> <!-- ESTE DIV CONTENDRA TODOS LOS MEDIOS DE PAGOS QUE SE AGREGAN -->
-                    <div class="row">
+                <div id="containerPayments" class="border rounded shadow-sm pl-3 pr-3 pt-2 pb-2 w-100" style="height: 80%;"> <!-- ESTE DIV CONTENDRA TODOS LOS MEDIOS DE PAGOS QUE SE AGREGAN -->
+                    <div class="row payments-header">
                         <div class="col-6 pr-1">
-                            <label for="x" class="col-form-label col-form-label-sm">Medio de pago: </label>
+                            <label class="col-form-label col-form-label-sm">Medio de pago: </label>
                         </div>
                         <div class="col-6 p-1">
-                            <label for="y" class="col-form-label col-form-label-sm">Monto: </label>
+                            <label class="col-form-label col-form-label-sm">Monto: </label>
                         </div>
                     </div>
                     {# <div class="row">
@@ -59,41 +59,44 @@
                     </div> #}
                 </div>
 				<div class="d-flex flex-row-reverse mt-2">  <!-- ESTE DIV CONTENDRA LAS ACCIONES (EN PRINCIPIO SOLO AGREGAR NUEVO MODO DE PAGO QUE MUESTRA UN MODAL PARA SELECCIONAR UNO Y LO AÑADE) -->
-                    <button id="btnAddPayment" type="button" class="btn btn-success shadow-sm" onclick="insertNewPayment()" >Agregar (Ins) <i class="fas fa-wallet"></i></button>
+                    {# <button id="btnAddPayment" type="button" class="btn btn-success shadow-sm" onclick="insertNewPayment()" >Agregar (Ins) <i class="fas fa-wallet"></i></button> #}
+                    <button id="btnAddPayment" class="btn btn-success shadow-sm" onclick="insertNewPayment()" style="float:right;"><span class="maintext"> Agregar <i class="fas fa-wallet"></i> </span> <span class="shortcut"> (Insertar) </span></button>
+
                 </div>
                 <div class="d-flex flex-row-reverse mt-2">
-                    <label for="inputPriceSale2" class="label-decoration-venta"><b>Total:</b>
-                        <input class="form-control form-control-sm text-right" type="float" readonly id="inputPriceSale2" value="2060.00" tabindex="-1">
+                    <label for="inputPriceSaleModal" class="label-decoration-venta" style="max-width: 200px;"><b>Total:</b>
+                        <input class="form-control form-control-lg text-right" type="float" readonly id="inputPriceSaleModal" value="2060.00" tabindex="-1">
                     </label>
 
-                    <label for="inputPriceSale22" class="label-decoration-venta mr-2"><b>Restante:</b>
-                        <input class="form-control form-control-sm text-right" type="float" readonly id="inputPriceSale22" value="0.00" tabindex="-1" onchange="this.style.backgroundColor = (this.value == 0 ? '#2ebd4f' : (this.value < 0 ? '#ff7a87' : ''))">
+                    <label for="inputRemainingAmount" class="label-decoration-venta mr-2" style="max-width: 200px;"><b>Restante:</b>
+                        <input class="form-control form-control-lg text-right" type="float" readonly id="inputRemainingAmount" value="0.00" tabindex="-1" onchange="isValid(this)">
                     </label>
                 </div>
 			</div>
 			<div class="modal-footer justify-content-between">
-				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
-				<button id="modalSetPaymentsbtnConfirmSale" type="button" class="btn btn-success shadow-sm" onclick="createNewFactura()"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Ctrl + Fin) </span></button>
+				<button id="modalSetPaymentsbtnCancelSale"  type="button" class="btn btn-danger shadow-sm" onclick="calcelSale()" style="float:right;"><span class="maintext"> Cancelar </span> <span class="shortcut"> (Esc) </span></button>
+				<button id="modalSetPaymentsbtnConfirmSale" type="button" class="btn btn-success shadow-sm" onclick="createNewFactura()"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Enter) </span></button>
 			</div>
 		</div>
 	</div>
 </div>
 
-<div id="modalInsertNewPaymentMethod" class="modal" role="dialog">
+<div class="modal fade " id="modalInsertNewPaymentMethod" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div id="modalInsertNewPaymentMethodColor" class="modal-header background-template-color">
                 <span id="modalInsertNewPaymentMethodTitle" class="modal-title text-template-color"> Insertar nuevo método de pago</span>
-                <button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+                {# <button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
-                </button>
+                </button> #}
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col">
-                        <select id="modalInsertNewPaymentMethodOptions" class="custom-select custom-select-sm shadow-sm" tabindex="1">
+                        <select id="modalInsertNewPaymentMethodOptions" size="12" class="custom-select custom-select-sm shadow-sm" onkeypress="keyPressSetPayment(event, null, null)" tabindex="1">
                             <option value="Efectivo">Efectivo</option>
                             <option value="Tarjeta">Tarjeta</option>
+                            <option value="Tarjeta Offline">Tarjeta OFFLINE</option>
                             <option value="Cheque">Cheque</option>
                             <option value="Giro">Giro</option>
                             <option value="Depósito">Depósito</option>
@@ -106,13 +109,15 @@
                         </select>
                     </div>
                     <div class="col">
-                        <input class="form-control form-control-sm text-right" type="float" id="modalInsertNewPaymentMethodAmount" tabindex="2">
+                        <input class="form-control form-control-sm text-right" type="float" id="modalInsertNewPaymentMethodAmount" onkeypress="keyPressSetPayment(event, null, null)" tabindex="2">
                     </div>
                 </div>
             </div>
             <div class="modal-footer justify-content-between">
-                <button id="modalInsertNewPaymentMethodButtonCancel" type="button" class="btn btn-danger shadow-sm" data-dismiss="modal" tabindex="3">Cancelar</button>
-                <button id="modalInsertNewPaymentMethodButtonConfirm" type="button" class="btn btn-success shadow-sm" tabindex="4">Confirmar (Ins)</button>
+                {# <button id="modalInsertNewPaymentMethodButtonCancel" type="button" class="btn btn-danger shadow-sm" data-dismiss="modal"  tabindex="3">Cancelar</button> #}
+                <button id="modalInsertNewPaymentMethodButtonCancel" class="btn btn-danger shadow-sm" onclick="cancelInsertPaymentMethod()" style="float:right;"><span class="maintext"> Cancelar </span> <span class="shortcut"> (Esc) </span></button>
+                <button id="modalInsertNewPaymentMethodButtonConfirm" class="btn btn-success shadow-sm" onclick="insertPaymentMethod($('#modalInsertNewPaymentMethodOptions').val(), $('#modalInsertNewPaymentMethodAmount').val())" style="float:right;"><span class="maintext"> Confirmar </span> <span class="shortcut"> (Enter) </span></button>
+                {# <button id="modalInsertNewPaymentMethodButtonConfirm" type="button" class="btn btn-success shadow-sm" tabindex="4">Confirmar (Ins)</button> #}
             </div>
         </div>
     </div>

@@ -158,6 +158,53 @@ return function (App $app){
 			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
+	//NEW
+	$app->post('/createNewVoucherPointSale', function(Request $request, Response $response) use ($container, $userClass, $userController, $voucherController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('VENTAS', $responseCurrentSession->currentSession->idEmpresa);
+			// error_log( "PERMISO 'VENTAS' EMPRESA: " . $responseCurrentSession->currentSession->idEmpresa . ": " . $responsePermissions->result);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$objClient = json_decode(stripslashes($data['client']), true);
+				$typeVoucher = $data['typeVoucher'];
+				$typeCoin = $data['typeCoin'];
+				$formaPago = isset($data['formaPago']) ? $data['formaPago'] : null;
+				$shapePayment = $data['shapePayment'];
+				$dateVoucher = date('Ymd');
+				$dateExpiration = isset($data['dateExpiration']) ? $data['dateExpiration'] : null;
+				$adenda = isset($data['adenda']) ? $data['adenda'] : null;
+				$idEnvio = null;
+				$discountTipo = $data['discountTipo'];
+				$CFE_reservado = isset($data['CFE_reservado']) ? $data['CFE_reservado'] : null;
+				$mediosPago = isset($data['mediosPago']) ? json_decode($data['mediosPago'], true) : array();
+				$listDetail = $responseCurrentSession->currentSession->cart;
+				// var_dump($mediosPago);
+				// var_dump($listDetail);
+				// var_dump($adenda);
+				// exit;	
+				$idUser = $responseCurrentSession->currentSession->idUser;
+				$responseGetFormato = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
+				if($responseGetFormato->result == 2){
+					$ticketFormat = "application/pdf;template=".$responseGetFormato->objectResult->valor;
+				}
+				// Le agrego al objecto de la sesion el formato del tiket (POR AHORA)
+				$responseCurrentSession->currentSession->ticketFormat = $ticketFormat;
+
+				// var_dump($objClient);
+				// var_dump($typeVoucher);
+				// var_dump($typeCoin);
+				// var_dump($shapePayment);
+				// var_dump($dateVoucher);
+				// var_dump($discountTipo);
+				// var_dump($mediosPago);
+				// var_dump($listDetail);
+				// var_dump($CFE_reservado);
+				// exit;
+				return json_encode($voucherController->createNewVoucherNew($objClient, $typeVoucher, $formaPago, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $responseCurrentSession->currentSession));
+			}else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
 	//UPDATED
 	$app->post('/loadProductsFromDetails', function(Request $request, Response $response) use ($userController, $voucherController){
 		$responseCurrentSession = $userController->validateCurrentSession();

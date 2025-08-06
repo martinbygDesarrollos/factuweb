@@ -241,6 +241,7 @@ function validation_digit(ci){
 }
 
 function calculeQuote (currentValue, quote, currentMoney, moneyToConvert){
+	console.log("calculeQuote" + currentValue + " - " + quote + " - " + currentMoney + " - " + moneyToConvert)
 	var newValue = 1;
 
 
@@ -256,6 +257,7 @@ function calculeQuote (currentValue, quote, currentMoney, moneyToConvert){
 	}
 
 	newValue = parseFloat(newValue).toFixed(2);
+	console.log(newValue)
 	return newValue;
 }
 
@@ -268,4 +270,21 @@ function parceDateForInput(dateToChange){
 function parceDateFormatBar(dateToChange){
 	let dateArray = dateToChange.split('-');
 	return `${dateArray[2]}/${dateArray[1]}/${dateArray[0]}`;
+}
+
+function getIvaValue(idIva){
+	let value = 1;
+	switch (idIva) {
+		case 2:
+			value = 1.1;
+			break;
+		case 3:
+			value = 1.22;
+			break;
+			
+		default:
+			value = 1;
+			break;
+	}
+	return value;
 }

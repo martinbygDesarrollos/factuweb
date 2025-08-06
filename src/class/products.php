@@ -225,14 +225,14 @@ class products{
 		return $responseQuery;
 	}
 	//UPDATED
-	public function insertProduct($idHeading, $idIva, $idInventory, $idBusiness, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode){
+	public function insertProduct($idHeading, $idIva, $idInventory, $idBusiness, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode, $unidadVenta){
 		$dbClass = new DataBase();
-		return $dbClass->sendQuery("INSERT INTO articulos(idRubro, idIva, idInventario, idEmpresa, descripcion, detalle, marca, moneda, costo, coeficiente, importe, descuento, codigoBarra) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", array('iiiissssdddds', $idHeading, $idIva, $idInventory, $idBusiness, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode), "BOOLE");
+		return $dbClass->sendQuery("INSERT INTO articulos(idRubro, idIva, idInventario, idEmpresa, descripcion, detalle, marca, moneda, costo, coeficiente, importe, descuento, codigoBarra, unidad_venta) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", array('iiiissssddddss', $idHeading, $idIva, $idInventory, $idBusiness, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $amount, $discount, $barcode, $unidadVenta), "BOOLE");
 	}
 
-	public function updateProduct($idHeading, $idIva, $idInventory, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $idBusiness){
+	public function updateProduct($idHeading, $idIva, $idInventory, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $unidadVenta, $idProduct, $idBusiness){
 		$dbClass = new DataBase();
-		return $dbClass->sendQuery("UPDATE articulos SET idRubro= ?, idIva= ?, idInventario= ?, descripcion= ?, detalle= ?, marca= ?, moneda= ?, costo= ?, coeficiente= ?, descuento = ?, importe = ?, codigoBarra= ? WHERE idArticulo = ? AND idEmpresa = ?", array('iiissssddddsii', $idHeading, $idIva, $idInventory, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $idProduct, $idBusiness), "BOOLE");
+		return $dbClass->sendQuery("UPDATE articulos SET idRubro= ?, idIva= ?, idInventario= ?, descripcion= ?, detalle= ?, marca= ?, moneda= ?, costo= ?, coeficiente= ?, descuento = ?, importe = ?, codigoBarra = ?, unidad_venta = ? WHERE idArticulo = ? AND idEmpresa = ?", array('iiissssddddssii', $idHeading, $idIva, $idInventory, $description, $detail, $brand, $typeCoin, $cost, $coefficient, $discount, $amount, $barcode, $unidadVenta, $idProduct, $idBusiness), "BOOLE");
 	}
 	//UPDATED [NEW]
 	public function setInventoryToProduct($idProduct, $idInventory, $idBusiness){
