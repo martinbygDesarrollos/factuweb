@@ -2,7 +2,7 @@
     <div class="py-4 px-3 mb-3 background-template-color">
         <div class="media d-flex justify-content-center ">
             {# <img src="{{path_for('Start')}}img/LogoHeader.png" alt="..." width="150"> #}
-            <img src="{{path_for('Start')}}img/logo_new.png" alt="..." width="200">
+            <img src="{{ path_for('Start') }}img/logo_new.png" alt="..." width="200">
         </div>
         {# <h4 class="text-template-background text-center font-italic ml-1">Efactura</h4> #}
         {% if systemSession %}
@@ -75,7 +75,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{path_for('Clients')}}" class="nav-link text-dark font-italic bg-light">
+                <a href="{{ path_for('Clients') }}" class="nav-link text-dark font-italic bg-light">
                     <i class="fas fa-users text-template-background ml-3 mr-2"></i>Clientes
                 </a>
             </li>
@@ -145,18 +145,18 @@
         {% endif %}
         {% if systemSession.permission.ACCOUNTING == 'SI' %}
         <li class="nav-item">
-            <a href="{{path_for('Accounting')}}" class="nav-link text-dark font-italic bg-light">Contabilidad</a>
+            <a href="{{ path_for('Accounting') }}" class="nav-link text-dark font-italic bg-light">Contabilidad</a>
         </li>
         {% endif %}
 
         <li class="nav-item">
-            <a href="{{path_for('Caes')}}" class="nav-link text-dark font-italic bg-light">
+            <a href="{{ path_for('Caes') }}" class="nav-link text-dark font-italic bg-light">
                 <i class="fas fa-file-alt text-template-background mr-2"></i> Constancias de emisión
             </a>
         </li>
         
         <li class="nav-item">
-            <a href="{{path_for('Settings')}}" class="nav-link text-dark font-italic bg-light">
+            <a href="{{ path_for('Settings') }}" class="nav-link text-dark font-italic bg-light">
                 <i class="fas fa-cog text-template-background mr-2"></i> Configuraciones
             </a>
         </li>

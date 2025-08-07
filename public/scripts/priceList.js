@@ -22,6 +22,7 @@ $('#modalCreateModifyProduct').on('shown.bs.modal', function () {
 		if(response.result == 2)
 			defaultIva = response.configValue;
 	}
+
 });
 
 function loadHeadings(){
@@ -249,6 +250,7 @@ function openModalNewProduct(stockManagement){
 	$('#titleModalCreateModifyProduct').html('Agregar artículo');
 	clearModalProduct();
 	$('#modalCreateModifyProduct').modal();
+	$('#inputUnidadVenta').val('Unidad')
 	$('#btnConfirmProduct').off('click');
 	$('#btnConfirmProduct').click(function(){
 		createNewProduct(stockManagement);
@@ -565,6 +567,7 @@ function createNewProduct(stockManagement){
 	let iva = $('#selectIVA').val();
 	let priceFinal = $('#inputPriceFinal').val() || 0;
 	let barcode = $('#inputBarcode').val() || null;
+	let unidadVenta = $('#inputUnidadVenta').val() || "Unidad";
 
 	let inventory = $('#inputInventory').val() || null;
 	let minInventory = $('#inputMinInventory').val() || null;
@@ -596,7 +599,8 @@ function createNewProduct(stockManagement){
 			barcode: barcode,
 			discount: discount,
 			inventory: inventory, //es el id de inventario que se encuentra como fk en la tabla de articulos
-			minInventory: minInventory //mìnima cantidad de articulos
+			minInventory: minInventory, //mìnima cantidad de articulos
+			unidadVenta: unidadVenta
 		}
 		let response = sendPost('insertProduct',data);
 		showReplyMessage(response.result, response.message, "Nuevo artículo", "modalCreateModifyProduct");

@@ -410,10 +410,12 @@ return function (App $app){
 			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
+				$movimientos = is_array($data['movimientos']) ? $data['movimientos'] : [];
+				$cheques = is_array($data['cheques']) ? $data['cheques'] : [];
 				// echo "<br><br> MOVIMIENTOS <br><br>";
-				// var_dump($data['movimientos']);
+				// var_dump($movimientos);
 				// echo "<br><br> CHEQUES <br><br>";
-				// var_dump($data['cheques']);
+				// var_dump($cheques);
 				// echo "<br><br> EFECTIVO UYU <br><br>";
 				// var_dump($data['efectivo']['UYU']);
 				// echo "<br><br> EFECTIVO USD <br><br>";
@@ -421,7 +423,7 @@ return function (App $app){
 				// echo "<br><br><br><br>";
 				// exit;
 				// $id = $data['id'];
-				return json_encode($cajaController->newSnap($data['movimientos'], $data['cheques'], $data['efectivo']['UYU'], $data['efectivo']['USD'], $data['saldos']['UYU'], $data['saldos']['USD'], $responseCurrentSession->currentSession));
+				return json_encode($cajaController->newSnap($movimientos, $cheques, $data['efectivo']['UYU'], $data['efectivo']['USD'], $data['saldos']['UYU'], $data['saldos']['USD'], $responseCurrentSession->currentSession));
 			} else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});
