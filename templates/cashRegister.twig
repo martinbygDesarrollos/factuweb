@@ -101,8 +101,8 @@
 									<span >Totales en caja</span>
 									<div>
 										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button" onclick="showCheques()"> <span> Cheques {{ cheques|length }}</span> </button>
-										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>U$D {{ totales.USD }}</span> </button>
-										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>$ {{ totales.UYU }}</span> </button>
+										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>U$D {{ totales.USD|number_format(2, ',', '.') }}</span> </button>
+										<button id="" class="btn btn-sm background-template-color2 text-template-background font-weight-bold shadow-sm mb-1" type="button"> <span>$ {{ totales.UYU|number_format(2, ',', '.') }}</span> </button>
 										{# {{ dump(cheques) }} #}
 									</div>
 								</div>
