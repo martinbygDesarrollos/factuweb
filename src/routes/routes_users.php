@@ -410,7 +410,8 @@ return function (App $app){
 			$responsePermissions = $userController->validatePermissions('CAJA', $responseCurrentSession->currentSession->idEmpresa);
 			if($responsePermissions->result == 2){
 				$data = $request->getParams();
-				$movimientos = is_array($data['movimientos']) ? $data['movimientos'] : [];
+				// $movimientos = is_array($data['movimientos']) ? $data['movimientos'] : [];
+				$movimientos = isset($data['movimientos']) && is_array($data['movimientos']) ? $data['movimientos'] : [];
 				// $cheques = is_array($data['cheques']) ? $data['cheques'] : [];
 				$cheques = isset($data['cheques']) && is_array($data['cheques']) ? $data['cheques'] : [];
 				// echo "<br><br> MOVIMIENTOS <br><br>";
