@@ -157,7 +157,7 @@ class ctr_vouchers{
 	}
 
 	//NEW
-	public function createNewVoucherNew($objClient, $tipoCFE, $formaPago, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $currentSession){
+	public function createNewVoucherNew($objClient, $tipoCFE, $formaPago, $typeCoin, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $currentSession){
 		$response = new \stdClass();
 		$clientController = new ctr_clients();
 		$restController = new ctr_rest();

@@ -3,9 +3,9 @@
 		<div class="modal-content">
 			<div class="modal-header background-template-color">
 				<span class="modal-title  text-template-color">Clientes</span>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				{# <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
-				</button>
+				</button> #}
 			</div>
 			<div class="modal-body">
 				<div class="input-group shadow-sm mb-1">
@@ -65,13 +65,12 @@
 				</div>
 			</div>
 			<div class="modal-footer justify-content-between">
-				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button style="height: 41px;" type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
 				<button type="button" class="btn background-template-color2 text-template-background shadow-sm" id="setConsumidorFinalSetClientByButton" onclick="setConsumidorFinalByButton()" data-dismiss="modal" title="Consumidor Final">
-					
 					<span class="maintext"> <i class="fas fa-user-times"></i> </span>  <span class="shortcut"> (Esc) </span>
 				</button>
-				<button type="button" class="btn background-template-color2 text-template-background shadow-sm" onclick="cleanFields('modalSetClientByButton')" title="Limpiar campos"><i class="fas fa-eraser"></i></button>
-				<button id="btnConfirmSetClientByButton" onclick="setClient('modalSetClientByButton')" type="button" class="btn btn-success shadow-sm" onkeypress="return keyPressAddClient(event, null, null)">Confirmar</button>
+				<button style="height: 41px;" type="button" class="btn background-template-color2 text-template-background shadow-sm" onclick="cleanFields('modalSetClientByButton')" title="Limpiar campos"><i class="fas fa-eraser"></i></button>
+				<button style="height: 41px;" id="btnConfirmSetClientByButton" onclick="setClient('modalSetClientByButton')" type="button" class="btn btn-success shadow-sm" onkeypress="return keyPressAddClient(event, null, null)">Confirmar</button>
 			</div>
 		</div>
 	</div>

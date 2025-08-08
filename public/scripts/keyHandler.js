@@ -365,7 +365,8 @@ function handleModalSetClientKeyEvents(keyCode, event) {
     console.log("handleModalSetClientKeyEvents")
     if (keyCode == 27) { // Escape
         event.preventDefault();
-        $('#setConsumidorFinal').click()
+        if($('#setConsumidorFinal').prop('disabled', false))
+            $('#setConsumidorFinal').click()
     }
 }
 
@@ -452,7 +453,8 @@ function handleModalSetClientByButtonKeyEvents(keyCode, event) {
     console.log("handleModalSetClientByButtonKeyEvents")
     if (keyCode == 27) { // Escape
         event.preventDefault();
-        $('#setConsumidorFinalSetClientByButton').click()
+        if($('#setConsumidorFinalSetClientByButton').prop('disabled', false))
+            $('#setConsumidorFinalSetClientByButton').click()
     }
 }
 

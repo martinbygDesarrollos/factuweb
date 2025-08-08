@@ -827,3 +827,23 @@ div.selected.row::before {
   margin-left: .3rem;
 }
 @keyframes l2 {to{transform: rotate(1turn)}}
+
+.input-spinner {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+    color: #1D635D;
+}
+
+.input-spinner i {
+    font-size: 14px;
+}
+
+input:disabled {
+    background-color: #f8f9fa !important;
+    opacity: 0.4;
+}

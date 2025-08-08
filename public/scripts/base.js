@@ -39,6 +39,59 @@ function mostrarLoader(valor){
 	}
 }
 
+function mostrarLoaderSearchClient(estado, modal, campo){
+    if(estado){
+        console.log('MOSTRAR LOADER MODAL');
+        
+        // Bloquear todos los campos y botones del modal
+        $('#' + modal + ' input, #' + modal + ' select, #' + modal + ' button, #' + modal + ' textarea').prop('disabled', true);
+        
+        // Agregar spinner al campo específico
+        if(campo && $('#' + campo).length > 0) {
+            // Crear el contenedor del spinner si no existe
+            if($('#' + campo + '_spinner').length === 0) {
+                $('#' + campo).after('<span id="' + campo + '_spinner" class="input-spinner"> <i class="fas fa-circle-notch fa-spin"></i> </span>');
+            }
+            
+            // Posicionar el spinner dentro del input
+            let $input = $('#' + campo);
+            let $spinner = $('#' + campo + '_spinner');
+            
+            // Posicionar el spinner
+            $spinner.css({
+                'position': 'absolute',
+                'right': '10px',
+                'top': '50%',
+                'transform': 'translateY(-50%)',
+                'z-index': '10',
+                'pointer-events': 'none',
+                'color': '#1D635D'
+            });
+            
+            // Hacer el input container relativo si no lo es
+            if($input.parent().css('position') === 'static') {
+                $input.parent().css('position', 'relative');
+            }
+            
+            $spinner.show();
+        }
+    } else {
+        console.log('ESCONDER LOADER MODAL');
+        
+        // Liberar todos los campos y botones del modal
+        $('#' + modal + ' input, #' + modal + ' select, #' + modal + ' button, #' + modal + ' textarea').prop('disabled', false);
+        
+        // Quitar spinner del campo específico
+        if(campo) {
+            $('#' + campo + '_spinner').hide();
+        }
+        
+        // Ocultar loader general
+        $('.loaderback').css('display', 'none');
+        $('.loader').css('display', 'none');
+    }
+}
+
 function updateSoldInfo(inputVariable){
 	let value = inputVariable.checked;
 	// console.log(value)

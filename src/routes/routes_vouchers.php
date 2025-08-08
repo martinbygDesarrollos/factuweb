@@ -170,7 +170,7 @@ return function (App $app){
 				$typeVoucher = $data['typeVoucher'];
 				$typeCoin = $data['typeCoin'];
 				$formaPago = isset($data['formaPago']) ? $data['formaPago'] : null;
-				$shapePayment = $data['shapePayment'];
+				// $shapePayment = $data['shapePayment'];
 				$dateVoucher = date('Ymd');
 				$dateExpiration = isset($data['dateExpiration']) ? $data['dateExpiration'] : null;
 				$adenda = isset($data['adenda']) ? $data['adenda'] : null;
@@ -201,7 +201,7 @@ return function (App $app){
 				// var_dump($listDetail);
 				// var_dump($CFE_reservado);
 				// exit;
-				return json_encode($voucherController->createNewVoucherNew($objClient, $typeVoucher, $formaPago, $typeCoin, $shapePayment, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $responseCurrentSession->currentSession));
+				return json_encode($voucherController->createNewVoucherNew($objClient, $typeVoucher, $formaPago, $typeCoin, $dateVoucher, $dateExpiration, $adenda, $listDetail, $idEnvio, $discountTipo, $mediosPago, $CFE_reservado, $responseCurrentSession->currentSession));
 			}else return json_encode($responsePermissions);
 		}else return json_encode($responseCurrentSession);
 	});

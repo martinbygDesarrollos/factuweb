@@ -38,6 +38,8 @@ return function (App $app) {
                 return $response->withStatus(302)->withHeader('Location', 'iniciar-sesion');
             }
         }
+        $args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
+
         return $this->view->render($response, "index.twig", $args);
         // return $response->withStatus(302)->withHeader('Location', 'iniciar-sesion');
 

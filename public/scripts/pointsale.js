@@ -151,6 +151,7 @@ function continueSale(){
 		$('#modalSetTypeVoucher').modal('show')
 	} else {
 		if(!cliente){ // Si no tiene cliente, hay que seleccionarlo [Selecccionar Cliente]
+			cleanFields('modalSetClient')
 			$('#modalSetClient').modal('show')
 		} else { // Si ya tiene cliente, paso a seleccionar tipo de voucher [Select TypeVoucher]
 			console.log("ABRIR: modalSetTypeVoucher")
@@ -160,6 +161,7 @@ function continueSale(){
 }
 
 function cleanFields(modal) {
+	console.log("cleanFields - " + modal)
 	$('#' + modal).find('input').each(function () {
 		if ($(this).is('[type="checkbox"], [type="radio"]')) {
 			$(this).prop('checked', false);
@@ -175,6 +177,7 @@ function cleanFields(modal) {
 
 function setConsumidorFinalByButton(){ // DESDE EL MODAL DE SELECCIONAR CLIENTE [modalSetClientByButton]
 	cliente = null;
+	cleanFields('modalSetClientByButton')
 	$('#buttonSetClient').find('span').html("Consumidor final");
 }
 
@@ -310,6 +313,84 @@ function confirmTypeVoucher(modal){
 	console.log("confirmTypeVoucher")
 	if($('#selectTypeVoucher').val() == "101_credito" || $('#selectTypeVoucher').val() == "111_credito"){// VENTA A CREDITO GENERAR CFE
 		console.log('VENTA A CREDITO')
+		
+		console.log(cliente)
+		let error = false;
+		let tipoCod = null;
+		let mediosPago = []
+		let tipoMoneda = caja.moneda
+		let adenda = $('#adenda').val() || null; // ADENDA
+		let discountTipo = configDiscountInPercentage
+		let dateValueExpiration = $('#inputDateExpirationVoucher').val();
+
+		if(cliente){
+			tipoCod = validateRut(cliente.document) ? 111 : 101;
+			tipoCod == 101 && (!validateCI(cliente.document)) ? error = "CLIENTE FINAL PERO CI NO VALIDA" : error = false
+		} else {
+			tipoCod = 101;
+		}
+
+		if(!$('#inputNotUseExpirationDate').is(':checked')){
+			if (dateValueExpiration) {
+				// Convertir de YYYY-MM-DD a YYYYmmDD
+				dateValueExpiration = dateValueExpiration.replace(/-/g, '');
+			} else {
+				error = "FECHA VENCIMIENTO NO VALIDA"
+			}
+		}
+
+		if(error){
+			showReplyMessage(1, error, "Error", "modalSetTypeVoucher");
+			return;
+		}
+
+		let data = {
+			client: JSON.stringify(cliente ? [cliente] : []),
+			typeVoucher: tipoCod, // 101/111
+			typeCoin: tipoMoneda,
+			formaPago: 2, // formaPago 2 credito | 1 contado
+			dateVoucher: null, // Hoy
+			adenda: adenda,
+			idBuy: null,
+			detail: null, // Lista de articulos
+			amount: null, // ESTO SE ENVIA AL PEDO
+			discountTipo: (discountTipo == true) ? 2 : 1, // En procentaje | en importe
+			mediosPago: null
+		};
+		if(!$('#inputNotUseExpirationDate').is(':checked'))
+			data.dateExpiration = dateValueExpiration
+		
+		{ // LOGS
+			console.log(cliente)
+			console.log(error)
+			console.log(tipoCod)
+			console.log(mediosPago)
+			console.log(tipoMoneda)
+			console.log(data)
+		}
+		$('#modalSetTypeVoucher').modal('hide')
+		mostrarLoader(true)
+		sendAsyncPost("createNewVoucherPointSale", data)
+		.then(function(response){
+			mostrarLoader(false)
+			console.log(response)
+
+			// console.log(response)
+			if (response.result == 2 ){
+				let data = {id:response.info.ID}
+				openModalVoucherFromPointSale(data, "CLIENT", "sale");
+				$('#modalSeeVoucher button.close').on('click', function (e) {
+					discardCart()
+				})
+			} else {
+				showReplyMessage(response.result, response.message, "Nueva factura", null);
+			}
+
+		})
+		.catch(function(response){
+			mostrarLoader(false)
+			console.log("este es el catch", response);
+		});
 	} else { // VENTA CONTADO ABRIR MODAL METODOS DE PAGO
 		resetPayments()
 		$('#modalSetTypeVoucher').modal('hide')
@@ -934,7 +1015,7 @@ function createNewFactura(){ // DESDE EL BOTON DE MEDIOS DE PAGOS
 		client: JSON.stringify(cliente ? [cliente] : []),
 		typeVoucher: tipoCod, // 101/111
 		typeCoin: tipoMoneda,
-		shapePayment: 1, // formaPago 2 credito | 1 contado
+		formaPago: 1, // formaPago 2 credito | 1 contado
 		dateVoucher: null, // Hoy
 		adenda: adenda,
 		idBuy: null,
@@ -1013,7 +1094,7 @@ function superFastSale(){
 		client: JSON.stringify([]),
 		typeVoucher: tipoCod, // 101/111
 		typeCoin: tipoMoneda,
-		shapePayment: 1, // formaPago 2 credito | 1 contado
+		formaPago: 1, // formaPago 2 credito | 1 contado
 		dateVoucher: null, // Hoy
 		adenda: adenda,
 		idBuy: null,
@@ -1229,57 +1310,6 @@ function getCode(glosa){
 			break;
 	}
 	return respuesta;
-}
-
-function prepareToNewSale(){
-	console.log("prepareToNewSale")
-	cancelClientSelected();
-	$('#tbodyDetailProducts').empty();
-	$('#inputDateVoucher').val(getCurrentDate());
-	$('#selectTypeVoucher').val(101);
-	$('#selectShapePayment').val(1);
-	$('#selectTypeCoin').val("UYU");
-	$('#selectTypeCoin').prop( "disabled", false );
-	$('#checkboxConfigIvaIncluido').prop( "disabled", false );
-	$('#inputPriceSale').val(parseFloat(0).toFixed(2));
-
-	let adenda = sendPost("getConfiguration", {nameConfiguration: "ADENDA"});
-	let adendaValue = "";
-	if(adenda.result == 2)
-		adendaValue = adenda.configValue;
-	$('#inputAdenda').val(adendaValue);
-
-	let responseShowClient = sendPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
-	if(responseShowClient.result == 2){
-		if(responseShowClient.configValue == "SI"){
-			$('#clientSelection').removeClass('d-none')
-		} else {
-			$('#clientSelection').addClass('d-none')
-		}
-	}
-
-
-	// Select all rows that contain input elements within the containerPayments div
-	let $allPaymentsWay = $('#containerPayments .row:has(input)');
-  
-	// Remove the selected rows
-	$allPaymentsWay.remove();
-	
-	let responseSkipClient = sendPost("getConfiguration", {nameConfiguration: "SKIP_SELECT_CLIENTE"});
-	if(responseSkipClient.result == 2){
-		if(responseSkipClient.configValue == "SI"){
-			setClientFinal()
-			setNextStep('selectTypeVoucher')
-		} else {
-			setNextStep('selectClient')
-		}
-	}
-	// setNextStep('selectClient')
-	// $('#idButtonShowModalPayment').addClass('d-none')
-	// $('#nextStep').removeClass('d-none');
-
-	// document.getElementById("idButtonCreateNewFactura").innerText = "Confirmar";
-	// document.getElementById("idButtonCreateNewFactura").disabled=false;
 }
 
 function confirmSale(){

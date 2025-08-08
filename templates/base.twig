@@ -22,14 +22,14 @@
 	<link rel="stylesheet" type="text/css" href="{{ path_for('Start') }}styles/alerts.css{{ versionerp }}">
 	<title>{% block title %}FactuWeb{% endblock %}</title>
 </head>
-<body class="d-flex flex-column" style="background-image: url('{{ path_for('Start')}}img/backGround.png'); background-repeat: no-repeat; background-attachment: fixed; background-size: cover;">
+<body class="d-flex flex-column" style="background-image: url('{{ path_for('Start') }}img/backGround.png'); background-repeat: no-repeat; background-attachment: fixed; background-size: cover;">
 	<div class="page-contentClass page-content" id="content">
 		<div class="d-flex justify-content-between">
 			<button id="sidebarCollapse" type="button" class="btn background-template-color text-template-color m-2"></button>
 			{% if systemSession %}
-			<a href="{{path_for('SignOut')}}" class="btn btn-danger text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+			<a href="{{ path_for('SignOut') }}" class="btn btn-danger text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
 			{% else %}
-			<a href="{{path_for('SignIn')}}" class="btn btn-success text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Iniciar sesión"><i class="fas fa-sign-in-alt"></i></a>
+			<a href="{{ path_for('SignIn') }}" class="btn btn-success text-white shadow-sm m-2" data-toggle="tooltip" data-placement="top" title="Iniciar sesión"><i class="fas fa-sign-in-alt"></i></a>
 			{% endif %}
 		</div>
 		<div class="container-fluid">

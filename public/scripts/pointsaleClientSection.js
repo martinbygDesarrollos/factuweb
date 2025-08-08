@@ -142,16 +142,14 @@ function searchClient(inputToSearch, e, dataList, modal){ //cuando se ingresan n
 	console.log("searchClient")
 	e.preventDefault();
 	if ( inputToSearch.value.length > 2 ){
-		const response = sendPost("searchClientsToSale",{textToSearch: inputToSearch.value });
-		if ( response ){
-			console.log(response);
+		// const response = sendPost("searchClientsToSale",{textToSearch: inputToSearch.value });
+		sendAsyncPost("searchClientsToSale", {textToSearch: inputToSearch.value })
+		.then(function(response){
 			if(response.result == 2){
 				$('#' + dataList).empty();
 				if(response.listResult.length > 0){
 					for (var i = 0; i < response.listResult.length; i++) {
-						//console.log(response.listResult[i].document);
 						let opt = document.getElementById("documentClient_"+response.listResult[i].document)
-
 						if ( !opt ){
 							let option = document.createElement("option");
 							option.label = response.listResult[i].name;
@@ -161,11 +159,15 @@ function searchClient(inputToSearch, e, dataList, modal){ //cuando se ingresan n
 						}
 
 					}
-				} else {
-					cleanFields(modal)
-				}
+				}// else {
+					// cleanFields(modal)
+				//}
 			}
-		}
+
+		})
+		.catch(function(response){
+			console.log("este es el catch", response);
+		});
 	}else{
 		console.log("limpiar tabla");
 		$('#' + dataList).empty();
@@ -184,10 +186,11 @@ function searchCompleteData(value, e, dataList, modal){
 			console.log(validRut);
 			if ( validRut ){
 				$('#' + dataList).empty();
+				mostrarLoaderSearchClient(true, modal, e.srcElement.id); 
 				sendAsyncPost("searchClientToSale", {documentClient: value})
 				.then((response)=>{
 					console.log(response);
-
+					mostrarLoaderSearchClient(false, modal, e.srcElement.id); 
 					if ( response.result == 2 ){
 						let client = response.objectResult;
 						setClientValues(modal, client.nombreReceptor, client.docReceptor, client.direccion, client.localidad, client.departamento, client.correo, client.celular);
@@ -195,6 +198,7 @@ function searchCompleteData(value, e, dataList, modal){
 					}
 				})
 				.catch((error)=>{
+					mostrarLoaderSearchClient(false, modal, e.srcElement.id); 
 					console.log("catch :"+error);
 				})
 			}else showReplyMessage(1, "El rut ingresado no es válido.", "Buscar cliente", modal);
