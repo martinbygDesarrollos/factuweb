@@ -440,6 +440,11 @@ class ctr_vouchers{
 
 	// NEW
 	public function fixMediosPagoArray($mediosPago){ // Corrige todo lo que tiene que ver con el carrito antes de enviarlo al CFE
+		// Validar que sea un array antes del foreach
+		if (!is_array($mediosPago) || empty($mediosPago)) {
+			return array();
+		}
+
 		$handleDateTimeClass = new handleDateTime();
 		$arrayMediosPago = array();
 		foreach ($mediosPago as $key => $medioPago){
