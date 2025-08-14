@@ -217,10 +217,10 @@ class ctr_products{
 			}
 			if($detalle->unidad_venta == "LIT")
 					$detalle->unidad_venta = "Litro";
-			$productsController->insertProduct(null, $detalle->idIva, $detalle->description, $detalle->detail, $detalle->brand, $detalle->coin, $detalle->cost, $detalle->coefficient, $detalle->discount, $detalle->barcode, $detalle->idInventory, null, $detalle->import, $detalle->unidad_venta, $currentSession->idEmpresa);
+			$responseInsertProd = $productsController->insertProduct(null, $detalle->idIva, $detalle->description, $detalle->detail, $detalle->brand, $detalle->coin, $detalle->cost, $detalle->coefficient, $detalle->discount, $detalle->barcode, $detalle->idInventory, null, $detalle->import, $detalle->unidad_venta, $currentSession->idEmpresa);
 			$response->result = 0;
 			$response->message = "Producto no encontrado.";
-			if($productsController->result == 2)
+			if($responseInsertProd->result == 2)
 				$response->message .= "  Pero ingresado con éxito!";
 		}
 		return $response;
