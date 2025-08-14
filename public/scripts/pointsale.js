@@ -322,6 +322,13 @@ function confirmTypeVoucher(modal){
 		let adenda = $('#adenda').val() || null; // ADENDA
 		let discountTipo = configDiscountInPercentage
 		let dateValueExpiration = $('#inputDateExpirationVoucher').val();
+		let dateVoucher = $('#inputDateVoucher').val() || null;
+
+		if(dateVoucher){
+			dateVoucher = dateVoucher.replace(/-/g, '');
+		} else {
+			error = "FECHA NO VÁLIDA"
+		}
 
 		if(cliente){
 			tipoCod = validateRut(cliente.document) ? 111 : 101;
@@ -335,7 +342,7 @@ function confirmTypeVoucher(modal){
 				// Convertir de YYYY-MM-DD a YYYYmmDD
 				dateValueExpiration = dateValueExpiration.replace(/-/g, '');
 			} else {
-				error = "FECHA VENCIMIENTO NO VALIDA"
+				error = "FECHA VENCIMIENTO NO VÁLIDA"
 			}
 		}
 
@@ -349,7 +356,7 @@ function confirmTypeVoucher(modal){
 			typeVoucher: tipoCod, // 101/111
 			typeCoin: tipoMoneda,
 			formaPago: 2, // formaPago 2 credito | 1 contado
-			dateVoucher: null, // Hoy
+			dateVoucher: dateVoucher, // Hoy
 			adenda: adenda,
 			idBuy: null,
 			detail: null, // Lista de articulos

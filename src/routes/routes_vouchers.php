@@ -171,7 +171,7 @@ return function (App $app){
 				$typeCoin = $data['typeCoin'];
 				$formaPago = isset($data['formaPago']) ? $data['formaPago'] : null;
 				// $shapePayment = $data['shapePayment'];
-				$dateVoucher = date('Ymd');
+				$dateVoucher = isset($data['dateVoucher']) ? $data['dateVoucher'] : date('Ymd');
 				$dateExpiration = isset($data['dateExpiration']) ? $data['dateExpiration'] : null;
 				$adenda = isset($data['adenda']) ? $data['adenda'] : null;
 				$idEnvio = null;
