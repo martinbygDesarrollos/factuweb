@@ -982,6 +982,13 @@ function createNewFactura(){ // DESDE EL BOTON DE MEDIOS DE PAGOS
 	let tipoMoneda = caja.moneda
 	let adenda = $('#adenda').val() || null; // ADENDA
 	let discountTipo = configDiscountInPercentage
+	let dateVoucher = $('#inputDateVoucher').val() || null;
+
+	if(dateVoucher){
+		dateVoucher = dateVoucher.replace(/-/g, '');
+	} else {
+		error = "FECHA NO VÁLIDA"
+	}
 
 	if(cliente){
 		tipoCod = validateRut(cliente.document) ? 111 : 101;
@@ -1023,7 +1030,7 @@ function createNewFactura(){ // DESDE EL BOTON DE MEDIOS DE PAGOS
 		typeVoucher: tipoCod, // 101/111
 		typeCoin: tipoMoneda,
 		formaPago: 1, // formaPago 2 credito | 1 contado
-		dateVoucher: null, // Hoy
+		dateVoucher: dateVoucher, // Hoy
 		adenda: adenda,
 		idBuy: null,
 		detail: null, // Lista de articulos
