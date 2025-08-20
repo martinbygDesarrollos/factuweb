@@ -12,7 +12,8 @@ var productsInCart = []; // array de productos en el carro, cada item tiene todo
 var configIncludeIva = null;
 var configDiscountInPercentage = null;
 var cotizacionDolar = null;
-var configrAllowProductsNotEntered = null;
+var configAllowProductsNotEntered = null;
+var configSuggestProducts = null; // SUGERIR PRODUCTOS DE LA LISTA DE ARTICULOS EN EL MODAL DE AGREGAR ARTICULOS
 var IndFactDefault = null; // AL ABRIR EL MODAL DE ADD PRODUCT USA EL IVA POR DEFECTO
 var caja = [];
 var CFE_reservado = null; // SI LA CAJA TIENE POS AL MOMENTO DE VENDER CON POS RESERVO CFE
@@ -101,12 +102,22 @@ async function getAllConfigurations(){
             configDiscountInPercentage = false;
         }
     }
+
     let responseAllowProductsNotEntered = await sendAsyncPost("getConfiguration", {nameConfiguration: "PERMITIR_PRODUCTOS_NO_INGRESADOS"});
     if(responseAllowProductsNotEntered.result == 2){
         if(responseAllowProductsNotEntered.configValue == "SI"){
-            configrAllowProductsNotEntered = true;
+            configAllowProductsNotEntered = true;
         } else {
-            configrAllowProductsNotEntered = false;
+            configAllowProductsNotEntered = false;
+        }
+    }
+
+	let responseSuggestProducts = await sendAsyncPost("getConfiguration", {nameConfiguration: "SUGERIR_PRODUCTOS_DE_LISTA_ARTICULOS"});
+    if(responseSuggestProducts.result == 2){
+        if(responseSuggestProducts.configValue == "SI"){
+            configSuggestProducts = true;
+        } else {
+            configSuggestProducts = false;
         }
     }
 	
@@ -233,9 +244,12 @@ function setClient(modal) { // Setea el cliente (y lo guarda) y dependiendo del 
 	$('#' + modal).modal('hide') 
 	mostrarLoader(true)
     // Si la validación fue exitosa, enviar los datos al servidor
-	sendAsyncPost("createModifyClient", {documentReceiver: document, nameReceiver: name, numberMobile: phone, addressReceiver: address, locality: city, department: department, email: email})
+	sendAsyncPost("createModifyClientFromPointSale", {documentReceiver: document, nameReceiver: name, numberMobile: phone, addressReceiver: address, locality: city, department: department, email: email})
 		.then(( response )=>{
 			console.log(response);
+			// Mostrar mensaje según el resultado
+        	mostrarMensajeRespuesta(response.message, response.result == 2);
+
     		console.log('...FIN')
 			console.log("Cliente guardado");
 			mostrarLoader(false)
@@ -262,7 +276,38 @@ function setClient(modal) { // Setea el cliente (y lo guarda) y dependiendo del 
 			mostrarLoader(false)
 			console.log('...FIN')
        		console.log("Error al guardar el cliente");
+			// Mostrar mensaje de error
+	        mostrarMensajeRespuesta("Error al guardar el cliente", false);
 		})
+}
+
+function mostrarMensajeRespuesta(mensaje, esExito) {
+    // Crear el elemento del mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: .5rem;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+        background-color: ${esExito ? '#28a745' : '#fd7e14'};
+    `;
+    messageDiv.textContent = mensaje;
+    
+    // Agregar al DOM
+    document.body.appendChild(messageDiv);
+    
+    // Remover después de 2 segundos
+    setTimeout(() => {
+        messageDiv.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(messageDiv);
+        }, 300);
+    }, 2000);
 }
 
 function onChangeTypeVoucher(selectTypeVoucher){ 
@@ -688,12 +733,6 @@ function payBackPaymentMethod(element, consumidor, RUT, monto, gravado, factura,
 		});
 }
 
-// function cancelPOSPayment(){
-// 	console.log("cancelPOSPayment")
-// 	$('#modalPOSPayment').modal('hide')
-// 	$('#modalSetPayments').modal('show')
-// }
-
 function deletePaymentMethod(element){ // ELIMINA UN MEDIO DE PAGO
 	console.log("deletePaymentMethod")
 	console.log(element)
@@ -703,92 +742,6 @@ function deletePaymentMethod(element){ // ELIMINA UN MEDIO DE PAGO
     }
 	insertRemainingAmount('inputRemainingAmount')
 }
-
-// function calcTotal(){ // EL DESCUENTO SE HACE SOBRE EL PRODUCTO CON IVA (EN CASO DE IVA INC.) Y CADA PRODUCTO NO A LA SUMA DE TODOS ESTOS (EJ: 2 x $10 con Dcto: $8 => $4 porque el $8 se le aplica a cada producto)
-// 	console.log('calcTotal')
-// 	// VARIABLES DEL TOTAL DE LA VENTA
-// 	let sale_total = 0;
-// 	let sale_gravado_basico = 0;
-// 	let sale_iva_basico = 0;
-// 	let sale_gravado_minimo = 0;
-// 	let sale_iva_minimo = 0;
-// 	let sale_no_gravado = 0;
-	
-// 	for (var i = 0; i < productsInCart.length; i++){
-// 		let subTotal = 0 // PRODUCTO SIN IVA
-// 		let total = 0 // PRODUCTO CON IVA
-// 		let iva = 0; // IVA
-// 		let descuento = 0;	// DESCUENTO ($) // calcular porque puede estar en %
-
-// 		if (productsInCart[i].includeIva){ // EL IMPORTE ES EL VALOR YA CON IVA
-// 			subTotal = productsInCart[i].import / getIvaValue(productsInCart[i].idIva) // getIvaValue devuelve 1.22 o 1.1 o 1 dependiendo del iva (1 es excento = 1, 2 es minimo = 1.1, 3 es basico = 1.22, los demas = 1)
-// 			total = productsInCart[i].import
-// 		} else {
-// 			subTotal = productsInCart[i].import
-// 			total = subTotal * getIvaValue(productsInCart[i].idIva)
-// 		}
-
-
-// 		if(!configDiscountInPercentage){ // DESCUENTO $
-// 			if(configIncludeIva){ // Punto de venta en modo IVA incluido | entonces el descuento es por sobre el valor total
-// 				subTotal = productsInCart[i].import - productsInCart[i].discount / getIvaValue(productsInCart[i].idIva) // 
-// 				total = productsInCart[i].import - productsInCart[i].discount
-// 			} else { // entonces el descuento es por sobre el sub total
-// 				subTotal = productsInCart[i].import - productsInCart[i].discount
-// 				total = subTotal * getIvaValue(productsInCart[i].idIva)
-// 			}
-// 		} else if(configDiscountInPercentage){ // DESCUENTO %
-// 			if(configIncludeIva){ // Punto de venta en modo IVA incluido | entonces el descuento es por sobre el valor total
-// 				descuento = total * (productsInCart[i].discount / 100)
-// 				subTotal = productsInCart[i].import - descuento / getIvaValue(productsInCart[i].idIva) // 
-// 				total = productsInCart[i].import - descuento
-// 			} else { // entonces el descuento es por sobre el sub total
-// 				descuento = subTotal * (productsInCart[i].discount / 100)
-// 				subTotal = productsInCart[i].import - descuento
-// 				total = subTotal * getIvaValue(productsInCart[i].idIva)
-// 			}
-// 		}
-// 		console.log(total)
-// 		switch (productsInCart[i].idIva) {
-// 			case 1:
-// 				sale_total = sale_total + total
-// 				sale_no_gravado = sale_no_gravado + subTotal
-// 				break;
-		
-// 			case 2:
-// 				sale_total = sale_total + total
-// 				sale_gravado_minimo = sale_gravado_minimo + subTotal
-// 				sale_iva_minimo = sale_iva_minimo + (total - subTotal)
-// 				break;
-			
-// 			case 3:
-// 				sale_total = sale_total + total
-// 				sale_gravado_basico = sale_gravado_basico + subTotal
-// 				sale_iva_basico = sale_iva_basico + (total - subTotal)
-// 				break;
-		
-// 			default:
-// 				sale_total = sale_total + total
-// 				sale_no_gravado = sale_no_gravado + subTotal
-// 				break;
-// 		}
-
-// 		sale_total = parseFloat(sale_total).toFixed(2)
-// 		sale_gravado_basico = parseFloat(sale_gravado_basico).toFixed(2)
-// 		sale_iva_basico = parseFloat(sale_iva_basico).toFixed(2)
-// 		sale_gravado_minimo = parseFloat(sale_gravado_minimo).toFixed(2)
-// 		sale_iva_minimo = parseFloat(sale_iva_minimo).toFixed(2)
-// 		sale_no_gravado = parseFloat(sale_no_gravado).toFixed(2)
-// 	}
-
-// 	$('#inputPriceSale').val(getFormatValue(sale_total));
-// 	$('#inputPriceSale-gravado-basica').val(getFormatValue(sale_gravado_basico));
-// 	$('#inputPriceSale-iva-basico').val(getFormatValue(sale_iva_basico));
-// 	$('#inputPriceSale-gravado-minima').val(getFormatValue(sale_gravado_minimo));
-// 	$('#inputPriceSale-iva-minimo').val(getFormatValue(sale_iva_minimo));
-// 	$('#inputPriceSale-nogravado').val(getFormatValue(sale_no_gravado));
-
-// }
 
 function calcTotal(){
     console.log('calcTotal')
@@ -1327,50 +1280,9 @@ function getCode(glosa){
 }
 
 function confirmSale(){
-	// console.log("confirmSale")
+	console.log("confirmSale")
 	$('#confirmSaleBtn').click();
 }
-
-// function setNextStep(step){ // le settea el siguiente paso al boton de confirmar
-// 	// console.log("setNextStep: " + step)
-// 	switch (step) {
-// 		case 'selectClient':
-// 			$('#confirmSaleBtn').off('click').on('click', function () {
-// 				$('#modalSetClient').modal({
-// 					backdrop: 'static'
-// 				});
-// 			});
-// 			break;
-// 		case 'selectPaymentWay':
-// 			$('#confirmSaleBtn').off('click').on('click', function () {
-// 				// setClientFinal()
-// 				let typeVoucher = $('#selectTypeVoucher').val() || null; // EFactura Contado/ETicket Contado / EFactura Credito/ETicket Credito
-// 				if(typeVoucher == 211 || typeVoucher == 311){
-// 					createNewFactura()
-// 					return;
-// 				}
-// 				$('#inputPriceSale2').val($('#inputPriceSale').val())
-// 				calculateRemainingAmount('inputPriceSale22');
-// 				$('#modalSetPayments').off('shown.bs.modal').on('shown.bs.modal', function () {
-// 					$('#modalSetPaymentsbtnConfirmSale').trigger('focus')
-// 				});
-// 				showModalPayment()
-// 			});
-// 			break;
-// 		case 'selectTypeVoucher':
-// 			$('#clientSelection').removeClass('d-none')
-// 			$('#confirmSaleBtn').off('click').on('click', function () {
-// 				if($('#buttonModalClientWithName').text() == "Consumidor final"){
-// 					setClientFinal()
-// 				}
-// 				$('#selectTypeVoucher').focus()
-// 				setNextStep('selectPaymentWay')
-// 			});
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// }
 
 function createNewProduct(producto, heading){ 
 	if(producto.description && producto.description.length > 4){
@@ -1400,124 +1312,6 @@ function createNewProduct(producto, heading){
 
 }
 
-//esta funcion recibe el array que tiene todos los productos de la lista de compra.
-//genera y devuelve un nuevo array solo con los elementos que tienen el campo removed como false
-function prepareToCreateNewFactura(originalArray){ // VER VER VER
-	var newArray = [];
-	for (var i = 0; i<originalArray.length; i++) {
-		if(!originalArray[i].removed || originalArray[i].removed == "false"){
-			newArray.push(originalArray[i]);
-		}
-	}
-	return newArray;
-}
-
-
-
-// function loadProductsInSession (){
-// 	console.log("loadProductsInSession")
-// 	let productsInSession = getDataSession("arrayProductsSales"); // ManagerDataSession.js
-// 	productsInCart = productsInSession.data;
-// 	indexDetail = productsInCart.length;
-// 	if ( productsInSession.result == 2 ){
-// 		insertAllElementsInDetail();
-// 	}
-// }
-
-//se confirma y se agrega un nuevo articulo a la tabla de facturacion
-function insertAllElementsInDetail(){ // En este punto de venta se vende en UYU y NO se toca el IVA, si tiene IVA se vende con él sino no
-    console.log("insertAllElementsInDetail");
-    // console.log("START COOKIES");
-    // console.log(document.cookie);
-    // console.log("END COOKIES");
-	// let disabledTypeCoin = null;
-	// let disabledIva = null;
-	// let selectTypeCoinValue = null;
-	if (productsInCart.length > 0){
-		let cookieData = document.cookie.split("; ");
-		for (var i = 0; i < cookieData.length; i++) {
-            // console.log(cookieData[i]);
-			// if (cookieData[i].includes("TYPECOIN")){ // SI no tiene TypeCoin lo tomo como UYU
-			// 	selectTypeCoinValue = cookieData[i].split("=");
-			// 	selectTypeCoinValue.value = selectTypeCoinValue[1];
-			// }
-		}
-		// disabledTypeCoin = false;
-		// disabledIva = false;
-		// $('#selectTypeCoin').val(selectTypeCoinValue.value)
-		// onChangeTypeCoin(selectTypeCoinValue.value);
-	}
-
-	for(var i = 0; i < productsInCart.length; i++) {
-        if(productsInCart[i].typeCoin == ""){
-            console.log("ESTE ARTICULO DEBERIA TENER COIN DE UYU");
-        }
-		let row = createDetailRow(productsInCart[i].idDetail, productsInCart[i].description, productsInCart[i].detail, productsInCart[i].count, productsInCart[i].price, productsInCart[i].discount, productsInCart[i].idIva, productsInCart[i].ivaValue, productsInCart[i].price, productsInCart[i].unidadVenta);
-		$('#tbodyDetailProducts').prepend(row);
-		if( productsInCart[i].removed == "true" ){
-			$('#' + productsInCart[i].idDetail).addClass("removedElement");
-		}
-		if (productsInCart[i].removed == "false"){
-			disabledTypeCoin = true;
-			disabledIva = true;
-		}
-	}
-	addTotal();
-	// $('#selectTypeCoin').prop( "disabled", disabledTypeCoin );
-	// $('#checkboxConfigIvaIncluido').prop( "disabled", disabledIva);
-	$('#modalAddProduct').modal('hide');
-}
-
-//crea las lineas que se muestran en la tabla luego de agregarse los productos
-// function createDetailRow(indexDetail, name, description, count, price, discount, idIva, ivaValue, total, unidadVenta){
-// 	console.log(`createDetailRow [indexDetail: ${indexDetail}. name: ${name}. description: ${description}. count: ${count}. price: ${price}. discount: ${discount}. idIva: ${idIva}. ivaValue: ${ivaValue}. total: ${total}. unidadVenta: ${unidadVenta}.`)
-// 	discount = discount ?? 0
-// 	let row = "<tr id='" + indexDetail +"' >";
-
-// 	row += "<td class='col-5 text-left overflow-example' title='"+ name +"'>"+ name;
-// 	if(description){
-// 		row += "<br>";
-// 		row += "<p class='overflow-example' style='margin-bottom: 0;'> " + description + " </p>"
-
-// 	} else {
-// 		row += "</td>";
-// 	}
-// 	row += `<td class='col-1 text-left align-middle'>
-// 				<button class='btn btn-danger btn-sm shadow-sm align-middle' style='width: 3em;' onclick='modalBorrarDetail(${indexDetail})'>
-// 					<i class='fas fa-trash-alt'></i>
-// 				</button>
-// 			</td>`;
-// 	let step = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.1 : 1;
-// 	let min = (unidadVenta === 'Peso' || unidadVenta === 'Litro') ? 0.001 : 1;	
-// 	row += `<td class='col-2 text-right align-middle'>
-// 				<input id='inputCount${indexDetail -1}' 
-// 					type='number' 
-// 					min='${min}' 
-// 					step='${step}' 
-// 					class='form-control form-control-sm text-right' 
-// 					value='${count}' 
-// 					oninput='handleCountChange(event, ${indexDetail - 1})'
-// 					onblur='handleCountBlur(event, ${indexDetail - 1})'
-// 					style='min-width: 100px;'>
-// 			</td>`;
-	
-// 	row += `<td class='col-2 text-right align-middle'>
-// 				<input id='inputDiscount${indexDetail -1}' 
-// 					type='number' 
-// 					min=0 
-// 					max=100 
-// 					class='form-control form-control-sm text-right' 
-// 					value='${parseFloat(discount).toFixed(2)}' 
-// 					oninput='handleDiscountChange(event, ${indexDetail - 1})'
-// 					style='min-width: 100px;'>
-// 			</td>`;
-// 	row += `<td class='col-1 text-right align-middle' style='min-width: 100px;'>
-// 				${getFormatValue(total)}
-// 			</td>`;
-// 	row += "</tr>";
-
-// 	return row;
-// }
 
 function handleCountChange(e, itemDetail) {
 	e.preventDefault();
@@ -1592,258 +1386,3 @@ function handleDiscountChange(e, itemDetail) {
 	updateProductsInSession(itemDetail, "discount", parsedDiscount);
 	addTotal();
 }
-
-
-// function getFormatValue(value){
-// 	let formatter = new Intl.NumberFormat('en-US', {
-// 		style: 'currency',
-// 		currency: 'USD',
-// 	});
-
-// 	return formatter.format(value);
-// }
-
-//suma todos los importes, ademas si la moneda del producto es distinta a UYU se calcula el importe segun la cotizacion.
-// function addTotal(){
-// 	let total = 0;
-// 	let totalProduct = 0;
-// 	// let typeCoinSelected = $('#selectTypeCoin').val(); // UYU
-// 	// let valueQuote = quote;
-// 	let quantity = 1;
-// 	// if(!todayQuote)
-// 	//     USD = cotizacion();
-//     // console.log(USD)
-// 	// if(USD == 1){
-// 	// 	cotizacion();
-// 	// 	USD = quote;
-// 	// }
-// 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-// 	if(responseDesc.result == 2)
-// 		discountPercentage = responseDesc.configValue;
-// 	// console.log('DESC EN %: ' + discountPercentage )
-// 	for (var i = 0; i < productsInCart.length; i++){
-// 		if(!productsInCart[i].removed || productsInCart[i].removed == "false"){
-// 			if(productsInCart[i].discount == undefined || productsInCart[i].discount == null || productsInCart[i].discount == NaN)
-// 				productsInCart[i].discount = 0;
-// 			discount = productsInCart[i].discount;
-// 			quantity = productsInCart[i].count;
-//             // if(productsInCart[i].typeCoin != "UYU"){ // SOLO manejo UYU y USD
-// 			// 	console.log(productsInCart[i].amount);
-//             //     totalProduct = parseFloat(productsInCart[i].amount) * USD * quantity * ((100 - discount)/ 100);
-//             // } else {
-// 				if(!discountPercentage || discountPercentage == "NO")
-//                 	totalProduct =  parseFloat(productsInCart[i].amount) * quantity - discount;
-// 				else if(discountPercentage == "SI")
-// 	                totalProduct =  parseFloat(productsInCart[i].amount) * quantity * ((100 - discount)/ 100);
-//             // }
-// 			// console.log(productsInCart[i].amount)
-// 			// console.log(totalProduct)
-// 			// totalProduct =  parseFloat(productsInCart[i].amount) * quantity;
-// 			total = totalProduct + total;
-// 			parseFloat(total).toFixed(2)
-// 		}
-// 	}
-// 	// $('#inputPriceSale').val(getFormatValue(total));
-// 	$('#inputPriceSale').val(getFormatValue(total));
-// }
-
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// function cotizacion(){
-// 	let response = sendPost("getQuote", {typeCoin: "USD", dateQuote: 1});
-// 	todayQuote = true;
-// 	return parseFloat(response.currentQuote).toFixed(2);
-// 	// return response;
-// }
-
-// async function cotizacion() {
-//     let response = await sendAsyncPost("getQuote", {typeCoin: "USD", dateQuote: 1});
-//     todayQuote = true;
-//     return parseFloat(response.currentQuote).toFixed(2);
-// }
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// function openModalAddProduct(){
-// 	console.log("openModalAddProduct")
-
-// 	$('#inputCountProduct').val(1);
-// 	let response = sendPost("getConfiguration", {nameConfiguration: "PERMITIR_PRODUCTOS_NO_INGRESADOS"});
-// 	if(response.result == 2){
-// 		if (response.configValue == "SI"){
-// 			var x = elementsNoRemoved();
-// 			if(x < 80){
-
-// 				clearModalDetail();
-// 				$('#inputDescriptionProduct').val(""); //se limpia el buscador
-
-// 				sendAsyncPost("getConfiguration", {nameConfiguration: "INDICADORES_FACTURACION_DEFECTO"}) // (CREO) busca si la empresa tiene IVA por defecto y lo pone, de lo contrario coloca el 22% por defecto
-// 				.then(( response )=>{
-// 					//console.log(response);
-// 					if ( response.result == 2 ){
-// 						$('#inputTaxProduct').val( response.configValue );
-// 					}else{
-// 						$('#inputTaxProduct').val( 3 );
-// 					}
-// 				})
-
-// 				$('#modalAddProduct').modal();
-
-// 			}else showReplyMessage(1, "80 artículos es la cantidad máxima soportada", "Detalles", null);
-// 		}
-// 	}
-// }
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// function openModalGetPrices(){
-// 	console.log("openModalGetPrices")
-// 	$('#inputTextToSearchPrice').val("");
-// 	let valueToSearch = $('#inputTextToSearchPrice').val();
-// 	let response = sendPost("getSuggestionProductByDescription", {textToSearch: valueToSearch});
-// 	$('#tbodyListPrice').empty();
-// 	if(response.result == 2){
-// 		let list = response.listResult;
-// 		firstRow = true;
-// 		for (var i = 0; i < list.length; i++) {
-// 			let row = createRowListPrice(list[i].idArticulo, list[i].descripcion, list[i].rubro, list[i].importe, list[i].moneda);
-// 			$('#tbodyListPrice').append(row);
-// 			if(firstRow){
-// 				$('#tbodyListPrice tr:first').addClass('selected')
-// 				firstRow = false
-// 			}
-// 		}
-// 		$('#modalListPrice').off('shown.bs.modal').on('shown.bs.modal', function () {
-// 			$('#inputTextToSearchPrice').prop( "readOnly", false );
-// 			$('#inputTextToSearchPrice').focus();
-// 		});
-// 		$('#modalListPrice').modal("show");
-// 	}
-// }
-
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-//agrega un nuevo producto al carro de compra
-// function addToCar(element, idProduct){ //detalle, discount, iva, ivaValue, costo, coeficiente, moneda
-// 	console.log("addToCar");
-// 	mostrarLoader(true)
-// 	console.log(element)
-// 	$("#tbodyListPrice button").attr('disabled', "true");
-// 	// $(element).attr('disabled', 'true')
-// 	$('#modalListPrice').modal("hide")
-// 	// $(element).off('click');
-// 	// let response = sendPost('getProductById', { idProduct: idProduct});
-// 	// if(response.result == 2){
-
-// 	sendAsyncPost("getProductById", { idProduct: idProduct })
-// 		.then(( response )=>{
-// 			mostrarLoader(false)
-// 			$('#modalListPrice').modal('hide');
-// 			let newProduct = response.objectResult;
-// 			// console.log(newProduct);
-// 			if(newProduct.moneda == "USD")
-// 				newProduct.importe = calculeQuote(newProduct.importe, USD, newProduct.moneda, "UYU");
-// 			$('#inputDescriptionProduct').val(newProduct.descripcion);
-// 			$('#inputDetailProduct').val(newProduct.detalle);
-// 			$('#inputCountProduct').val(1)
-// 			$('#inputDiscountProduct').val(newProduct.descuento);
-// 			$('#inputTaxProduct').val(newProduct.idIva);
-// 			$('#inputPriceProduct').val(newProduct.importe);
-// 			$('#inputUnidadVentaProduct').val(newProduct.unidad_venta);
-// 			idProductSelected = idProduct;
-// 			calculateInverseByCost();
-// 			insertNewDetail();
-// 			$("#tbodyListPrice button").attr('disabled', "false");
-// 			// $(element).on('click', function() {
-// 			// 	addToCar(element, idProduct);
-// 			// });
-// 		})
-// 		.catch(function(response){
-// 			mostrarLoader(false)
-// 			showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
-// 			$("#tbodyListPrice button").attr('disabled', "false");
-
-// 			console.log("este es el catch", response);
-// 		});
-// 	// } else {
-// 		// mostrarLoader(false)
-
-// 		// showReplyMessage(response.result, response.message, "Agregar artículo", "modalListPrice");
-// 		// $("#tbodyListPrice button").attr('disabled', "false");
-// 		// $(element).on('click', function() {
-// 		// 	addToCar(element, idProduct);
-// 		// });
-
-// 	// }
-// }
-
-// function elementsNoRemoved (){ // Devuelve la cantidad de productos en el carro
-// 	count = 0
-// 	for (var i = productsInCart.length - 1; i >= 0; i--) {
-// 		if (productsInCart[i].removed == "false" || productsInCart[i].removed == false){
-// 			count++;
-// 		}
-// 	}
-// 	return count;
-// }
-
-// function clearModalDetail(){ // Limpia el modal de agregar producto
-// 	// $('#inputTextToSearchDetail').val("");
-// 	$('#inputDetailProduct').val("");
-// 	$('#inputPriceProduct').val("");
-// 	$('#inputDiscountProduct').val("");
-// 	$('#inputSubtotalProduct').val(0);
-// 	$('#inputUnidadVentaProduct').val('Unidad');
-// 	//HERE
-// 	let allIndicatorsInvoice = [];
-
-// 	$("#inputTaxProduct option").each(function(){
-// 		allIndicatorsInvoice.push($(this).val());
-// 	});
-// 	$('#inputTaxProduct').val( allIndicatorsInvoice[0] );// se agrega un impuesto por defecto para que se muestre en caso de que el impuesto del producto ingresado no esté habilitado
-// 	$('#inputIVAProduct').val(0);
-// 	$('#inputTotalProduct').val(0);
-// }
-
-//calcula precio sin iva, subtotal, importe, y el valor del iva a partir de cost, coefficient, iva, discount
-//esta funcion se usa en el modal de agregar articulos
-// function calculateInverseByCost(){ // FALTA EL TEMA DE EL COEFFICIENT 
-// 	let count = $('#inputCountProduct').val() || 0;
-// 	let price = $('#inputPriceProduct').val() || 0;
-// 	let discount = $('#inputDiscountProduct').val() || 0;
-// 	let subtotal = $('#inputSubtotalProduct');
-// 	let total = $('#inputTotalProduct');
-// 	let taxSelected = $('#inputTaxProduct option:selected').attr('name');
-// 	let valueIVA = $('#inputIVAProduct');
-// 	count = parseFloat(count);
-// 	price = parseFloat(price);
-// 	discount = parseFloat(discount);
-
-// 	// if(!discountPercentage){
-// 	let responseDesc = sendPost("getConfiguration", {nameConfiguration: "DESCUENTO_EN_PORCENTAJE"});
-// 	if(responseDesc.result == 2)
-// 		discountPercentage = responseDesc.configValue;
-// 	// }
-// 	// if(!includeIva){
-// 	let responseIVA = sendPost("getConfiguration", {nameConfiguration: "IVA_INCLUIDO"});
-// 	if(responseIVA.result == 2)
-// 		includeIva = responseIVA.configValue;
-// 	// }
-
-
-// 	if(discountPercentage == "SI"){
-// 		if(discount > 0)
-// 			discount = ((price * count) * discount)/100;
-// 	}
-
-// 	if(includeIva == "SI"){
-// 		x = parseFloat(((price * count) - discount) - ((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)
-// 		y = parseFloat(((price * count) - discount) / (1+(parseFloat(taxSelected)/100))).toFixed(2)// importe / (1+(iva/100))
-// 		z = parseFloat(((price * count) - discount)).toFixed(2)
-// 	}else{
-// 		x = parseFloat(((price * count) - discount)*(parseFloat(taxSelected)/100)).toFixed(2);
-// 		y = parseFloat(((price * count) - discount)).toFixed(2)
-// 		z = (parseFloat(x) + parseFloat(y)).toFixed(2);
-// 	}
-// 	valueIVA.val(x);
-// 	subtotal.val(y);
-// 	total.val(z);
-// }

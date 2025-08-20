@@ -1,6 +1,6 @@
 function openModalAddProduct(){
 	console.log("openModalAddProduct")
-	if(configrAllowProductsNotEntered){
+	if(configAllowProductsNotEntered){
 		if(productsInCart.length >= 80){
 			showReplyMessage(1, "80 artículos es la cantidad máxima soportada", "Detalles", null);
 			return;

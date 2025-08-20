@@ -55,18 +55,41 @@ class ctr_vouchers{
 		// if($responseGetBusiness->result == 2){
 		$responseGetCaes = $restController->consultarCaes($currentSession->rut, $currentSession->tokenRest);
 		if($responseGetCaes->result == 2){
+			$foundUsable = false;
+			$foundType = false;
+
 			foreach ($responseGetCaes->caes->caes as $key => $cae) {
-				if(strcmp($cae->cfeType, $typeCFE)){
+				if($cae->cfeType == $typeCFE) {
+					$foundType = true;
 					if($cae->isUsable == true){
-						$response->result = 2;
-						$response->message ="USABLE";
-					}else{
-						$response->result = 0;
-						$response->message = "Actualmente no puede emitir " . $utilClass->getNameVoucher($typeCFE,0) . ".";
+						$foundUsable = true;
+						break; // Encontró uno usable, no necesita seguir
 					}
-					break;
 				}
 			}
+			if($foundType) {
+				if($foundUsable) {
+					$response->result = 2;
+					$response->message = "USABLE";
+				} else {
+					$response->result = 0;
+					$response->message = "Actualmente no puede emitir " . $utilClass->getNameVoucher($typeCFE,0) . ".";
+				}
+			}
+
+			// foreach ($responseGetCaes->caes->caes as $key => $cae) { // ERROR PORQUE PUEDE HABER MAS DE UN ITEM DE ESE cfeType y si el primero no es usable ya no busca y dice que no puede emitir
+			// 	if(strcmp($cae->cfeType, $typeCFE)){
+			// 		if($cae->isUsable == true){
+			// 			$response->result = 2;
+			// 			$response->message ="USABLE";
+			// 		}else{
+			// 			$response->result = 0;
+			// 			$response->message = "Actualmente no puede emitir " . $utilClass->getNameVoucher($typeCFE,0) . ".";
+			// 		}
+			// 		break;
+			// 	}
+			// }
+
 			if(!isset($response->result)){
 				$response->result = 0;
 				$response->message = "No se encontro información para CFEs de tipo: " . $utilClass->getNameVoucher($typeCFE,0) . " entre los CAEs disponibles.";

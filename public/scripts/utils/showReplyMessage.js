@@ -38,6 +38,8 @@ function showReplyMessage(codeResult, message, title, currentModal){
         // Setup modal shown event
         $('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function () {
             $('#modalButtonResponse').trigger('focus');
+            $(this).data('bs.modal')._config.keyboard = false;
+	        $(this).data('bs.modal')._config.backdrop = 'static';
             // $(this).off('shown.bs.modal'); // Remove handler after use
         });
 

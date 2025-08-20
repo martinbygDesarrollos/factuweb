@@ -55,6 +55,9 @@ return function (App $app){
 				$responseGetConfigPermitProducts = $userController->getVariableConfiguration("PERMITIR_PRODUCTOS_NO_INGRESADOS", $responseCurrentSession->currentSession);
 				if($responseGetConfigPermitProducts->result == 2)
 					$args['productsNoEntered'] = $responseGetConfigPermitProducts->configValue;
+				$responseGetConfigSuggestProducts = $userController->getVariableConfiguration("SUGERIR_PRODUCTOS_DE_LISTA_ARTICULOS", $responseCurrentSession->currentSession);
+				if($responseGetConfigSuggestProducts->result == 2)
+					$args['suggestProducts'] = $responseGetConfigSuggestProducts->configValue;
 				$responseGetConfigPermitListProducts = $userController->getVariableConfiguration("PERMITIR_LISTA_DE_PRECIOS", $responseCurrentSession->currentSession);
 				if($responseGetConfigPermitListProducts->result == 2)
 					$args['listProducts'] = $responseGetConfigPermitListProducts->configValue;

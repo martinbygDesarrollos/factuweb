@@ -79,6 +79,7 @@ class ctr_vouchers_emitted{
 						}else{
 							foreach ($jsonPrintFormat->detalles as $key => $itemDetail){
 								error_log("indFact: '$itemDetail->indFact', nomItem: '$itemDetail->nomItem', codItem: '$itemDetail->codItem', descripcion: '$itemDetail->descripcion', cantidad: '$itemDetail->cantidad', uniMedida: '$itemDetail->uniMedida', precio: '$itemDetail->precio', descRecItemTipo: '$itemDetail->descRecItemTipo', descRecItem: '$itemDetail->descRecItem'");	
+								error_log(print_r($itemDetail, true));
 								$arrayDetails[] = $restController->prepareDetalleToSend($itemDetail->indFact, $itemDetail->nomItem, $itemDetail->codItem, $itemDetail->descripcion, $itemDetail->cantidad, $itemDetail->uniMedida, $itemDetail->precio, $itemDetail->descRecItemTipo, +$itemDetail->descRecItem);
 							}
 						}
@@ -100,27 +101,27 @@ class ctr_vouchers_emitted{
 							$response->message = "Se emitió correctamente la cancelación del comprobante seleccionado.";
 							// BORRAR MOVIMIENTO DE LA CAJA SI ALGUN MOVIMIENTO HACE REFERENCIA A EL (USA columna IsAnulado => 1)
 							$response->movimientos = $cajaController->anularMovementByRef($idVoucher, $currentSession);
-							// REPONER STOCK
-							$stocks = [];
-							foreach ($jsonPrintFormat->detalles as $key => $detail){
-								$stockItem = (object) [
-									'description' => $detail->nomItem,
-									'detail' => $detail->descripcion,
-									'quantity' => $detail->cantidad,
-									'idIva' => $detail->indFact,
-									'brand' => null,
-									'coin' => $jsonPrintFormat->tipoMoneda,
-									'cost' => 0.00,
-									'coefficient' => 0.00,
-									'discount' => 0.00,
-									'barcode' => null,
-									'idInventory' => null,
-									'import' => $detail->precio,
-									'unidad_venta' => $detail->uniMedida
-								];
-								$stocks[] = $productsController->updateStockProduct($stockItem, $responseGetType->type, $currentSession);
-							}
-							$response->stocks = $stocks;
+							// REPONER STOCK // YA SE HACE EN createNewCFE(...)
+							// $stocks = [];
+							// foreach ($jsonPrintFormat->detalles as $key => $detail){
+							// 	$stockItem = (object) [	
+							// 		'description' => $detail->nomItem,
+							// 		'detail' => $detail->descripcion,
+							// 		'quantity' => $detail->cantidad,
+							// 		'idIva' => $detail->indFact,
+							// 		'brand' => null,
+							// 		'coin' => $jsonPrintFormat->tipoMoneda,
+							// 		'cost' => 0.00,
+							// 		'coefficient' => 0.00,
+							// 		'discount' => 0.00,
+							// 		'barcode' => null,
+							// 		'idInventory' => null,
+							// 		'import' => $detail->precio,
+							// 		'unidad_venta' => $detail->uniMedida
+							// 	];
+							// 	$stocks[] = $productsController->updateStockProduct($stockItem, $responseGetType->type, $currentSession);
+							// }
+							// $response->stocks = $stocks;
 						}else return $responseCreateVoucherCancel;
 
 

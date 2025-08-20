@@ -415,6 +415,139 @@ class ctr_clients{
 				$response->message = "EL cliente fue creado correctamente.";
 		return $response;
 	}
+	// NEW TEST
+	public function createModifyClientFromPointSale($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa, $rut, $token){
+		$clientClass = new clients();
+		$clientController = new ctr_clients();
+		$restController = new ctr_rest();
+		$response = new \stdClass();
+		$validateClass = new validate();
+
+		//si el dato es vacio lo paso a null
+		$locality = $locality == "" ? null : $locality;
+		$department = $department == "" ? null : $department;
+		$email = $email == "" ? null : $email;
+		$numberMobile = $numberMobile == "" ? null : $numberMobile;
+		$addressReceiver = $addressReceiver == "" ? null : $addressReceiver;
+
+		$local = false;
+		$rest = false;
+
+		$objClient = $clientClass->getClient($documentReceiver, $idEmpresa);
+		$needsUpdate = false;
+
+		error_log(print_r($objClient, true));
+		if ( $objClient->result == 2 ){ //el cliente se encuentra en el sistema hay que modificar si es distinto
+			if($objClient->objectResult->localidad != $locality){
+				$needsUpdate = true;
+			}
+			if($objClient->objectResult->departamento != $department){
+				$needsUpdate = true;
+			}
+			if($objClient->objectResult->correo != $email){
+				$needsUpdate = true;
+			}
+			if($objClient->objectResult->celular != $numberMobile){
+				$needsUpdate = true;
+			}
+			if($objClient->objectResult->direccion != $addressReceiver){
+				$needsUpdate = true;
+			}
+			if($needsUpdate){// Ejecutar la actualización del cliente
+				$responseUpdateClientLocal = $clientClass->updateClient($nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $objClient->objectResult->id);
+				if($responseUpdateClientLocal->result == 2){
+					$response->result = 2; 
+					$response->message = "Cliente correctamente actualizado de forma local"; 
+					$local = true;
+				} else {
+					$response->result = 2; 
+					$response->message = "Cliente no se pudo actualizar"; 
+				}
+			} else {// Es igual, no hace falta
+				$response->result = 2; 
+				$response->message = "Cliente no modificado"; 
+			}
+		} else { //hay que crear el cliente
+			$resultNewClient = $clientClass->insertClient($documentReceiver, $nameReceiver, $addressReceiver, $locality, $department, $email, $numberMobile, $idEmpresa);
+			if ( $resultNewClient->result == 2 ){
+				$response->result = 2; 
+				$response->message = "Cliente creado de forma local"; 
+				$local = true;
+			} else {
+				$response->result = 2; 
+				$response->message = "Cliente no se pudo crear"; 
+			}
+		}
+
+		if(!$needsUpdate){
+			return $response;
+		}
+
+		$emails = $email;
+		$arrayEmails = explode(';', $emails);
+		$validEmails = array();
+		foreach ($arrayEmails as $emailAux) {
+			$emailAux = trim($emailAux); // Eliminar espacios en blanco
+			if (!empty($emailAux) && filter_var($emailAux, FILTER_VALIDATE_EMAIL)) {
+				$validEmails[] = $emailAux; // Solo agregar si es válido
+			}
+		}
+		error_log(print_r($validEmails, true));
+
+		// Si viene el mail entonces tambien mando para Ormen
+		if(!empty($validEmails)){
+			//consulto si exite
+			$arrayContacts = $clientController->prepareContactToSend($email, $numberMobile);
+			$documentType = 1;
+			$responseValidateRUT = $validateClass->validateRUT($documentReceiver);
+			error_log(print_r($responseValidateRUT, true));
+			if ( $responseValidateRUT->result == 2 ){
+				$documentType = 2;
+			} else {
+				$ciLimpia = preg_replace( '/\D/', '', $documentReceiver );
+				$validationDigit = $ciLimpia[-1];
+				$validCi = $validateClass->validateCI($documentReceiver);
+				if ($validationDigit == $validCi)
+					$documentType = 3;
+			}
+			$resultOrmenClient = $restController->consultarCliente($rut, $documentReceiver, $token);
+			error_log(print_r($resultOrmenClient, true));
+			if ( $resultOrmenClient->result == 2 ){ //ntonces el cliente ya esta guardado en ormen
+				$responseSendRest = $restController->modificarCliente($rut, $documentReceiver, $documentType, $nameReceiver, 1, $arrayContacts, $token);
+				error_log(print_r($responseSendRest, true));
+				if($responseSendRest->result == 2){
+					$rest = true;
+					$response->result = 2;
+					$response->message = "Cliente correctamente actualizado";
+				} else {
+					$response->result = 2;
+					$response->message = "Cliente no se pudo actualizar";
+				}
+			}else{ //no se encuentra cliente en ormen, se agrega
+				$object = array(
+					'document' => $documentReceiver,
+					'name' => $nameReceiver,
+					'notificationMethods' => [1],
+					'documentType' => $documentType,
+					'contacts' => $arrayContacts
+				);
+				$responseSendRest = $restController->nuevoCliente($rut, $object, $token);
+				error_log(print_r($responseSendRest, true));
+				if($responseSendRest->resultado->codigo == 200){
+					$rest = true;
+					$response->result = 2;
+					$response->message = "EL cliente fue creado correctamente.";
+				} else {
+					$response->result = 2;
+					$response->message = "Cliente no se pudo crear";
+				}
+			}
+		} else {
+			// No lo guardo en Ormen porque el/los mail no tiene/n formato correcto
+		}
+		return $response;
+	}
+
 	//NEW TEST
 	public function updateClientByDocumentJustLocal($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $idEmpresa, $rut, $token){
 		$response = new \stdClass();
@@ -432,21 +565,29 @@ class ctr_clients{
 	}
 	//UPDATED
 	public function prepareContactToSend($emails, $numbers){
-		$restController = new ctr_rest();
+		// $restController = new ctr_rest();
 		$newArray = array();
 		if(!is_null($emails)){
 			$arrayValue = explode(";", $emails);
 			foreach ($arrayValue as $key => $value) {
-				$valueContact = $restController->prepareContactDetail(1, $value);
-				$newArray[] = $valueContact;
+				// $valueContact = $restController->prepareContactDetail(1, $value);
+				$newArray[] = array(
+					"contactType" => 1,
+					"value" => $value
+				);
+				// $newArray[] = $valueContact;
 			}
 		}
 
 		if(!is_null($numbers)){
 			$arrayValue = explode(";", $numbers);
 			foreach ($arrayValue as $key => $value) {
-				$valueContact = $restController->prepareContactDetail(5, $value);
-				$newArray[] = $valueContact;
+				// $valueContact = $restController->prepareContactDetail(5, $value);
+				$newArray[] = array(
+					"contactType" => 5,
+					"value" => $value
+				);
+				// $newArray[] = $valueContact;
 			}
 		}
 

@@ -47,7 +47,7 @@ function isElementInModal(element) {
         '#modalConfigMethodPayment',
         '#modalPOSPayment',
         '#modalPOSDEV',
-        '#modalCancelVoucher'
+        '#modalCancelVoucher',
         // Agregar aquí otros modales que puedan existir
     ];
 
@@ -85,7 +85,8 @@ function handleBodyKeyEvents(keyCode, character, event) {
         }
     } else if (keyCode == 107) { // Tecla +
         if (event.shiftKey) { // Shift + +
-            openModalGetPrices("normal", 1);
+            $('#buttonListaPrecios').click()
+            // openModalGetPrices("normal", 1);
         } else { // Solo +
             openModalAddProduct();
         }
@@ -262,7 +263,13 @@ function handleModalAddProductKeyEvents(keyCode, event) {
 */
 function handleModalResponseKeyEvents(keyCode, event) {
     console.log("handleModalResponseKeyEvents")
-    
+    if (keyCode == 13) { // Enter
+        event.preventDefault();
+        $('#modalButtonResponse').click()
+    } else if (keyCode == 27) { // Escape
+        event.preventDefault();
+        $('#modalButtonResponse').click()
+    }
 }
 
 /**

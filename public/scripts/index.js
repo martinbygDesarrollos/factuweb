@@ -59,3 +59,5 @@ function resizeScreen(){
 			$(".toHidden2").show();
 	}
 }
+
+console.log = function() {}; // SI EL ENTORNO ES DESARROLLO COMENTAR ESTA LINEA | PRODUCCION DESCOMENTAR

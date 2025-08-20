@@ -2,88 +2,10 @@
 
 
 $('#modalResponse').off('shown.bs.modal').on('shown.bs.modal', function(){
+	$(this).data('bs.modal')._config.keyboard = false;
+	$(this).data('bs.modal')._config.backdrop = 'static';
 	$('#modalResponse button').focus();
 })
-
-function selectClient(){
-	console.log("NUEVO CLIENTE SETTEADO")
-	let documentClient = $('#inputDocumentClient').val() || null;
-	let nameClient = $('#inputNameClient').val() || null;
-	let address = $('#inputAddressClient').val() || null;
-	let city = $('#inputCityClient').val() || null;
-	let department = $('#inputDepartmentClient').val() || null;
-	let email = $('#inputEmailClient').val() || null;
-	let phone = $('#inputPhoneClient').val() || null;
-	console.log(department)
-	console.log(city)
-	console.log(address)
-	// console.log(department.trim())
-	// console.log(city.trim())
-	// console.log(address.trim())
-	if((!department || !city || !address)){
-		showReplyMessage(1, "Para ingresar un cliente este debe contar con dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
-		console.log("A")
-		return;
-	} else {
-		if(department.trim() == "" || city.trim() == "" || address.trim() == ""){
-			console.log("B")
-			showReplyMessage(1, "Para ingresar un cliente este debe contar con dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
-			return;
-		} else {
-
-		}
-	}
-	//  else {
-	// 	if(department.trim() == "" || city.trim() == "" || address.trim() == ""){
-	// 		showReplyMessage(1, "Para ingresar un cliente este debe contar dirección, ciudad y departamento, de lo contrario no ingresar.", "Información incompleta", "modalSetClient")
-	// 		return;
-	// 	}
-	// }
-	$("#selectTypeVoucher").empty();
-	// $('#divComprobante').children().remove();
-	if($('#inputDocumentClient').val().length > 8){
-		// $('#divComprobante').append('<label for="selectTypeVoucher">Comprobante</label><select class="custom-select custom-select-sm shadow-sm" id="selectTypeVoucher" onchange="onChangeTypeVoucher(this)"><option value="301">EFactura Contado</option><option value="311">EFactura Crédito</option></select>')
-		// $('#divComprobante').children().remove();
-        $("#selectTypeVoucher").append('<option value="301">EFactura Contado</option>');
-        $("#selectTypeVoucher").append('<option value="311">EFactura Crédito</option>');
-		// $("#selectTypeVoucher").prop("selectedIndex", 0);
-        console.log("EMPRESA")
-    } else if($('#inputDocumentClient').val().length <= 8){
-		// $('#divComprobante').append('<label for="selectTypeVoucher">Comprobante</label><select class="custom-select custom-select-sm shadow-sm" id="selectTypeVoucher" onchange="onChangeTypeVoucher(this)"><option value="201">ETicket Contado</option><option value="211">ETicket Crédito</option></select>')
-		// $("#selectTypeVoucher").empty();
-        $("#selectTypeVoucher").append('<option value="201">ETicket Contado</option>');
-        $("#selectTypeVoucher").append('<option value="211">ETicket Crédito</option>');
-        console.log("PERSONA")
-    }
-	$("#selectTypeVoucher").prop("selectedIndex", 0);
-	
-	if(nameClient && documentClient){
-		if(validateRut(documentClient) || validateCI(documentClient)){
-			//se envían todos los datos del cliente, si no se encuentra registrado el documento se registra en la base local y en ormen
-			sendAsyncPost("createModifyClient", {documentReceiver: documentClient, nameReceiver: nameClient, numberMobile: phone, addressReceiver: address, locality: city, department: department, email: email})
-			.then(( response )=>{
-				console.log("se terminó el proceso de guardado del cliente");
-				console.log(response);
-			})
-			.catch(()=>{
-				console.log("proceso del cliente ");
-			})
-			createClient(documentClient, nameClient, address, city, department, email, phone);
-			if(validateRut(documentClient)){
-				console.log("QUE HACE ACA"); // NADA QUE PUEDA DETECTAR
-				// $('#selectTypeVoucher').val(111).change();
-			}
-			$('#buttonModalClientWithName').html(nameClient + " " +  documentClient);
-			$('#buttonCancelClient').css('display', 'block');
-			$('#modalSetClient').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-				console.log("modalSetClient.onHidden")
-				setNextStep('selectTypeVoucher')
-			});
-
-			$('#modalSetClient').modal('hide');
-		}else showReplyMessage(1, "El documento ingresado no pudo validarse como RUT y tampoco como CI por favor vuelva a ingresarlo", "Documento no valido", "modalSetClient");
-	}else showReplyMessage(1, "Para ingresar un cliente este debe contar con Nombre y Documento, de lo contrario no ingresar.", "Nombre y Documento requeridos", "modalSetClient");
-}
 
 let clientSelected = [];
 function createClient(documentClient, nameClient, address, city, department, email, phone){
@@ -117,25 +39,6 @@ function setClientValues(modal, name, document, address, city, department, email
 		$('#inputPhoneClient').val(phone)
 	}
 }
-
-// function setClientValues(name, documentC, address, city, department, email, phone){
-// 	$('#inputNameClient').val(name);
-// 	$('#inputDocumentClient').val(documentC);
-// 	$('#inputAddressClient').val(address);
-// 	$('#inputCityClient').val(city);
-// 	$('#inputDepartmentClient').val(department);
-// 	$('#inputEmailClient').val(email);
-// 	$('#inputPhoneClient').val(phone);
-// }
-
-// function cancelClientSelected(){
-// 	clientSelected = [];
-// 	$('#inputTextToSearchClient').val("");
-// 	$('#buttonModalClientWithName').html("Agregar <u>C</u>liente <i class='fas fa-user-plus'></i>");
-// 	setClientValues(null, null, null, null, null, null, null);
-// 	$('#selectTypeVoucher').val(101).change();
-// 	$('#buttonCancelClient').css('display', 'none');
-// }
 
 //esta función busca cliente desde la vista de ventas
 function searchClient(inputToSearch, e, dataList, modal){ //cuando se ingresan numeros el el buscador de cliente por rut se llama a esta función para buscar los datos

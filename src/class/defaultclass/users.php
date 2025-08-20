@@ -215,28 +215,24 @@ class users{
     	if($responseGetPermitProducts->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "PERMITIR_LISTA_DE_PRECIOS", "SI");
 
-    	$responseGetPermitProducts = $userClass->getConfigurationUser($idUser, "PERMITIR_NOTAS_DE_DEBITO");
-    	if($responseGetPermitProducts->result == 1)
+    	$responseGetPermitND = $userClass->getConfigurationUser($idUser, "PERMITIR_NOTAS_DE_DEBITO");
+    	if($responseGetPermitND->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "PERMITIR_NOTAS_DE_DEBITO", "SI");
 
-    	$responseGetPermitProducts = $userClass->getConfigurationUser($idUser, "PERMITIR_PRODUCTOS_NO_INGRESADOS");
-    	if($responseGetPermitProducts->result == 1)
+    	$responseGetPermitProductsNotEntered = $userClass->getConfigurationUser($idUser, "PERMITIR_PRODUCTOS_NO_INGRESADOS");
+    	if($responseGetPermitProductsNotEntered->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "PERMITIR_PRODUCTOS_NO_INGRESADOS", "NO");
 
-    	$responseGetConfiguration = $userClass->getConfigurationUser($idUser, "VER_SALDOS_ESTADO_CUENTA");
-    	if($responseGetConfiguration->result == 1)
+    	$responseGetConfigurationVerSaldo = $userClass->getConfigurationUser($idUser, "VER_SALDOS_ESTADO_CUENTA");
+    	if($responseGetConfigurationVerSaldo->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_SALDOS_ESTADO_CUENTA", "SI");
 
-    	$responseGetConfiguration = $userClass->getConfigurationUser($idUser, "VER_SALDOS_ESTADO_CUENTA_PDF");
-    	if($responseGetConfiguration->result == 1)
+    	$responseGetConfigurationVerSaldoPdf = $userClass->getConfigurationUser($idUser, "VER_SALDOS_ESTADO_CUENTA_PDF");
+    	if($responseGetConfigurationVerSaldoPdf->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_SALDOS_ESTADO_CUENTA_PDF", "SI");
 
-    	$responseGetConfiguration = $userClass->getConfigurationUser($idUser, "INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA");
-    	if($responseGetConfiguration->result == 1)
-    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA", "NO");
-
-    	$responseGetConfiguration = $userClass->getConfigurationUser($idUser, "INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA");
-    	if($responseGetConfiguration->result == 1)
+    	$responseGetConfigurationIncCobranzaEC = $userClass->getConfigurationUser($idUser, "INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA");
+    	if($responseGetConfigurationIncCobranzaEC->result == 1)
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "INCLUIR_COBRANZAS_CONTADO_ESTADO_CUENTA", "NO");
 
     	$responseGetConfigurationCotizacion = $userClass->getConfigurationUser($idUser, "VER_COTIZACION_INICIO");
@@ -268,13 +264,13 @@ class users{
     		$userClass->insertConfigurationUser($idUser, "VALUE", "SUCURSAL_IS_PRINCIPAL", "0");
     	}
 
-    	$responseGetBranchCompany = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
-    	if($responseGetBranchCompany->result == 1){
+    	$responseGetFormatTicket = $userClass->getConfigurationUser($idUser, "FORMATO_TICKET");
+    	if($responseGetFormatTicket->result == 1){
     		$userClass->insertConfigurationUser($idUser, "VALUE", "FORMATO_TICKET", "a4");
     	}
 
-    	$responseGetBranchCompany = $userClass->getConfigurationUser($idUser, "INDICADORES_FACTURACION_DEFECTO");
-    	if($responseGetBranchCompany->result == 1){
+    	$responseGetIndFactDefault = $userClass->getConfigurationUser($idUser, "INDICADORES_FACTURACION_DEFECTO");
+    	if($responseGetIndFactDefault->result == 1){
     		$userClass->insertConfigurationUser($idUser, "VALUE", "INDICADORES_FACTURACION_DEFECTO", "3");
     	}
 
@@ -289,28 +285,33 @@ class users{
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "MANEJO_DE_STOCK", "NO");
 		}
 
-		$responseStockManagement = $userClass->getConfigurationUser($idUser, "VER_TOTAL_VENTAS_FOOTER");
-    	if($responseStockManagement->result == 1){
+		$responseShowTotalVentasFooter = $userClass->getConfigurationUser($idUser, "VER_TOTAL_VENTAS_FOOTER");
+    	if($responseShowTotalVentasFooter->result == 1){
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_TOTAL_VENTAS_FOOTER", "NO");
 		}
 		
-		$responseStockManagement = $userClass->getConfigurationUser($idUser, "VER_SIEMPRE_CLIENTE");
-    	if($responseStockManagement->result == 1){
-    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_SIEMPRE_CLIENTE", "NO");
+		// $responseStockManagement = $userClass->getConfigurationUser($idUser, "VER_SIEMPRE_CLIENTE"); // OPCION QUITADA
+    	// if($responseStockManagement->result == 1){
+    	// 	$userClass->insertConfigurationUser($idUser, "BOOLEAN", "VER_SIEMPRE_CLIENTE", "NO");
+		// }
+		
+		$responseSuggestProducts = $userClass->getConfigurationUser($idUser, "SUGERIR_PRODUCTOS_DE_LISTA_ARTICULOS"); // OPCION NUEVA
+    	if($responseSuggestProducts->result == 1){
+    		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SUGERIR_PRODUCTOS_DE_LISTA_ARTICULOS", "SI");
 		}
 
-		$responseStockManagement = $userClass->getConfigurationUser($idUser, "SKIP_SELECT_CLIENTE");
-    	if($responseStockManagement->result == 1){
+		$responseSkipClient = $userClass->getConfigurationUser($idUser, "SKIP_SELECT_CLIENTE");
+    	if($responseSkipClient->result == 1){
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SKIP_SELECT_CLIENTE", "NO");
 		}
 
-		$responseStockManagement = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE");
-    	if($responseStockManagement->result == 1){
+		$responseSuperFastSale = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE");
+    	if($responseSuperFastSale->result == 1){
     		$userClass->insertConfigurationUser($idUser, "BOOLEAN", "SUPERFAST_SALE", "NO");
 		}
 
-		$responseGetBranchCompany = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE_MEDIOPAGO");
-    	if($responseGetBranchCompany->result == 1){
+		$responseSuperFastSalePayWay = $userClass->getConfigurationUser($idUser, "SUPERFAST_SALE_MEDIOPAGO"); // Aun no aplicada
+    	if($responseSuperFastSalePayWay->result == 1){
     		$userClass->insertConfigurationUser($idUser, "VALUE", "SUPERFAST_SALE_MEDIOPAGO", "Efectivo");
     	}
 

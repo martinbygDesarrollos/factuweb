@@ -539,6 +539,24 @@ return function (App $app){
 		}else return json_encode($responseCurrentSession);
 	});
 	//UPDATED
+	$app->post('/createModifyClientFromPointSale', function(Request $request, Response $response) use ($userController, $clientController){
+		$responseCurrentSession = $userController->validateCurrentSession();
+		if($responseCurrentSession->result == 2){
+			$responsePermissions = $userController->validatePermissions('CLIENT', $responseCurrentSession->currentSession->idEmpresa);
+			if($responsePermissions->result == 2){
+				$data = $request->getParams();
+				$documentReceiver = $data['documentReceiver'];
+				$nameReceiver = $data['nameReceiver'];
+				$numberMobile = $data['numberMobile'];
+				$addressReceiver = $data['addressReceiver'];
+				$locality = $data['locality'];
+				$department = $data['department'];
+				$email = $data['email'];
+				return json_encode($clientController->createModifyClientFromPointSale($documentReceiver, $nameReceiver, $locality, $department, $email, $numberMobile, $addressReceiver, $responseCurrentSession->currentSession->idEmpresa, $responseCurrentSession->currentSession->rut, $responseCurrentSession->currentSession->tokenRest));
+			} else return json_encode($responsePermissions);
+		}else return json_encode($responseCurrentSession);
+	});
+	//UPDATED
 	$app->post('/getClientSelected', function(Request $request, Response $response) use ($userController, $clientController){
 		$responseCurrentSession = $userController->validateCurrentSession();
 		if($responseCurrentSession->result == 2){
